@@ -332,7 +332,42 @@ motion:
       pattern: "slide-to-leading"
 ```
 
-### 3.5 Layout tokens
+### 3.5 Elevation tokens
+
+Elevation tokens define shadow depth levels for layering surfaces. Each level has platform-specific shadow implementations.
+
+```yaml
+# tokens/elevation.yaml
+elevation:
+  none:
+    semantic: "Flat, no shadow"
+    value: "none"
+
+  sm:
+    semantic: "Subtle lift for hover states, input focus"
+    platform:
+      ios: { shadow: { color: "black", opacity: 0.04, radius: 2, y: 1 } }
+      android: { elevation: 1 }
+      web: { box_shadow: "0 1px 2px rgba(0,0,0,0.04)" }
+
+  md:
+    semantic: "Cards, toasts, popovers"
+    platform:
+      ios: { shadow: { color: "black", opacity: 0.08, radius: 8, y: 2 } }
+      android: { elevation: 3 }
+      web: { box_shadow: "0 2px 8px rgba(0,0,0,0.08)" }
+
+  lg:
+    semantic: "FABs, modals, sheets"
+    platform:
+      ios: { shadow: { color: "black", opacity: 0.12, radius: 16, y: 4 } }
+      android: { elevation: 6 }
+      web: { box_shadow: "0 4px 16px rgba(0,0,0,0.12)" }
+```
+
+Elevation tokens use a 4-level scale (none/sm/md/lg). Screens reference levels by name: `elevation: lg`. Platform implementations translate these into native shadow APIs — `UIKit`/`SwiftUI` shadow modifiers on iOS, `elevation` dp on Android, and CSS `box-shadow` on web.
+
+### 3.6 Layout tokens
 
 Layout tokens define the adaptive breakpoint vocabulary and layout primitives. See **Section 5.2** for the full adaptive layout system.
 
@@ -349,7 +384,7 @@ layout:
 
 Every screen and section references size classes by name (`compact`, `regular`, `expanded`), never by pixel values.
 
-### 3.6 Themes
+### 3.7 Themes
 
 ```yaml
 # tokens/themes.yaml
@@ -2486,7 +2521,8 @@ operation      := 'format' | 'map' | 'default'
 computed_expr  := data_path comparator value '?' literal ':' literal
 comparator     := '==' | '!=' | '>' | '<' | '>=' | '<='
 locale_ref     := '$t:' locale_key
-locale_key     := identifier ('.' identifier)*
+locale_key     := key_segment ('.' key_segment)*
+key_segment    := identifier | interpolation
 ```
 
 OpenUISpec supports three expression types for display strings:
@@ -2769,6 +2805,7 @@ t_params:
 - `t_params` is a sibling property of the `$t:` string, mapping ICU placeholder names to data paths
 - `t_params` values are data paths (see Section 10.3), resolved at runtime
 - Formatter mappings may also reference locale keys: `mapping: { todo: "$t:status.todo" }`
+- **Dynamic key validation:** When a locale key contains interpolation segments (e.g., `$t:home.greeting.{time_of_day | format:greeting}`), the key is resolved at runtime. Static validation tools should expand all possible values from the formatter mapping and verify that each resolved key exists in the locale file (e.g., `home.greeting.morning`, `home.greeting.afternoon`, `home.greeting.evening`).
 
 ### 11.4 Formatter localization
 

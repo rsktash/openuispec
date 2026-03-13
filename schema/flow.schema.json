@@ -1,0 +1,164 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openuispec.org/schema/flow.schema.json",
+  "title": "OpenUISpec Flow",
+  "description": "Navigation flow \u2014 a single root key (flow name) mapping to the flow definition",
+  "type": "object",
+  "minProperties": 1,
+  "maxProperties": 1,
+  "additionalProperties": {
+    "$ref": "https://openuispec.org/schema/flow.schema.json#/$defs/flow_def"
+  },
+  "$defs": {
+    "flow_def": {
+      "type": "object",
+      "description": "A navigation flow definition",
+      "properties": {
+        "semantic": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "stub",
+            "draft",
+            "ready"
+          ]
+        },
+        "params": {
+          "$ref": "https://openuispec.org/schema/defs/data-binding.schema.json#/$defs/params_map"
+        },
+        "entry": {
+          "type": "string",
+          "description": "Entry screen step name"
+        },
+        "screens": {
+          "type": "object",
+          "description": "Map of step names to screen definitions",
+          "additionalProperties": {
+            "$ref": "https://openuispec.org/schema/flow.schema.json#/$defs/flow_screen"
+          }
+        },
+        "platform_hints": {
+          "type": "object",
+          "description": "Per-platform presentation hints",
+          "properties": {
+            "ios": {
+              "$ref": "https://openuispec.org/schema/flow.schema.json#/$defs/platform_hint"
+            },
+            "android": {
+              "$ref": "https://openuispec.org/schema/flow.schema.json#/$defs/platform_hint"
+            },
+            "web": {
+              "$ref": "https://openuispec.org/schema/flow.schema.json#/$defs/platform_hint"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "semantic",
+        "entry",
+        "screens"
+      ],
+      "additionalProperties": false
+    },
+    "flow_screen": {
+      "type": "object",
+      "description": "A screen step within a flow \u2014 either references an external screen or defines one inline",
+      "properties": {
+        "screen": {
+          "type": "string",
+          "description": "Reference to an external screen file"
+        },
+        "screen_inline": {
+          "$ref": "https://openuispec.org/schema/flow.schema.json#/$defs/inline_screen_def"
+        },
+        "transitions": {
+          "type": "object",
+          "description": "Map of transition names to transition definitions",
+          "additionalProperties": {
+            "$ref": "https://openuispec.org/schema/flow.schema.json#/$defs/transition_def"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "inline_screen_def": {
+      "type": "object",
+      "description": "An inline screen definition within a flow (same shape as screen_def)",
+      "properties": {
+        "semantic": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "params": {
+          "$ref": "https://openuispec.org/schema/defs/data-binding.schema.json#/$defs/params_map"
+        },
+        "data": {
+          "$ref": "https://openuispec.org/schema/defs/data-binding.schema.json#/$defs/data_map"
+        },
+        "state": {
+          "$ref": "https://openuispec.org/schema/defs/data-binding.schema.json#/$defs/state_map"
+        },
+        "layout": {
+          "$ref": "https://openuispec.org/schema/screen.schema.json#/$defs/layout_def"
+        },
+        "surfaces": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "https://openuispec.org/schema/screen.schema.json#/$defs/surface_def"
+          }
+        }
+      },
+      "required": [
+        "semantic",
+        "layout"
+      ],
+      "additionalProperties": false
+    },
+    "transition_def": {
+      "type": "object",
+      "properties": {
+        "to": {
+          "type": "string",
+          "description": "Target step name"
+        },
+        "animation": {
+          "type": "string"
+        },
+        "feedback": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      },
+      "required": [
+        "to"
+      ],
+      "additionalProperties": false
+    },
+    "platform_hint": {
+      "type": "object",
+      "properties": {
+        "presentation": {
+          "type": "string"
+        },
+        "detents": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "fullscreen": {
+          "type": "boolean"
+        },
+        "size": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
+    }
+  }
+}

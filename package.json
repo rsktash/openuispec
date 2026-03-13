@@ -1,0 +1,24 @@
+{
+  "name": "openuispec",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "A semantic UI specification format for AI-native, platform-native app development",
+  "scripts": {
+    "validate": "tsx schema/validate.ts",
+    "validate:manifest": "tsx schema/validate.ts manifest",
+    "validate:tokens": "tsx schema/validate.ts tokens",
+    "validate:screens": "tsx schema/validate.ts screens",
+    "validate:flows": "tsx schema/validate.ts flows",
+    "validate:platform": "tsx schema/validate.ts platform",
+    "validate:locales": "tsx schema/validate.ts locales"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3",
+    "yaml": "^2.7.1"
+  }
+}

@@ -1,0 +1,326 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openuispec.org/schema/defs/common.schema.json",
+  "title": "OpenUISpec Common Definitions",
+  "description": "Shared type definitions used across OpenUISpec schemas",
+  "$defs": {
+    "icon_ref": {
+      "type": "string",
+      "description": "Reference to a named icon (e.g. 'checkmark_circle', 'folder_fill')"
+    },
+    "color_ref": {
+      "type": "string",
+      "description": "Color reference \u2014 hex value (#RRGGBB) or token path (color.brand.primary)"
+    },
+    "token_ref": {
+      "type": "string",
+      "description": "Reference to a design token (e.g. 'spacing.md', 'typography.body')"
+    },
+    "media_ref": {
+      "type": "string",
+      "description": "Reference to a media asset or data path for images/avatars"
+    },
+    "screen_ref": {
+      "type": "string",
+      "description": "Reference to a screen (e.g. 'screens/home', 'screens/task_detail')"
+    },
+    "severity": {
+      "type": "string",
+      "enum": [
+        "info",
+        "success",
+        "warning",
+        "error",
+        "neutral"
+      ],
+      "description": "Severity level for badges, feedback, and status indicators"
+    },
+    "size_class": {
+      "type": "string",
+      "enum": [
+        "compact",
+        "regular",
+        "expanded"
+      ],
+      "description": "Responsive size class breakpoint"
+    },
+    "contract_family": {
+      "type": "string",
+      "enum": [
+        "action_trigger",
+        "data_display",
+        "input_field",
+        "nav_container",
+        "feedback",
+        "surface",
+        "collection"
+      ],
+      "description": "One of the 7 component contract families"
+    },
+    "platform_target": {
+      "type": "string",
+      "enum": [
+        "ios",
+        "android",
+        "web"
+      ],
+      "description": "Target platform identifier"
+    },
+    "locale_ref": {
+      "type": "string",
+      "pattern": "^\\$t:",
+      "description": "Internationalization reference string (e.g. '$t:home.greeting')"
+    },
+    "string_or_locale": {
+      "description": "A plain string or a $t: locale reference",
+      "type": "string"
+    },
+    "badge_config": {
+      "type": "object",
+      "description": "Badge configuration for navigation items and indicators",
+      "properties": {
+        "text": {
+          "type": "string"
+        },
+        "count": {
+          "type": [
+            "string",
+            "integer"
+          ]
+        },
+        "dot": {
+          "type": "boolean"
+        },
+        "severity": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "range_object": {
+      "type": "object",
+      "description": "A base value with a constrained range",
+      "properties": {
+        "base": {
+          "type": "number"
+        },
+        "range": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 2,
+          "maxItems": 2
+        }
+      },
+      "required": [
+        "base",
+        "range"
+      ],
+      "additionalProperties": false
+    },
+    "size_value": {
+      "description": "Either a fixed number or a base+range object",
+      "oneOf": [
+        {
+          "type": "number"
+        },
+        {
+          "$ref": "https://openuispec.org/schema/defs/common.schema.json#/$defs/range_object"
+        }
+      ]
+    },
+    "hsl_range": {
+      "type": "object",
+      "description": "HSL color range constraints",
+      "properties": {
+        "hue": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "saturation": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "lightness": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 2,
+          "maxItems": 2
+        }
+      },
+      "additionalProperties": false
+    },
+    "on_color": {
+      "type": "object",
+      "description": "Foreground color for use on top of a background color",
+      "properties": {
+        "reference": {
+          "type": "string"
+        },
+        "contrast_min": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "reference"
+      ],
+      "additionalProperties": false
+    },
+    "icon_object": {
+      "type": "object",
+      "description": "Inline icon specification with optional styling",
+      "properties": {
+        "ref": {
+          "type": "string"
+        },
+        "icon": {
+          "type": "string"
+        },
+        "position": {
+          "type": "string",
+          "enum": [
+            "leading",
+            "trailing"
+          ]
+        },
+        "color": {
+          "type": "string"
+        },
+        "size": {
+          "type": "number"
+        },
+        "background": {
+          "type": "string"
+        },
+        "radius": {
+          "type": [
+            "string",
+            "number"
+          ]
+        },
+        "padding": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "leading_trailing": {
+      "description": "Leading or trailing content \u2014 can be an icon object, a media object, a nested contract, or a string",
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "$ref": "https://openuispec.org/schema/defs/common.schema.json#/$defs/icon_object"
+        },
+        {
+          "$ref": "https://openuispec.org/schema/defs/common.schema.json#/$defs/media_object"
+        },
+        {
+          "$ref": "https://openuispec.org/schema/defs/common.schema.json#/$defs/nested_contract"
+        }
+      ]
+    },
+    "media_object": {
+      "type": "object",
+      "description": "Media content with fallback",
+      "properties": {
+        "media": {
+          "type": "string"
+        },
+        "fallback": {
+          "type": "object",
+          "properties": {
+            "initials": {
+              "type": "string"
+            },
+            "background": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "size": {
+          "type": "number"
+        },
+        "radius": {
+          "type": [
+            "string",
+            "number"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "nested_contract": {
+      "type": "object",
+      "description": "An inline contract instance used in props (leading/trailing/content)",
+      "properties": {
+        "contract": {
+          "$ref": "https://openuispec.org/schema/defs/common.schema.json#/$defs/contract_family"
+        },
+        "variant": {
+          "type": "string"
+        },
+        "input_type": {
+          "type": "string"
+        },
+        "props": {
+          "type": "object"
+        },
+        "action": {
+          "$ref": "https://openuispec.org/schema/defs/action.schema.json"
+        },
+        "data_binding": {
+          "type": "string"
+        },
+        "tokens_override": {
+          "type": "object"
+        },
+        "adaptive": {
+          "$ref": "https://openuispec.org/schema/defs/adaptive.schema.json"
+        },
+        "behavior": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "contract",
+        "props"
+      ],
+      "additionalProperties": true
+    },
+    "tokens_override": {
+      "type": "object",
+      "description": "Token override map \u2014 keys are token names, values are token references or literal values",
+      "additionalProperties": true
+    },
+    "empty_state": {
+      "type": "object",
+      "description": "Empty state configuration for collections",
+      "properties": {
+        "icon": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "body": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

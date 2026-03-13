@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openuispec.org/schema/tokens/themes.schema.json",
+  "title": "OpenUISpec Themes",
+  "description": "Theme variants with token overrides and platform capabilities",
+  "type": "object",
+  "required": [
+    "themes"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "themes": {
+      "type": "object",
+      "properties": {
+        "default": {
+          "type": "string",
+          "description": "Name of the default theme variant"
+        },
+        "variants": {
+          "type": "object",
+          "description": "Named theme variants with token overrides",
+          "additionalProperties": {
+            "$ref": "https://openuispec.org/schema/tokens/themes.schema.json#/$defs/theme_variant"
+          }
+        },
+        "platform": {
+          "type": "object",
+          "description": "Per-platform theme capabilities",
+          "properties": {
+            "ios": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "android": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "web": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "default",
+        "variants"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "$defs": {
+    "theme_variant": {
+      "type": "object",
+      "description": "A theme variant \u2014 keys are dot-notation token paths, values are override objects. 'extends' inherits from another variant.",
+      "properties": {
+        "extends": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {
+        "description": "Token override \u2014 object with HSL range properties and/or opacity",
+        "type": "object",
+        "properties": {
+          "hue": {
+            "type": [
+              "number",
+              "array"
+            ]
+          },
+          "saturation": {
+            "type": [
+              "number",
+              "array"
+            ]
+          },
+          "lightness": {
+            "type": [
+              "number",
+              "array"
+            ]
+          },
+          "opacity": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  }
+}

@@ -1,0 +1,264 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openuispec.org/schema/defs/action.schema.json",
+  "title": "OpenUISpec Action",
+  "description": "Discriminated union of the 13 action types in OpenUISpec",
+
+  "type": "object",
+  "required": ["type"],
+  "properties": {
+    "type": {
+      "type": "string",
+      "enum": [
+        "navigate",
+        "api_call",
+        "set_state",
+        "present",
+        "dismiss",
+        "submit_form",
+        "confirm",
+        "refresh",
+        "open_url",
+        "share",
+        "copy",
+        "sequence",
+        "conditional",
+        "feedback"
+      ]
+    }
+  },
+
+  "allOf": [
+    {
+      "if": { "properties": { "type": { "const": "navigate" } } },
+      "then": {
+        "properties": {
+          "type": true,
+          "destination": { "type": "string" },
+          "params": { "type": "object", "additionalProperties": true },
+          "presentation": { "type": "string" },
+          "animation": { "type": "string" }
+        },
+        "required": ["type", "destination"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "if": { "properties": { "type": { "const": "api_call" } } },
+      "then": {
+        "properties": {
+          "type": true,
+          "endpoint": { "type": "string" },
+          "params": { "type": "object", "additionalProperties": true },
+          "body": { "type": ["string", "object"] },
+          "method": { "type": "string" },
+          "optimistic": {
+            "type": "object",
+            "properties": {
+              "target": { "type": "string" },
+              "value": {},
+              "revert_on_error": { "type": "boolean" }
+            },
+            "additionalProperties": false
+          },
+          "on_success": {
+            "anyOf": [
+              { "$ref": "#" },
+              { "type": "object", "additionalProperties": true }
+            ]
+          },
+          "on_error": {
+            "anyOf": [
+              { "$ref": "#" },
+              { "type": "object", "additionalProperties": true }
+            ]
+          },
+          "feedback": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "required": ["type", "endpoint"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "if": { "properties": { "type": { "const": "set_state" } } },
+      "then": {
+        "properties": {
+          "type": true,
+          "target": { "type": "string" },
+          "value": {}
+        },
+        "additionalProperties": true
+      }
+    },
+    {
+      "if": { "properties": { "type": { "const": "present" } } },
+      "then": {
+        "properties": {
+          "type": true,
+          "surface": { "type": "string" },
+          "params": { "type": "object", "additionalProperties": true }
+        },
+        "required": ["type", "surface"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "if": { "properties": { "type": { "const": "dismiss" } } },
+      "then": {
+        "properties": {
+          "type": true,
+          "target": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "if": { "properties": { "type": { "const": "submit_form" } } },
+      "then": {
+        "properties": {
+          "type": true,
+          "form_id": { "type": "string" }
+        },
+        "required": ["type", "form_id"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "if": { "properties": { "type": { "const": "confirm" } } },
+      "then": {
+        "properties": {
+          "type": true,
+          "confirmation": {
+            "type": "object",
+            "properties": {
+              "contract": { "const": "feedback" },
+              "variant": { "type": "string" },
+              "props": {
+                "type": "object",
+                "properties": {
+                  "title": { "type": "string" },
+                  "message": { "type": "string" },
+                  "severity": { "type": "string" },
+                  "t_params": { "type": "object", "additionalProperties": true },
+                  "actions": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "label": { "type": "string" },
+                        "variant": { "type": "string" },
+                        "action": { "$ref": "#" }
+                      },
+                      "required": ["label", "action"],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "additionalProperties": true
+              }
+            },
+            "required": ["contract", "variant", "props"],
+            "additionalProperties": false
+          }
+        },
+        "required": ["type", "confirmation"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "if": { "properties": { "type": { "const": "refresh" } } },
+      "then": {
+        "properties": {
+          "type": true,
+          "target": { "type": "string" }
+        },
+        "required": ["type", "target"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "if": { "properties": { "type": { "const": "open_url" } } },
+      "then": {
+        "properties": {
+          "type": true,
+          "url": { "type": "string" },
+          "external": { "type": "boolean" }
+        },
+        "required": ["type", "url"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "if": { "properties": { "type": { "const": "share" } } },
+      "then": {
+        "properties": {
+          "type": true,
+          "content": { "type": "string" },
+          "title": { "type": "string" },
+          "url": { "type": "string" }
+        },
+        "required": ["type"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "if": { "properties": { "type": { "const": "copy" } } },
+      "then": {
+        "properties": {
+          "type": true,
+          "content": { "type": "string" },
+          "feedback": { "type": "string" }
+        },
+        "required": ["type", "content"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "if": { "properties": { "type": { "const": "sequence" } } },
+      "then": {
+        "properties": {
+          "type": true,
+          "actions": {
+            "type": "array",
+            "items": { "$ref": "#" },
+            "minItems": 1
+          }
+        },
+        "required": ["type", "actions"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "if": { "properties": { "type": { "const": "conditional" } } },
+      "then": {
+        "properties": {
+          "type": true,
+          "condition": { "type": "string" },
+          "then": { "$ref": "#" },
+          "else": { "$ref": "#" }
+        },
+        "required": ["type", "condition", "then"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "if": { "properties": { "type": { "const": "feedback" } } },
+      "then": {
+        "properties": {
+          "type": true,
+          "variant": { "type": "string" },
+          "message": { "type": "string" },
+          "title": { "type": "string" },
+          "severity": { "type": "string" },
+          "icon": { "type": "string" },
+          "duration": { "type": "integer" }
+        },
+        "required": ["type", "variant"],
+        "additionalProperties": false
+      }
+    }
+  ]
+}

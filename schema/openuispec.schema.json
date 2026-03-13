@@ -1,0 +1,280 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openuispec.org/schema/openuispec.schema.json",
+  "title": "OpenUISpec Root Manifest",
+  "description": "Root manifest file (openuispec.yaml) defining project, includes, generation, data model, and API",
+  "type": "object",
+  "required": [
+    "spec_version",
+    "project",
+    "includes"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "spec_version": {
+      "type": "string",
+      "description": "OpenUISpec version (e.g. '0.1')"
+    },
+    "project": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "icon": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "additionalProperties": false
+    },
+    "includes": {
+      "type": "object",
+      "description": "Paths to spec component directories",
+      "properties": {
+        "tokens": {
+          "type": "string"
+        },
+        "contracts": {
+          "type": "string"
+        },
+        "screens": {
+          "type": "string"
+        },
+        "flows": {
+          "type": "string"
+        },
+        "platform": {
+          "type": "string"
+        },
+        "locales": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "tokens",
+        "contracts",
+        "screens",
+        "flows",
+        "platform",
+        "locales"
+      ],
+      "additionalProperties": false
+    },
+    "i18n": {
+      "type": "object",
+      "description": "Internationalization configuration",
+      "properties": {
+        "default_locale": {
+          "type": "string"
+        },
+        "supported_locales": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "fallback_strategy": {
+          "type": "string",
+          "enum": [
+            "default",
+            "key",
+            "empty"
+          ]
+        }
+      },
+      "required": [
+        "default_locale",
+        "supported_locales"
+      ],
+      "additionalProperties": false
+    },
+    "generation": {
+      "type": "object",
+      "description": "Code generation targets and output format",
+      "properties": {
+        "targets": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "output_format": {
+          "type": "object",
+          "description": "Per-target generation config",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "language": {
+                "type": "string"
+              },
+              "framework": {
+                "type": "string"
+              },
+              "min_version": {
+                "type": "string"
+              },
+              "min_sdk": {
+                "type": "integer"
+              },
+              "bundler": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "required": [
+        "targets"
+      ],
+      "additionalProperties": false
+    },
+    "formatters": {
+      "type": "object",
+      "description": "Custom formatter definitions for format expressions",
+      "additionalProperties": {
+        "$ref": "https://openuispec.org/schema/openuispec.schema.json#/$defs/formatter_def"
+      }
+    },
+    "mappers": {
+      "type": "object",
+      "description": "Key-value mapping definitions",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "string"
+        }
+      }
+    },
+    "data_model": {
+      "type": "object",
+      "description": "Application data model definitions",
+      "additionalProperties": {
+        "$ref": "https://openuispec.org/schema/openuispec.schema.json#/$defs/model_def"
+      }
+    },
+    "api": {
+      "type": "object",
+      "description": "API endpoint definitions",
+      "properties": {
+        "base_url": {
+          "type": "string"
+        },
+        "auth": {
+          "type": "string"
+        },
+        "endpoints": {
+          "type": "object",
+          "description": "Grouped API endpoints",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "https://openuispec.org/schema/openuispec.schema.json#/$defs/endpoint_def"
+            }
+          }
+        }
+      },
+      "required": [
+        "base_url",
+        "endpoints"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "$defs": {
+    "formatter_def": {
+      "type": "object",
+      "properties": {
+        "input": {
+          "type": "string"
+        },
+        "output": {
+          "type": "string"
+        },
+        "mapping": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "input",
+        "output",
+        "mapping"
+      ],
+      "additionalProperties": false
+    },
+    "model_def": {
+      "type": "object",
+      "description": "Data model \u2014 map of field names to field definitions",
+      "additionalProperties": {
+        "$ref": "https://openuispec.org/schema/openuispec.schema.json#/$defs/field_def"
+      }
+    },
+    "field_def": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "format": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "max_length": {
+          "type": "integer"
+        },
+        "default": {},
+        "values": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "endpoint_def": {
+      "type": "object",
+      "properties": {
+        "method": {
+          "type": "string",
+          "enum": [
+            "GET",
+            "POST",
+            "PUT",
+            "PATCH",
+            "DELETE"
+          ]
+        },
+        "path": {
+          "type": "string"
+        },
+        "params": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "body": {}
+      },
+      "required": [
+        "method",
+        "path"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

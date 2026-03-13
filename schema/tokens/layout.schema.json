@@ -1,0 +1,170 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openuispec.org/schema/tokens/layout.schema.json",
+  "title": "OpenUISpec Layout Tokens",
+  "description": "Size classes, platform mapping, layout primitives, and content reflow rules",
+  "type": "object",
+  "required": [
+    "layout"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "layout": {
+      "type": "object",
+      "properties": {
+        "size_classes": {
+          "type": "object",
+          "description": "Size class definitions",
+          "properties": {
+            "compact": {
+              "$ref": "https://openuispec.org/schema/tokens/layout.schema.json#/$defs/size_class_def"
+            },
+            "regular": {
+              "$ref": "https://openuispec.org/schema/tokens/layout.schema.json#/$defs/size_class_def"
+            },
+            "expanded": {
+              "$ref": "https://openuispec.org/schema/tokens/layout.schema.json#/$defs/size_class_def"
+            }
+          },
+          "additionalProperties": false
+        },
+        "platform_mapping": {
+          "type": "object",
+          "description": "How each platform resolves size classes",
+          "properties": {
+            "ios": {
+              "$ref": "https://openuispec.org/schema/tokens/layout.schema.json#/$defs/platform_size_mapping"
+            },
+            "android": {
+              "$ref": "https://openuispec.org/schema/tokens/layout.schema.json#/$defs/platform_size_mapping"
+            },
+            "web": {
+              "$ref": "https://openuispec.org/schema/tokens/layout.schema.json#/$defs/platform_size_mapping"
+            }
+          },
+          "additionalProperties": false
+        },
+        "primitives": {
+          "type": "object",
+          "description": "Layout primitive definitions",
+          "additionalProperties": {
+            "$ref": "https://openuispec.org/schema/tokens/layout.schema.json#/$defs/primitive_def"
+          }
+        },
+        "reflow_rules": {
+          "type": "object",
+          "description": "Content reflow rules across size class boundaries",
+          "additionalProperties": {
+            "$ref": "https://openuispec.org/schema/defs/adaptive.schema.json"
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "$defs": {
+    "size_class_def": {
+      "type": "object",
+      "properties": {
+        "semantic": {
+          "type": "string"
+        },
+        "width": {
+          "type": "object",
+          "properties": {
+            "min": {
+              "type": "integer"
+            },
+            "max": {
+              "type": "integer"
+            }
+          },
+          "additionalProperties": false
+        },
+        "columns": {
+          "type": "integer"
+        },
+        "margin": {
+          "type": "string"
+        },
+        "content_max_width": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "examples": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "platform_size_mapping": {
+      "type": "object",
+      "properties": {
+        "uses": {
+          "type": "string"
+        },
+        "compact": {
+          "type": "string"
+        },
+        "regular": {
+          "type": "string"
+        },
+        "expanded": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "primitive_def": {
+      "type": "object",
+      "properties": {
+        "semantic": {
+          "type": "string"
+        },
+        "props": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string"
+              },
+              "values": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "default": {},
+              "required": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "platform_mapping": {
+          "type": "object",
+          "properties": {
+            "ios": {
+              "type": "string"
+            },
+            "android": {
+              "type": "string"
+            },
+            "web": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "behavior": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openuispec.org/schema/defs/data-binding.schema.json",
+  "title": "OpenUISpec Data Binding Definitions",
+  "description": "Data sources, state definitions, data paths, and format expressions",
+  "$defs": {
+    "data_source": {
+      "type": "object",
+      "description": "A data source definition with API endpoint and optional params",
+      "properties": {
+        "source": {
+          "type": "string",
+          "description": "API endpoint or data provider reference"
+        },
+        "params": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "refresh": {
+          "type": "object",
+          "properties": {
+            "interval": {
+              "type": "integer"
+            },
+            "on_focus": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": true
+        },
+        "cache": {
+          "type": "object",
+          "properties": {
+            "ttl": {
+              "type": "integer"
+            },
+            "strategy": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": true
+        }
+      },
+      "required": [
+        "source"
+      ],
+      "additionalProperties": true
+    },
+    "state_def": {
+      "type": "object",
+      "description": "Screen-level state variable definition",
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "State variable type (enum, string, bool, int, etc.)"
+        },
+        "values": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Allowed values for enum types"
+        },
+        "default": {
+          "description": "Default value for this state variable"
+        }
+      },
+      "required": [
+        "type",
+        "default"
+      ],
+      "additionalProperties": false
+    },
+    "data_map": {
+      "type": "object",
+      "description": "Map of named data sources",
+      "additionalProperties": {
+        "$ref": "https://openuispec.org/schema/defs/data-binding.schema.json#/$defs/data_source"
+      }
+    },
+    "state_map": {
+      "type": "object",
+      "description": "Map of named state definitions",
+      "additionalProperties": {
+        "$ref": "https://openuispec.org/schema/defs/data-binding.schema.json#/$defs/state_def"
+      }
+    },
+    "params_map": {
+      "type": "object",
+      "description": "Map of screen/flow parameter definitions",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "required": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "additionalProperties": true
+      }
+    },
+    "t_params": {
+      "type": "object",
+      "description": "Translation parameter bindings \u2014 keys are param names, values are data paths",
+      "additionalProperties": {
+        "type": [
+          "string",
+          "number",
+          "boolean"
+        ]
+      }
+    }
+  }
+}

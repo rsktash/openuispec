@@ -1,0 +1,332 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openuispec.org/schema/screen.schema.json",
+  "title": "OpenUISpec Screen",
+  "description": "Screen composition \u2014 a single root key (screen name) mapping to the screen definition",
+  "type": "object",
+  "minProperties": 1,
+  "maxProperties": 1,
+  "additionalProperties": {
+    "$ref": "https://openuispec.org/schema/screen.schema.json#/$defs/screen_def"
+  },
+  "$defs": {
+    "screen_def": {
+      "type": "object",
+      "description": "A screen definition with layout, data, state, navigation, and surfaces",
+      "properties": {
+        "semantic": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "stub",
+            "draft",
+            "ready"
+          ]
+        },
+        "params": {
+          "$ref": "https://openuispec.org/schema/defs/data-binding.schema.json#/$defs/params_map"
+        },
+        "data": {
+          "$ref": "https://openuispec.org/schema/defs/data-binding.schema.json#/$defs/data_map"
+        },
+        "state": {
+          "$ref": "https://openuispec.org/schema/defs/data-binding.schema.json#/$defs/state_map"
+        },
+        "navigation": {
+          "$ref": "https://openuispec.org/schema/screen.schema.json#/$defs/navigation_def"
+        },
+        "layout": {
+          "$ref": "https://openuispec.org/schema/screen.schema.json#/$defs/layout_def"
+        },
+        "surfaces": {
+          "type": "object",
+          "description": "Named surface definitions (sheets, modals, panels)",
+          "additionalProperties": {
+            "$ref": "https://openuispec.org/schema/screen.schema.json#/$defs/surface_def"
+          }
+        }
+      },
+      "required": [
+        "semantic",
+        "layout"
+      ],
+      "additionalProperties": false
+    },
+    "navigation_def": {
+      "type": "object",
+      "description": "Navigation shell definition",
+      "properties": {
+        "contract": {
+          "const": "nav_container"
+        },
+        "variant": {
+          "type": "string"
+        },
+        "props": {
+          "type": "object",
+          "properties": {
+            "items": {
+              "type": "array",
+              "items": {
+                "$ref": "https://openuispec.org/schema/screen.schema.json#/$defs/nav_item"
+              }
+            },
+            "selected": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": true
+        },
+        "adaptive": {
+          "$ref": "https://openuispec.org/schema/defs/adaptive.schema.json"
+        }
+      },
+      "required": [
+        "contract",
+        "props"
+      ],
+      "additionalProperties": false
+    },
+    "nav_item": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "icon": {
+          "type": "string"
+        },
+        "icon_active": {
+          "type": "string"
+        },
+        "destination": {
+          "type": "string"
+        },
+        "badge": {
+          "$ref": "https://openuispec.org/schema/defs/common.schema.json#/$defs/badge_config"
+        }
+      },
+      "required": [
+        "id",
+        "label",
+        "icon",
+        "destination"
+      ],
+      "additionalProperties": false
+    },
+    "layout_def": {
+      "type": "object",
+      "description": "Screen layout \u2014 either direct type or adaptive",
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "adaptive": {
+          "$ref": "https://openuispec.org/schema/screen.schema.json#/$defs/layout_adaptive"
+        },
+        "safe_area": {
+          "type": "boolean"
+        },
+        "padding": {
+          "type": "string"
+        },
+        "sections": {
+          "type": "array",
+          "items": {
+            "$ref": "https://openuispec.org/schema/screen.schema.json#/$defs/section_item"
+          }
+        },
+        "on_submit": {
+          "$ref": "https://openuispec.org/schema/defs/action.schema.json"
+        }
+      },
+      "additionalProperties": true
+    },
+    "layout_adaptive": {
+      "type": "object",
+      "description": "Adaptive layout configuration per size class",
+      "properties": {
+        "compact": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "regular": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "expanded": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "section_item": {
+      "description": "A section item \u2014 either a contract instance or a section group with children",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "contract": {
+          "type": "string"
+        },
+        "variant": {
+          "type": "string"
+        },
+        "input_type": {
+          "type": "string"
+        },
+        "size": {
+          "type": "string"
+        },
+        "interactive": {
+          "type": "boolean"
+        },
+        "full_width": {
+          "type": "boolean"
+        },
+        "props": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "action": {
+          "$ref": "https://openuispec.org/schema/defs/action.schema.json"
+        },
+        "tokens_override": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "adaptive": {
+          "$ref": "https://openuispec.org/schema/defs/adaptive.schema.json"
+        },
+        "condition": {
+          "type": "string"
+        },
+        "position": {
+          "type": "string"
+        },
+        "data_binding": {
+          "type": "string"
+        },
+        "state_binding": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "form_id": {
+          "type": "string"
+        },
+        "t_params": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "behavior": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "layout": {
+          "$ref": "https://openuispec.org/schema/screen.schema.json#/$defs/inline_layout"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "https://openuispec.org/schema/screen.schema.json#/$defs/section_item"
+          }
+        },
+        "padding": {
+          "type": "string"
+        },
+        "padding_h": {
+          "type": "string"
+        },
+        "padding_v": {
+          "type": "string"
+        },
+        "margin_top": {
+          "type": "string"
+        },
+        "max_width": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": true
+    },
+    "inline_layout": {
+      "type": "object",
+      "description": "Inline layout specification for section groups",
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "adaptive": {
+          "$ref": "https://openuispec.org/schema/screen.schema.json#/$defs/layout_adaptive"
+        },
+        "spacing": {
+          "type": "string"
+        },
+        "align": {
+          "type": "string"
+        },
+        "justify": {
+          "type": "string"
+        },
+        "wrap": {
+          "type": "boolean"
+        },
+        "columns": {
+          "type": [
+            "integer",
+            "object"
+          ]
+        },
+        "gap": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
+    },
+    "surface_def": {
+      "type": "object",
+      "description": "A named surface (sheet, modal, panel)",
+      "properties": {
+        "contract": {
+          "const": "surface"
+        },
+        "variant": {
+          "type": "string"
+        },
+        "props": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string"
+            },
+            "size": {
+              "type": "string"
+            },
+            "content": {
+              "type": "array",
+              "items": {
+                "$ref": "https://openuispec.org/schema/screen.schema.json#/$defs/section_item"
+              }
+            }
+          },
+          "additionalProperties": true
+        },
+        "adaptive": {
+          "$ref": "https://openuispec.org/schema/defs/adaptive.schema.json"
+        }
+      },
+      "required": [
+        "contract",
+        "props"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

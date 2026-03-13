@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openuispec.org/schema/locale.schema.json",
+  "title": "OpenUISpec Locale",
+  "description": "Locale file with $locale, $direction, and translation key-value pairs (ICU MessageFormat)",
+  "type": "object",
+  "required": ["$locale", "$direction"],
+  "properties": {
+    "$locale": {
+      "type": "string",
+      "description": "Locale identifier (e.g. 'en', 'fr', 'ar')"
+    },
+    "$direction": {
+      "type": "string",
+      "enum": ["ltr", "rtl"],
+      "description": "Text direction"
+    }
+  },
+  "patternProperties": {
+    "^[a-zA-Z_][a-zA-Z0-9_.]*$": {
+      "type": "string",
+      "description": "Translation string (ICU MessageFormat)"
+    }
+  },
+  "additionalProperties": false
+}

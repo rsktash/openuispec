@@ -129,7 +129,5 @@
 
   "common.cancel": "Cancel",
   "common.delete": "Delete",
-  "common.save": "Save",
-  "common.create": "Create",
-  "common.error_generic": "Something went wrong"
+  "common.create": "Create"
 }

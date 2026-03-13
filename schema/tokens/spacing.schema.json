@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openuispec.org/schema/tokens/spacing.schema.json",
+  "title": "OpenUISpec Spacing Tokens",
+  "description": "Spacing scale, base unit, and aliases",
+  "type": "object",
+  "required": [
+    "spacing"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "spacing": {
+      "type": "object",
+      "properties": {
+        "base_unit": {
+          "type": "integer",
+          "description": "Base spacing unit in pixels"
+        },
+        "platform_flex": {
+          "type": "number",
+          "description": "Platform flexibility factor (0-1)"
+        },
+        "scale": {
+          "type": "object",
+          "description": "Named spacing scale values",
+          "additionalProperties": {
+            "$ref": "https://openuispec.org/schema/tokens/spacing.schema.json#/$defs/spacing_value"
+          }
+        },
+        "aliases": {
+          "type": "object",
+          "description": "Named spacing aliases for common patterns",
+          "additionalProperties": {
+            "$ref": "https://openuispec.org/schema/tokens/spacing.schema.json#/$defs/alias_value"
+          }
+        }
+      },
+      "required": [
+        "base_unit",
+        "scale"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "$defs": {
+    "spacing_value": {
+      "description": "A spacing value \u2014 integer or base+range object",
+      "oneOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "$ref": "https://openuispec.org/schema/defs/common.schema.json#/$defs/range_object"
+        }
+      ]
+    },
+    "alias_value": {
+      "description": "Spacing alias \u2014 a token reference string or object with directional values",
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "all": {
+              "type": "string"
+            },
+            "horizontal": {
+              "type": "string"
+            },
+            "vertical": {
+              "type": "string"
+            },
+            "top": {
+              "type": "string"
+            },
+            "bottom": {
+              "type": "string"
+            },
+            "leading": {
+              "type": "string"
+            },
+            "trailing": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    }
+  }
+}

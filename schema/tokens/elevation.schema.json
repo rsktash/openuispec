@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openuispec.org/schema/tokens/elevation.schema.json",
+  "title": "OpenUISpec Elevation Tokens",
+  "description": "Elevation/shadow definitions with per-platform values",
+  "type": "object",
+  "required": [
+    "elevation"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "elevation": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "https://openuispec.org/schema/tokens/elevation.schema.json#/$defs/elevation_entry"
+      }
+    }
+  },
+  "$defs": {
+    "elevation_entry": {
+      "type": "object",
+      "properties": {
+        "semantic": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        },
+        "platform": {
+          "type": "object",
+          "properties": {
+            "ios": {
+              "type": "object",
+              "properties": {
+                "shadow": {
+                  "type": "object",
+                  "properties": {
+                    "color": {
+                      "type": "string"
+                    },
+                    "opacity": {
+                      "type": "number"
+                    },
+                    "radius": {
+                      "type": "number"
+                    },
+                    "x": {
+                      "type": "number"
+                    },
+                    "y": {
+                      "type": "number"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            },
+            "android": {
+              "type": "object",
+              "properties": {
+                "elevation": {
+                  "type": "number"
+                }
+              },
+              "additionalProperties": false
+            },
+            "web": {
+              "type": "object",
+              "properties": {
+                "box_shadow": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

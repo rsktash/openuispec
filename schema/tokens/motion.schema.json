@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openuispec.org/schema/tokens/motion.schema.json",
+  "title": "OpenUISpec Motion Tokens",
+  "description": "Animation durations, easings, reduced motion policy, and motion patterns",
+  "type": "object",
+  "required": [
+    "motion"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "motion": {
+      "type": "object",
+      "properties": {
+        "duration": {
+          "type": "object",
+          "description": "Named duration values in milliseconds",
+          "additionalProperties": {
+            "type": "integer"
+          }
+        },
+        "easing": {
+          "type": "object",
+          "description": "Named easing curves",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "reduced_motion": {
+          "type": "string",
+          "description": "Policy for reduced motion preference",
+          "enum": [
+            "remove-animation",
+            "reduce-animation",
+            "respect-system"
+          ]
+        },
+        "patterns": {
+          "type": "object",
+          "description": "Named motion patterns for common interactions",
+          "additionalProperties": {
+            "$ref": "https://openuispec.org/schema/tokens/motion.schema.json#/$defs/motion_pattern"
+          }
+        }
+      },
+      "required": [
+        "duration",
+        "easing"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "$defs": {
+    "motion_pattern": {
+      "type": "object",
+      "properties": {
+        "duration": {
+          "type": "string",
+          "description": "Reference to a named duration"
+        },
+        "easing": {
+          "type": "string",
+          "description": "Reference to a named easing"
+        },
+        "property": {
+          "type": "string",
+          "description": "CSS/animated property"
+        },
+        "value": {
+          "type": [
+            "number",
+            "string"
+          ]
+        },
+        "pattern": {
+          "type": "string",
+          "description": "Named animation pattern"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

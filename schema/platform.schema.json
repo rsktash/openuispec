@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openuispec.org/schema/platform.schema.json",
+  "title": "OpenUISpec Platform Adaptation",
+  "description": "Platform-specific overrides, behaviors, and generation config. Root key is the platform name.",
+  "type": "object",
+  "minProperties": 1,
+  "maxProperties": 1,
+  "additionalProperties": {
+    "$ref": "https://openuispec.org/schema/platform.schema.json#/$defs/platform_def"
+  },
+  "$defs": {
+    "platform_def": {
+      "type": "object",
+      "description": "Platform adaptation definition",
+      "properties": {
+        "framework": {
+          "type": "string",
+          "description": "UI framework (swiftui, compose, react)"
+        },
+        "language": {
+          "type": "string",
+          "description": "Programming language"
+        },
+        "min_version": {
+          "type": "string",
+          "description": "Minimum framework/OS version (iOS)"
+        },
+        "min_sdk": {
+          "type": "integer",
+          "description": "Minimum SDK version (Android)"
+        },
+        "target_sdk": {
+          "type": "integer",
+          "description": "Target SDK version (Android)"
+        },
+        "overrides": {
+          "type": "object",
+          "description": "Per-contract-family overrides",
+          "additionalProperties": {
+            "type": "object",
+            "description": "Variant-level overrides for a contract family",
+            "additionalProperties": true
+          }
+        },
+        "behaviors": {
+          "type": "object",
+          "description": "Platform-specific behaviors and capabilities",
+          "additionalProperties": true
+        },
+        "generation": {
+          "type": "object",
+          "description": "Code generation configuration",
+          "properties": {
+            "imports": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "dependencies": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "architecture": {
+              "type": "string"
+            },
+            "naming": {
+              "type": "string"
+            },
+            "bundler": {
+              "type": "string"
+            },
+            "css": {
+              "type": "string"
+            },
+            "routing": {
+              "type": "string"
+            },
+            "state": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": true
+        }
+      },
+      "required": [
+        "framework"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

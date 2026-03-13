@@ -102,6 +102,7 @@ data_model:
   user:
     id: { type: string, format: uuid }
     name: { type: string }
+    first_name: { type: string }
     avatar: { type: media_ref, required: false }
     email: { type: string, format: email }
 

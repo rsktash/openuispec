@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openuispec.org/schema/defs/adaptive.schema.json",
+  "title": "OpenUISpec Adaptive Override",
+  "description": "Adaptive overrides keyed by size class (compact, regular, expanded). Values are override objects whose shape depends on context.",
+  "type": "object",
+  "properties": {
+    "compact": { "type": "object", "additionalProperties": true },
+    "regular": { "type": "object", "additionalProperties": true },
+    "expanded": { "type": "object", "additionalProperties": true }
+  },
+  "additionalProperties": false
+}
