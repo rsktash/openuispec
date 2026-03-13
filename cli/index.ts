@@ -45,7 +45,7 @@ Usage:
 
 Validate groups: manifest, tokens, screens, flows, platform, locales, custom_contracts
 
-Learn more: https://github.com/rsktash/openuispec
+Docs: node_modules/openuispec/spec/openuispec-v0.1.md
 `);
       break;
 

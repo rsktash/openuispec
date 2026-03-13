@@ -247,9 +247,12 @@ This project generates native code for: **${targetList}**
 
 ## Learn more
 
-- Full spec: https://github.com/rsktash/openuispec/blob/main/spec/openuispec-v0.1.md
-- Example app: https://github.com/rsktash/openuispec/tree/main/examples/taskflow
-- Repository: https://github.com/rsktash/openuispec
+All docs and examples are local in \`node_modules/openuispec/\` — read from disk, not from GitHub.
+
+- Full spec: \`node_modules/openuispec/spec/openuispec-v0.1.md\`
+- Example app: \`node_modules/openuispec/examples/taskflow/\`
+- JSON Schemas: \`node_modules/openuispec/schema/\`
+- Repository: \`node_modules/openuispec/\` (all files included)
 `;
 }
 
@@ -496,7 +499,7 @@ Commands:
 
 AI rules have been added to CLAUDE.md and AGENTS.md.
 
-Learn more: https://github.com/rsktash/openuispec
+Docs: node_modules/openuispec/spec/openuispec-v0.1.md
 `);
   } catch (err) {
     rl.close();

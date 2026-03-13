@@ -108,6 +108,8 @@ Every token file requires a root wrapper key matching its type (e.g. `tokens/typ
 
 ## Examples
 
+If the package is installed locally, all examples are in `node_modules/openuispec/examples/` — read from disk instead of fetching from GitHub.
+
 - [TaskFlow Example App](https://github.com/rsktash/openuispec/tree/main/examples/taskflow): Complete example spec covering all 7 contract families, tokens, screens, flows, platform overrides, and localization
 
 ## Optional
