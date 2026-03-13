@@ -19,3 +19,4 @@ generated/
 # Environment
 .env
 .env.local
+site/_output/
