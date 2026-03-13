@@ -118,6 +118,88 @@ api:
 `;
 }
 
+function specReadmeTemplate(name: string, targets: string[]): string {
+  const targetList = targets.join(", ");
+  return `# ${name} — OpenUISpec
+
+This directory contains the **OpenUISpec** semantic UI specification for **${name}**.
+
+OpenUISpec is a YAML-based format that describes your app's UI semantically — tokens, screens, flows, and platform overrides. AI reads the spec and generates native code (SwiftUI, Compose, React). The spec is the single source of truth across all platforms.
+
+## Directory structure
+
+| Directory | Contents |
+|-----------|----------|
+| \`tokens/\` | Design tokens — colors, typography, spacing, elevation, motion, icons, themes |
+| \`screens/\` | Screen definitions — one YAML file per screen |
+| \`flows/\` | Navigation flows — multi-step user journeys |
+| \`contracts/\` | Component contracts — custom UI component definitions (\`x_\` prefixed) |
+| \`platform/\` | Platform overrides — per-target (iOS, Android, Web) behaviors |
+| \`locales/\` | Localization — i18n strings (JSON, ICU MessageFormat) |
+
+## Getting started
+
+**Start here:** read \`openuispec.yaml\` — it's the root manifest that defines the project structure, data model, API endpoints, and generation targets.
+
+### New project (no existing UI code)
+
+1. Define your data model and API endpoints in \`openuispec.yaml\`
+2. Create token files in \`tokens/\` (colors, typography, spacing)
+3. Create screen specs in \`screens/\` (one YAML per screen)
+4. Create navigation flows in \`flows/\`
+5. Ask AI to generate native code from the spec
+
+### Existing project (adopting OpenUISpec)
+
+1. Scan the codebase for existing UI screens
+2. Create a stub for each screen in \`screens/\`:
+   \`\`\`yaml
+   screen_name:
+     semantic: "Brief description of what this screen does"
+     status: stub
+     layout:
+       type: scroll_vertical
+   \`\`\`
+3. Extract design tokens (colors, fonts, spacing) into \`tokens/\`
+4. Fill in \`data_model\` and \`api.endpoints\` in \`openuispec.yaml\`
+5. Spec screens incrementally: \`stub\` → \`draft\` → \`ready\`
+
+## Screen and flow status
+
+- \`stub\` — placeholder, not yet specced. Drift detection skips these.
+- \`draft\` — actively being specced. Tracked by drift.
+- \`ready\` — fully specified (default if omitted). Tracked by drift.
+
+## Spec format quick reference
+
+- **7 contract families:** nav_container, surface, action_trigger, input_field, data_display, collection, feedback
+- **Custom contracts:** prefixed with \`x_\` (e.g., \`x_media_player\`)
+- **Data binding:** \`$data:\`, \`$state:\`, \`$param:\`, \`$t:\` prefixes
+- **Actions:** typed objects — navigate, api_call, set_state, confirm, sequence, feedback, etc.
+- **Adaptive layout:** size classes (compact, regular, expanded) with per-section overrides
+
+## CLI commands
+
+\`\`\`bash
+openuispec validate             # Validate spec files against schemas
+openuispec validate screens     # Validate only screens
+openuispec drift --target ${targets[0]}    # Check for spec drift
+openuispec drift --snapshot --target ${targets[0]}  # Snapshot current state
+openuispec drift --all          # Include stubs in drift check
+\`\`\`
+
+## Targets
+
+This project generates native code for: **${targetList}**
+
+## Learn more
+
+- Full spec: https://github.com/rsktash/openuispec/blob/main/spec/openuispec-v0.1.md
+- Example app: https://github.com/rsktash/openuispec/tree/main/examples/taskflow
+- Repository: https://github.com/rsktash/openuispec
+`;
+}
+
 function aiRulesBlock(specDir: string, targets: string[]): string {
   const targetList = targets.map((t) => `"${t}"`).join(", ");
   return `
@@ -245,6 +327,13 @@ export async function init(): Promise<void> {
     writeIfMissing(
       join(root, "openuispec.yaml"),
       manifestTemplate(name, targets, specDir)
+    );
+
+    // ── spec README ──────────────────────────────────────────────
+
+    writeIfMissing(
+      join(root, "README.md"),
+      specReadmeTemplate(name, targets)
     );
 
     // ── .gitkeep for empty dirs ────────────────────────────────────
