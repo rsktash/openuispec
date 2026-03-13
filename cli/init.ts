@@ -170,6 +170,14 @@ OpenUISpec is a YAML-based format that describes your app's UI semantically — 
 - \`draft\` — actively being specced. Tracked by drift.
 - \`ready\` — fully specified (default if omitted). Tracked by drift.
 
+## All documentation is local — do not fetch from the internet
+
+Everything you need is in \`node_modules/openuispec/\`. Read files from disk, not from URLs.
+
+- **Full specification:** \`node_modules/openuispec/spec/openuispec-v0.1.md\`
+- **Example app:** \`node_modules/openuispec/examples/taskflow/\`
+- **JSON Schemas:** \`node_modules/openuispec/schema/\`
+
 ## JSON Schemas (validation & file structure)
 
 **IMPORTANT:** Before creating or editing any spec file, read the corresponding JSON Schema to understand the valid structure. Schemas are located in the installed package:
@@ -288,8 +296,16 @@ This means the project has existing UI code but hasn't been specced yet. Your jo
 2. Run \`openuispec drift --snapshot --target <target>\` for each affected platform.
 3. Run \`openuispec drift\` to verify no untracked drift remains.
 
+## IMPORTANT: All documentation is local — do not fetch from the internet
+Everything you need is installed locally in \`node_modules/openuispec/\`. Do NOT curl, fetch, or download from GitHub or any URL. Read files directly from disk.
+
+## Learning OpenUISpec — read these local files
+1. **Full specification:** \`node_modules/openuispec/spec/openuispec-v0.1.md\` — the complete spec (read this to understand the format)
+2. **Example app:** \`node_modules/openuispec/examples/taskflow/\` — a complete working app with all file types
+3. **JSON Schemas:** \`node_modules/openuispec/schema/\` — validation schemas that define the exact structure of every file type
+
 ## JSON Schemas — read before creating spec files
-Before creating or editing any spec file, read the corresponding JSON Schema to understand the valid structure. Schemas are in the installed package:
+Before creating or editing any spec file, read the corresponding JSON Schema to understand the valid structure:
 - \`node_modules/openuispec/schema/openuispec.schema.json\` — root manifest
 - \`node_modules/openuispec/schema/screen.schema.json\` — screens
 - \`node_modules/openuispec/schema/flow.schema.json\` — flows
@@ -299,8 +315,7 @@ Before creating or editing any spec file, read the corresponding JSON Schema to 
 - \`node_modules/openuispec/schema/tokens/*.schema.json\` — token files (color, typography, spacing, elevation, motion, layout, themes, icons)
 - \`node_modules/openuispec/schema/defs/*.schema.json\` — shared types (actions, data-binding, adaptive, validation, common)
 
-Workflow: read the schema → create the YAML → run \`openuispec validate\`.
-Example spec files: \`node_modules/openuispec/examples/taskflow/\` — a complete app with all file types.
+Workflow: read the spec → read the schema → read an example → create the YAML → run \`openuispec validate\`.
 
 ## Spec format reference
 - 7 contract families: nav_container, surface, action_trigger, input_field, data_display, collection, feedback
