@@ -120,7 +120,15 @@
       "then": {
         "properties": {
           "type": true,
-          "form_id": { "type": "string" }
+          "form_id": { "type": "string" },
+          "validate_only": {
+            "type": "boolean",
+            "description": "Run validation without triggering on_submit (useful for multi-step forms)"
+          },
+          "on_validation_error": {
+            "$ref": "#",
+            "description": "Action to execute when validation fails (e.g., scroll to first error, show toast)"
+          }
         },
         "required": ["type", "form_id"],
         "additionalProperties": false

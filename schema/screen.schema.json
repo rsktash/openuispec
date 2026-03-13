@@ -229,6 +229,20 @@
           "type": "object",
           "additionalProperties": true
         },
+        "validate": {
+          "$ref": "https://openuispec.org/schema/defs/validation.schema.json#/$defs/validation_rules"
+        },
+        "required_when": {
+          "type": "string",
+          "description": "Condition expression — field becomes required when true"
+        },
+        "enabled_when": {
+          "type": "string",
+          "description": "Condition expression — field is enabled (editable) when true"
+        },
+        "validate_trigger": {
+          "$ref": "https://openuispec.org/schema/defs/validation.schema.json#/$defs/validate_trigger"
+        },
         "layout": {
           "$ref": "https://openuispec.org/schema/screen.schema.json#/$defs/inline_layout"
         },

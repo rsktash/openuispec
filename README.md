@@ -56,7 +56,7 @@ The result: each platform feels native, but every app stays consistent because i
 ```
 openuispec/
 ├── spec/
-│   └── openuispec-v0.1.md              # Full specification (12 sections)
+│   └── openuispec-v0.1.md              # Full specification (13 sections)
 ├── schema/                              # JSON Schema for validation (draft 2020-12)
 │   ├── openuispec.schema.json          # Root manifest schema
 │   ├── screen.schema.json              # Screen composition schema
@@ -77,7 +77,8 @@ openuispec/
 │   │   ├── common.schema.json          # Shared types (icons, badges, etc.)
 │   │   ├── action.schema.json          # 13 action types (discriminated union)
 │   │   ├── data-binding.schema.json    # Data sources, state, params
-│   │   └── adaptive.schema.json        # Adaptive override pattern
+│   │   ├── adaptive.schema.json        # Adaptive override pattern
+│   │   └── validation.schema.json     # Validation rule definitions
 │   └── validate.ts                     # Validation script (npm run validate)
 ├── examples/
 │   └── taskflow/                        # Complete example app
@@ -130,6 +131,7 @@ openuispec/
 | 10. Data binding & state | Sources, paths, format expressions, reactivity, caching |
 | 11. Internationalization | Locale files, `$t:` references, ICU MessageFormat, RTL, platform mapping |
 | 12. Custom contract extensions | `x_` prefixed domain-specific contracts, registration, dependencies |
+| 13. Form validation & field dependencies | Validation rules, field dependencies, cross-field checks, async validation |
 
 ## The 7 contract families
 
@@ -159,7 +161,7 @@ openuispec/
 - [x] JSON Schema for spec validation
 - [x] Custom contract extension mechanism
 - [x] Icon system definition
-- [ ] Form system (validation rules, field dependencies)
+- [x] Form system (validation rules, field dependencies)
 - [ ] Reference AI generator (spec → SwiftUI proof of concept)
 - [ ] More example apps (e-commerce, social, dashboard)
 

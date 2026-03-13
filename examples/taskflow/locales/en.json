@@ -139,6 +139,19 @@
   "media_player.unmute": "Unmute",
   "media_player.playback_rate": "Playback speed",
 
+  "validation.required": "This field is required",
+  "validation.min_length": "Must be at least {min} characters",
+  "validation.max_length": "Must be no more than {max} characters",
+  "validation.min_value": "Must be at least {min}",
+  "validation.max_value": "Must be no more than {max}",
+  "validation.pattern": "Invalid format",
+  "validation.format.email": "Enter a valid email address",
+  "validation.format.url": "Enter a valid URL",
+  "validation.format.phone": "Enter a valid phone number",
+  "validation.match_field": "Fields do not match",
+  "validation.tag_format": "Tags may only contain letters, numbers, and hyphens",
+  "validation.checking": "Checking…",
+
   "common.cancel": "Cancel",
   "common.delete": "Delete",
   "common.create": "Create"

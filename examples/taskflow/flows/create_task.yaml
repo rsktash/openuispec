@@ -68,6 +68,8 @@ create_task:
                     placeholder: "$t:create_task.field_title_placeholder"
                     required: true
                     max_length: 200
+                  validate:
+                    min_length: { value: 3, message: "$t:validation.min_length" }
                   data_binding: "form.title"
 
                 # Description (multiline)
@@ -125,6 +127,8 @@ create_task:
                     placeholder: "$t:create_task.field_tags_placeholder"
                     helper_text: "$t:create_task.field_tags_helper"
                     required: false
+                  validate:
+                    pattern: { regex: "^[a-zA-Z0-9_,\\-\\s]+$", message: "$t:validation.tag_format" }
                   data_binding: "form.tags"
                   behavior:
                     tokenize_on: [",", "Enter"]

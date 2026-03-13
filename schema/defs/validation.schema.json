@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openuispec.org/schema/defs/validation.schema.json",
+  "title": "OpenUISpec Validation",
+  "description": "Validation rule definitions for input_field contracts (Section 13)",
+
+  "$defs": {
+    "string_or_locale": {
+      "type": "string",
+      "description": "Plain text message or $t: locale reference"
+    },
+
+    "validate_trigger": {
+      "type": "string",
+      "enum": ["on_blur", "on_change", "on_submit"],
+      "description": "When to run validation: on_blur (default), on_change (every keystroke), on_submit (only on form submission)"
+    },
+
+    "validation_rules": {
+      "type": "object",
+      "description": "Co-located validation rules for an input_field instance",
+      "properties": {
+        "pattern": {
+          "type": "object",
+          "description": "Regex pattern validation",
+          "properties": {
+            "regex": { "type": "string" },
+            "message": { "$ref": "#/$defs/string_or_locale" }
+          },
+          "required": ["regex"],
+          "additionalProperties": false
+        },
+        "min_length": {
+          "type": "object",
+          "description": "Minimum string length",
+          "properties": {
+            "value": { "type": "integer", "minimum": 0 },
+            "message": { "$ref": "#/$defs/string_or_locale" }
+          },
+          "required": ["value"],
+          "additionalProperties": false
+        },
+        "max_length": {
+          "type": "object",
+          "description": "Maximum string length",
+          "properties": {
+            "value": { "type": "integer", "minimum": 0 },
+            "message": { "$ref": "#/$defs/string_or_locale" }
+          },
+          "required": ["value"],
+          "additionalProperties": false
+        },
+        "min": {
+          "type": "object",
+          "description": "Minimum numeric value",
+          "properties": {
+            "value": { "type": "number" },
+            "message": { "$ref": "#/$defs/string_or_locale" }
+          },
+          "required": ["value"],
+          "additionalProperties": false
+        },
+        "max": {
+          "type": "object",
+          "description": "Maximum numeric value",
+          "properties": {
+            "value": { "type": "number" },
+            "message": { "$ref": "#/$defs/string_or_locale" }
+          },
+          "required": ["value"],
+          "additionalProperties": false
+        },
+        "format": {
+          "type": "object",
+          "description": "Built-in format validation",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["email", "url", "phone", "uuid"]
+            },
+            "message": { "$ref": "#/$defs/string_or_locale" }
+          },
+          "required": ["type"],
+          "additionalProperties": false
+        },
+        "match_field": {
+          "type": "object",
+          "description": "Cross-field equality check (e.g., password confirmation)",
+          "properties": {
+            "field": { "type": "string", "description": "data_binding path of the field to match" },
+            "message": { "$ref": "#/$defs/string_or_locale" }
+          },
+          "required": ["field"],
+          "additionalProperties": false
+        },
+        "custom": {
+          "type": "object",
+          "description": "Custom expression-based validation",
+          "properties": {
+            "expression": { "type": "string", "description": "Condition expression using the same grammar as condition (Section 5)" },
+            "message": { "$ref": "#/$defs/string_or_locale" }
+          },
+          "required": ["expression"],
+          "additionalProperties": false
+        },
+        "async": {
+          "type": "object",
+          "description": "Server-side async validation (e.g., username availability)",
+          "properties": {
+            "endpoint": { "type": "string", "description": "API endpoint reference (same format as api_call)" },
+            "debounce": { "type": "integer", "minimum": 0, "description": "Debounce in milliseconds (default: 300)" },
+            "message": { "$ref": "#/$defs/string_or_locale" }
+          },
+          "required": ["endpoint"],
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

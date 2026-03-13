@@ -2258,20 +2258,34 @@ action:
 
 #### `submit_form`
 
-Validates all fields in the referenced form, then triggers the form's `on_submit:` handler. If validation fails, error states are set on individual fields.
+Validates all fields in the referenced form, then triggers the form's `on_submit:` handler. If validation fails, error states are set on individual fields. See Section 13 for the full validation rule system.
 
 ```yaml
 action:
   type: submit_form
   form_id: "task_form"                  # matches form_id on the form section
+
+# With extended options (Section 13.8)
+action:
+  type: submit_form
+  form_id: "task_form"
+  validate_only: true                   # run validation without triggering on_submit
+  on_validation_error:                  # action to run when validation fails
+    type: feedback
+    variant: toast
+    message: "Please fix the errors above"
+    severity: warning
 ```
 
 **Validation behavior:**
-1. All fields with `required: true` are checked for non-empty values
-2. Fields with `max_length` are checked for length
-3. Fields with `input_type: email` are checked for email format
-4. If any field fails, its state transitions to `error` with `error_text` set
-5. If all fields pass, the `on_submit:` handler executes
+1. All fields with `required: true` (or `required_when` evaluating to true) are checked for non-empty values
+2. Fields with `max_length` prop are checked for length (shorthand; see also `validate.max_length`)
+3. Fields with `input_type: email` are checked for email format (shorthand; see also `validate.format`)
+4. Fields with a `validate` block have all declared rules checked in order (Section 13.2)
+5. If any field fails, its state transitions to `error` with `error_text` set to the rule's `message`
+6. If `validate_only: true`, stop here (do not run `on_submit:`)
+7. If `on_validation_error` is set and validation failed, execute that action
+8. If all fields pass, the `on_submit:` handler executes
 
 #### `refresh`
 
@@ -3183,6 +3197,370 @@ ios:
 - Implement items listed in `generation.may_handle`
 - Generate test code based on `test_cases`
 - Add platform-specific enhancements beyond what the contract specifies
+
+---
+
+## 13. Form validation and field dependencies
+
+Form validation extends the `input_field` contract with co-located validation rules, field dependencies, and i18n-integrated error messages. Rules are declared inline on each field — there are no separate validation files.
+
+### 13.1 Overview
+
+Existing shorthand properties (`required`, `max_length`, `input_type: email`) continue to work unchanged. The `validate` block adds structured rules with explicit error messages and i18n support. Both can coexist on the same field — shorthands are checked first, then `validate` rules in declaration order.
+
+```yaml
+- contract: input_field
+  input_type: text
+  props:
+    label: "Username"
+    required: true                         # shorthand — still works
+  validate:                                # structured rules — additive
+    min_length: { value: 3, message: "$t:validation.min_length" }
+    pattern: { regex: "^[a-z0-9_]+$", message: "Lowercase letters, numbers, and underscores only" }
+    async: { endpoint: "api.users.check_username", debounce: 500, message: "Username already taken" }
+  data_binding: "form.username"
+```
+
+### 13.2 Validation rules
+
+Each rule is an object with a value/config and an optional `message`. If `message` is omitted, the platform uses a sensible default. Messages support `$t:` locale references (Section 11).
+
+#### `pattern`
+
+Validates the field value against a regular expression.
+
+```yaml
+validate:
+  pattern:
+    regex: "^[A-Z]{2}\\d{6}$"
+    message: "$t:validation.pattern"
+```
+
+The `regex` value is a standard regular expression string. Backslashes must be escaped in YAML (`\\d` for `\d`).
+
+#### `min_length`
+
+Validates minimum string length.
+
+```yaml
+validate:
+  min_length:
+    value: 3
+    message: "$t:validation.min_length"    # receives {min} placeholder
+```
+
+#### `max_length`
+
+Validates maximum string length. This is the structured equivalent of the `max_length` prop shorthand.
+
+```yaml
+validate:
+  max_length:
+    value: 200
+    message: "$t:validation.max_length"    # receives {max} placeholder
+```
+
+When both `props.max_length` and `validate.max_length` are present, the `validate` version takes precedence (its message is used for errors).
+
+#### `min`
+
+Validates minimum numeric value. Use with `input_type: number`, `slider`, or `stepper`.
+
+```yaml
+validate:
+  min:
+    value: 0
+    message: "$t:validation.min_value"     # receives {min} placeholder
+```
+
+#### `max`
+
+Validates maximum numeric value.
+
+```yaml
+validate:
+  max:
+    value: 100
+    message: "$t:validation.max_value"     # receives {max} placeholder
+```
+
+#### `format`
+
+Validates against a built-in format type. This is the structured equivalent of `input_type: email` implicit validation, extended to more formats.
+
+```yaml
+validate:
+  format:
+    type: email                            # email | url | phone | uuid
+    message: "$t:validation.format.email"
+```
+
+| Format | Validates |
+|--------|-----------|
+| `email` | Standard email format |
+| `url` | Valid URL with scheme |
+| `phone` | E.164 or common phone formats |
+| `uuid` | UUID v4 format |
+
+#### `match_field`
+
+Cross-field equality check. The `field` value is the `data_binding` path of the field to match.
+
+```yaml
+# Password confirmation example
+- contract: input_field
+  input_type: password
+  props: { label: "Password" }
+  data_binding: "form.password"
+
+- contract: input_field
+  input_type: password
+  props: { label: "Confirm password" }
+  validate:
+    match_field:
+      field: "form.password"
+      message: "$t:validation.match_field"
+  data_binding: "form.password_confirm"
+```
+
+#### `custom`
+
+Expression-based validation using the same condition grammar as `condition` (Section 5). The expression has access to the current field value as `$value` and the full form data via `form.*` paths.
+
+```yaml
+validate:
+  custom:
+    expression: "form.end_date > form.start_date"
+    message: "End date must be after start date"
+```
+
+#### `async`
+
+Server-side validation via an API call. The endpoint receives the field value and returns a boolean or error message.
+
+```yaml
+validate:
+  async:
+    endpoint: "api.users.check_username"   # same format as api_call endpoint
+    debounce: 500                          # ms, default 300
+    message: "Username already taken"
+```
+
+**Async behavior:**
+1. After the debounce period, the platform sends the field value to the endpoint
+2. While waiting, the field shows a loading indicator (the `validating` state)
+3. The endpoint returns `{ valid: true }` or `{ valid: false, message?: "..." }`
+4. If the endpoint returns a message, it overrides the local `message`
+
+### 13.3 Validation messages
+
+Every rule accepts an optional `message` property:
+
+- **Plain string:** `"Must be at least 3 characters"`
+- **Locale reference:** `"$t:validation.min_length"` — resolved via the i18n system (Section 11)
+- **With placeholders:** Locale strings can use ICU MessageFormat. The validation system passes rule parameters as named values: `{min}`, `{max}`, `{value}`, `{field}`.
+
+```json
+{
+  "validation.min_length": "Must be at least {min} characters",
+  "validation.max_length": "Must be no more than {max} characters",
+  "validation.min_value": "Must be at least {min}",
+  "validation.max_value": "Must be no more than {max}"
+}
+```
+
+If no `message` is provided, the platform uses a built-in default appropriate to the rule type and locale.
+
+### 13.4 Validation triggers
+
+The `validate_trigger` property controls when validation runs for a field:
+
+| Trigger | Behavior | Use case |
+|---------|----------|----------|
+| `on_blur` (default) | Validates when the field loses focus | Most text fields |
+| `on_change` | Validates on every value change | Real-time feedback (e.g., password strength) |
+| `on_submit` | Validates only when the form is submitted | Fields where intermediate states are valid |
+
+```yaml
+- contract: input_field
+  input_type: text
+  props:
+    label: "Username"
+    required: true
+  validate:
+    pattern: { regex: "^[a-z0-9_]+$", message: "Lowercase letters and numbers only" }
+  validate_trigger: on_change              # validate on every keystroke
+  data_binding: "form.username"
+```
+
+If not specified, `on_blur` is the default. The `submit_form` action always runs all validation rules regardless of trigger setting.
+
+### 13.5 Field dependencies
+
+Field dependencies control whether a field is required or enabled based on the values of other fields.
+
+#### Visibility: `condition`
+
+The existing `condition` property (Section 5) already handles field visibility. No new syntax is needed:
+
+```yaml
+# Show "Other" text field only when category is "other"
+- contract: input_field
+  input_type: select
+  props: { label: "Category", options: [...] }
+  data_binding: "form.category"
+
+- contract: input_field
+  input_type: text
+  props: { label: "Please specify" }
+  condition: "form.category == 'other'"
+  data_binding: "form.category_other"
+```
+
+#### Conditional requirement: `required_when`
+
+Makes a field required based on a condition expression:
+
+```yaml
+- contract: input_field
+  input_type: text
+  props: { label: "Company name" }
+  required_when: "form.account_type == 'business'"
+  data_binding: "form.company_name"
+```
+
+When the condition is true, the field behaves as if `required: true` is set. When false, the field is optional. The condition uses the same expression grammar as `condition`.
+
+#### Conditional enablement: `enabled_when`
+
+Controls whether a field is editable:
+
+```yaml
+- contract: input_field
+  input_type: date
+  props: { label: "Custom date" }
+  enabled_when: "form.schedule_type == 'custom'"
+  data_binding: "form.custom_date"
+```
+
+When the condition is false, the field is rendered in a disabled state — visible but not interactive.
+
+### 13.6 Cross-field validation
+
+Two mechanisms support validation that depends on multiple fields:
+
+**`match_field`** — for simple equality checks (see 13.2):
+
+```yaml
+validate:
+  match_field:
+    field: "form.password"
+    message: "$t:validation.match_field"
+```
+
+**`custom` expression** — for arbitrary cross-field logic:
+
+```yaml
+validate:
+  custom:
+    expression: "form.max_budget >= form.min_budget"
+    message: "Maximum budget must be at least the minimum"
+```
+
+Cross-field validation rules are re-evaluated whenever any referenced field changes (not just the field they're declared on). The platform tracks dependencies by parsing the expression paths.
+
+### 13.7 Async validation
+
+Async validation calls a server endpoint to validate a field value. Common uses: username availability, invite code validation, address verification.
+
+```yaml
+- contract: input_field
+  input_type: text
+  props: { label: "Username" }
+  validate:
+    min_length: { value: 3, message: "$t:validation.min_length" }
+    async:
+      endpoint: "api.users.check_username"
+      debounce: 500
+      message: "$t:validation.username_taken"
+  validate_trigger: on_change
+  data_binding: "form.username"
+```
+
+**Lifecycle:**
+
+1. **Debounce** — after the user stops typing for `debounce` ms (default 300), the request fires
+2. **Loading** — the field enters the `validating` state; platforms SHOULD show a spinner or "Checking…" text
+3. **Response** — the endpoint returns `{ valid: true }` or `{ valid: false, message?: "..." }`
+4. **Result** — if invalid, the field enters `error` state with the message; if valid, the field clears any error
+
+Sync rules (pattern, min_length, etc.) run first. Async validation only fires if all sync rules pass.
+
+### 13.8 `submit_form` enhancements
+
+The `submit_form` action (Section 9) is extended with two optional properties:
+
+#### `validate_only`
+
+When `true`, runs all validation rules but does **not** trigger the form's `on_submit:` handler. Useful for multi-step forms where you validate one step before advancing:
+
+```yaml
+action:
+  type: submit_form
+  form_id: "step_1_form"
+  validate_only: true
+```
+
+#### `on_validation_error`
+
+An action to execute when validation fails. Runs after field-level error states are set:
+
+```yaml
+action:
+  type: submit_form
+  form_id: "checkout_form"
+  on_validation_error:
+    type: feedback
+    variant: toast
+    message: "$t:validation.fix_errors"
+    severity: warning
+```
+
+**Full validation flow:**
+
+1. Collect all fields in the form (matched by `form_id`)
+2. For each field, evaluate `required_when` → determine if required
+3. Check shorthand rules: `required`, `max_length`, `input_type` format
+4. Check `validate` block rules in declaration order
+5. For any failed field, set its state to `error` with `error_text`
+6. If any field failed and `on_validation_error` is set, execute it
+7. If `validate_only: true`, stop
+8. If all fields passed, execute the form's `on_submit:` handler
+
+### 13.9 AI generation requirements
+
+**MUST:**
+- Implement all `validate` rules declared on `input_field` instances
+- Evaluate `required_when` and `enabled_when` expressions reactively
+- Show `error_text` on fields that fail validation
+- Run all validation rules on `submit_form`, regardless of `validate_trigger`
+- Support `$t:` locale references in `message` properties
+- Respect validation rule order: shorthands first, then `validate` rules in declaration order
+
+**SHOULD:**
+- Implement `validate_trigger` per field (default: `on_blur`)
+- Re-evaluate cross-field rules (`match_field`, `custom` with external paths) when referenced fields change
+- Show a loading indicator during `async` validation
+- Implement `validate_only` for multi-step form flows
+- Pass rule parameters (`{min}`, `{max}`) to locale message strings
+- Debounce `async` validation requests
+
+**MAY:**
+- Animate field error state transitions
+- Scroll to the first invalid field on form submission
+- Show a summary count of validation errors
+- Cache async validation results for previously checked values
+- Implement client-side equivalents of `format` rules (email, url, phone, uuid) using platform-native validators
 
 ---
 
