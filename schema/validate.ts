@@ -97,10 +97,8 @@ function validateFile(
   }
 
   // Convert schema URL to a local path for display
-  const schemaLocalPath = schemaId.replace(
-    BASE,
-    "node_modules/openuispec/schema/",
-  );
+  const schemaRelPath = schemaId.replace(BASE, "");
+  const schemaLocalPath = resolve(SCHEMA_DIR, schemaRelPath);
 
   const errors: ErrorObject[] = validate.errors ?? [];
   console.log(`  FAIL  ${name} (${errors.length} error(s))`);

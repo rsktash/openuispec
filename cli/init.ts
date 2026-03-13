@@ -170,16 +170,19 @@ OpenUISpec is a YAML-based format that describes your app's UI semantically — 
 - \`draft\` — actively being specced. Tracked by drift.
 - \`ready\` — fully specified (default if omitted). Tracked by drift.
 
-## Learning OpenUISpec — local files and online reference
+## Learning OpenUISpec — where to find the docs
 
-All documentation is included in the installed package at \`node_modules/openuispec/\`:
-1. **Full specification:** \`node_modules/openuispec/spec/openuispec-v0.1.md\`
-2. **Example app:** \`node_modules/openuispec/examples/taskflow/\`
-3. **JSON Schemas:** \`node_modules/openuispec/schema/\`
+All documentation is included in the installed \`openuispec\` package. Search for it in this order:
+1. **Local:** \`node_modules/openuispec/\` (if installed as a project dependency)
+2. **Global:** run \`npm root -g\` to find the global prefix, then look in \`<prefix>/openuispec/\`
+3. **Online fallback:** if the package is not installed at all, fetch from:
+   - \`https://openuispec.rsteam.uz/llms-full.txt\` — complete spec + all JSON schemas in one file
+   - \`https://openuispec.rsteam.uz/llms.txt\` — concise summary with links
 
-If the package is not in node_modules, fetch the full reference from:
-- \`https://openuispec.rsteam.uz/llms-full.txt\` — complete spec + all JSON schemas in one file
-- \`https://openuispec.rsteam.uz/llms.txt\` — concise summary with links
+Inside the package:
+- **Full specification:** \`spec/openuispec-v0.1.md\`
+- **Example app:** \`examples/taskflow/\`
+- **JSON Schemas:** \`schema/\`
 
 ## Token file structure — root wrapper key required
 
@@ -219,9 +222,9 @@ Root keys: \`color\`, \`typography\`, \`spacing\`, \`elevation\`, \`motion\`, \`
 | \`tokens/themes.yaml\` | \`tokens/themes.schema.json\` | \`themes\` |
 | \`tokens/icons.yaml\` | \`tokens/icons.schema.json\` | \`icons\` |
 
-All schemas are in \`node_modules/openuispec/schema/\`. Shared type definitions (actions, data-binding, adaptive, validation, common) are in \`schema/defs/\`.
+All schemas are in \`schema/\` inside the installed package. Shared type definitions (actions, data-binding, adaptive, validation, common) are in \`schema/defs/\`.
 
-**Workflow:** read the schema → read an example from \`node_modules/openuispec/examples/taskflow/\` → create the YAML → run \`openuispec validate\`.
+**Workflow:** read the schema → read an example from \`examples/taskflow/\` → create the YAML → run \`openuispec validate\`.
 
 ## Spec format quick reference
 
@@ -247,12 +250,12 @@ This project generates native code for: **${targetList}**
 
 ## Learn more
 
-All docs and examples are local in \`node_modules/openuispec/\` — read from disk, not from GitHub.
+All docs and examples are in the installed \`openuispec\` package — check \`node_modules/openuispec/\` or run \`npm root -g\` for the global install path.
 
-- Full spec: \`node_modules/openuispec/spec/openuispec-v0.1.md\`
-- Example app: \`node_modules/openuispec/examples/taskflow/\`
-- JSON Schemas: \`node_modules/openuispec/schema/\`
-- Repository: \`node_modules/openuispec/\` (all files included)
+- Full spec: \`spec/openuispec-v0.1.md\`
+- Example app: \`examples/taskflow/\`
+- JSON Schemas: \`schema/\`
+- Online reference: \`https://openuispec.rsteam.uz/llms-full.txt\`
 `;
 }
 
@@ -311,15 +314,18 @@ This means the project has existing UI code but hasn't been specced yet. Your jo
 2. Run \`openuispec drift --snapshot --target <target>\` for each affected platform.
 3. Run \`openuispec drift\` to verify no untracked drift remains.
 
-## Learning OpenUISpec — local files and online reference
-All documentation is included in the installed package at \`node_modules/openuispec/\`:
-1. **Full specification:** \`node_modules/openuispec/spec/openuispec-v0.1.md\` — the complete spec (read this to understand the format)
-2. **Example app:** \`node_modules/openuispec/examples/taskflow/\` — a complete working app with all file types
-3. **JSON Schemas:** \`node_modules/openuispec/schema/\` — validation schemas that define the exact structure of every file type
+## Learning OpenUISpec — where to find the docs
+All documentation is in the installed \`openuispec\` package. Search in this order:
+1. **Local:** \`node_modules/openuispec/\` (project dependency)
+2. **Global:** run \`npm root -g\` to get the global prefix, then look in \`<prefix>/openuispec/\`
+3. **Online fallback:** if not installed, fetch from:
+   - \`https://openuispec.rsteam.uz/llms-full.txt\` — complete spec + all JSON schemas
+   - \`https://openuispec.rsteam.uz/llms.txt\` — concise summary with links
 
-If the package is not in node_modules, fetch the full reference from:
-- \`https://openuispec.rsteam.uz/llms-full.txt\` — complete spec + all JSON schemas in one file
-- \`https://openuispec.rsteam.uz/llms.txt\` — concise summary with links
+Inside the package:
+1. **Full specification:** \`spec/openuispec-v0.1.md\` — the complete spec (read this to understand the format)
+2. **Example app:** \`examples/taskflow/\` — a complete working app with all file types
+3. **JSON Schemas:** \`schema/\` — validation schemas that define the exact structure of every file type
 
 ## Token file structure — root wrapper key required
 Every token file must have a single root key matching the token type. Do NOT put properties at the top level.
@@ -335,7 +341,7 @@ Every token file must have a single root key matching the token type. Do NOT put
 ## File formats and schemas — read before creating spec files
 Before creating or editing any spec file, read the corresponding JSON Schema. Do not guess the file format.
 
-| File | Schema (in \`node_modules/openuispec/schema/\`) | Root key |
+| File | Schema (in \`schema/\` inside the installed package) | Root key |
 |------|--------|----------|
 | \`openuispec.yaml\` | \`openuispec.schema.json\` | \`spec_version\` |
 | \`screens/*.yaml\` | \`screen.schema.json\` | \`<screen_id>\` |
@@ -354,7 +360,7 @@ Before creating or editing any spec file, read the corresponding JSON Schema. Do
 
 Shared type definitions (actions, data-binding, adaptive, validation, common) are in \`schema/defs/\`.
 
-Workflow: read the schema → read an example from \`node_modules/openuispec/examples/taskflow/\` → create the YAML → run \`openuispec validate\`.
+Workflow: read the schema → read an example from \`examples/taskflow/\` → create the YAML → run \`openuispec validate\`.
 
 ## Spec format reference
 - 7 contract families: nav_container, surface, action_trigger, input_field, data_display, collection, feedback
@@ -499,7 +505,7 @@ Commands:
 
 AI rules have been added to CLAUDE.md and AGENTS.md.
 
-Docs: node_modules/openuispec/spec/openuispec-v0.1.md
+Docs: https://openuispec.rsteam.uz
 `);
   } catch (err) {
     rl.close();
