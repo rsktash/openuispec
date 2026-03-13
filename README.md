@@ -70,11 +70,19 @@ For new features & design changes     For iteration, tweaks & bug fixes
 
 ## Quick start
 
-1. Read the [spec](./spec/openuispec-v0.1.md)
-2. Explore the [TaskFlow example app](./examples/taskflow/)
-3. Hand the example to any AI code generator:
+```bash
+npm install -g openuispec
+cd your-project
+openuispec init
+```
+
+This scaffolds a spec directory, starter tokens, and adds rules to `CLAUDE.md` / `AGENTS.md` so AI assistants track spec changes automatically.
+
+Then hand your spec to any AI code generator:
 
 > Generate a native iOS app from this OpenUISpec. Follow all contract state machines, apply token ranges for iOS, and implement navigation flows as defined. Use `platform/ios.yaml` for SwiftUI-specific overrides.
+
+See the [TaskFlow example](./examples/taskflow/) for a complete spec covering all 7 contract families.
 
 ## Repository structure
 
@@ -136,15 +144,11 @@ openuispec/
 │           ├── ios.yaml                 # SwiftUI overrides + behaviors
 │           ├── android.yaml             # Compose overrides + behaviors
 │           └── web.yaml                 # React overrides + responsive rules
-├── generator/                           # Reference code generators
-│   └── ios/                             # spec → SwiftUI generator (TypeScript)
-│       ├── index.ts                     # Entry point (npm run generate:ios)
-│       ├── parse/                       # YAML/JSON parser → SpecProject
-│       ├── ir/                          # Intermediate representation + resolvers
-│       ├── codegen/                     # Swift code emitters
-│       └── write.ts                     # File writer
-├── generated/                           # Generated output (gitignored)
-│   └── ios/TaskFlow/                    # Swift Package (swift build)
+├── cli/                                 # CLI tool (openuispec init, drift, validate)
+│   ├── index.ts                        # Entry point
+│   └── init.ts                         # Project scaffolding + AI rules
+├── drift/                               # Drift detection (spec change tracking)
+│   └── index.ts                        # Hash-based drift checker
 ├── LICENSE
 └── README.md
 ```
@@ -197,9 +201,8 @@ openuispec/
 - [x] Custom contract extension mechanism
 - [x] Icon system definition
 - [x] Form system (validation rules, field dependencies)
-- [x] Reference AI generator (spec → SwiftUI proof of concept)
-- [ ] Drift detection (spec vs platform code comparison)
-- [ ] Code-to-spec sync (reverse generator)
+- [x] Drift detection (spec change tracking per platform)
+- [x] CLI tool (`openuispec init` for project scaffolding + AI rules)
 - [ ] More example apps (e-commerce, social, dashboard)
 
 ## Contributing

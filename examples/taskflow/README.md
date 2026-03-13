@@ -83,7 +83,7 @@ taskflow/
     └── web.yaml                 # React overrides + responsive rules
 ```
 
-## How to use this with an AI generator
+## How to use this with AI
 
 Pass the entire `taskflow/` directory as context to an AI code generator with the prompt:
 

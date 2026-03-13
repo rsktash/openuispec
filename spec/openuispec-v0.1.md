@@ -3585,7 +3585,7 @@ In design mode, the spec is the starting point:
 2. **Generate** — AI produces native code per platform from the spec
 3. **Refine** — Platform teams adjust the generated code for native feel
 
-This is the natural workflow when creating new screens, onboarding flows, or applying design system changes across all platforms simultaneously. The reference generator (`npm run generate:ios`) demonstrates this path.
+This is the natural workflow when creating new screens, onboarding flows, or applying design system changes across all platforms simultaneously.
 
 Design mode works best when:
 - A feature does not yet exist on any platform
