@@ -159,6 +159,13 @@
         "$ref": "https://openuispec.org/schema/openuispec.schema.json#/$defs/model_def"
       }
     },
+    "custom_contracts": {
+      "type": "array",
+      "description": "Paths to custom contract definition files (x_ prefixed)",
+      "items": {
+        "type": "string"
+      }
+    },
     "api": {
       "type": "object",
       "description": "API endpoint definitions",

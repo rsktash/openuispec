@@ -56,13 +56,14 @@ The result: each platform feels native, but every app stays consistent because i
 ```
 openuispec/
 ├── spec/
-│   └── openuispec-v0.1.md              # Full specification (11 sections)
+│   └── openuispec-v0.1.md              # Full specification (12 sections)
 ├── schema/                              # JSON Schema for validation (draft 2020-12)
 │   ├── openuispec.schema.json          # Root manifest schema
 │   ├── screen.schema.json              # Screen composition schema
 │   ├── flow.schema.json                # Navigation flow schema
 │   ├── platform.schema.json            # Platform adaptation schema
 │   ├── locale.schema.json              # Locale file schema
+│   ├── custom-contract.schema.json    # Custom contract extension schema
 │   ├── tokens/
 │   │   ├── color.schema.json           # Color token schema
 │   │   ├── typography.schema.json      # Typography token schema
@@ -88,7 +89,8 @@ openuispec/
 │       │   ├── motion.yaml              # Durations, easings, patterns
 │       │   ├── layout.yaml              # Size classes, primitives, reflow rules
 │       │   └── themes.yaml              # Light, dark, warm variants
-│       ├── contracts/                   # 7 contract family stubs (see spec Section 4)
+│       ├── contracts/                   # 7 contract family stubs + custom contracts
+│       │   └── x_media_player.yaml    # Custom media player contract (Section 12)
 │       ├── screens/
 │       │   ├── home.yaml                # Task list with search, filters, FAB, adaptive nav
 │       │   ├── task_detail.yaml         # Full task view with actions + assignee sheet
@@ -125,6 +127,7 @@ openuispec/
 | 9. Action system | 13 action types, composition, optimistic updates |
 | 10. Data binding & state | Sources, paths, format expressions, reactivity, caching |
 | 11. Internationalization | Locale files, `$t:` references, ICU MessageFormat, RTL, platform mapping |
+| 12. Custom contract extensions | `x_` prefixed domain-specific contracts, registration, dependencies |
 
 ## The 7 contract families
 
@@ -152,7 +155,7 @@ openuispec/
 - [x] Format expression grammar with computed expressions
 - [x] Internationalization (i18n) with ICU MessageFormat and `$t:` references
 - [x] JSON Schema for spec validation
-- [ ] Custom contract extension mechanism
+- [x] Custom contract extension mechanism
 - [ ] Icon system definition
 - [ ] Form system (validation rules, field dependencies)
 - [ ] Reference AI generator (spec → SwiftUI proof of concept)

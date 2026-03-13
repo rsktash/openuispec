@@ -127,6 +127,18 @@
   "status.in_progress": "In progress",
   "status.done": "Done",
 
+  "media_player.loading": "Loading media…",
+  "media_player.play": "Play",
+  "media_player.pause": "Pause",
+  "media_player.replay": "Replay",
+  "media_player.retry": "Retry",
+  "media_player.error": "Unable to play media",
+  "media_player.fullscreen": "Full screen",
+  "media_player.exit_fullscreen": "Exit full screen",
+  "media_player.mute": "Mute",
+  "media_player.unmute": "Unmute",
+  "media_player.playback_rate": "Playback speed",
+
   "common.cancel": "Cancel",
   "common.delete": "Delete",
   "common.create": "Create"

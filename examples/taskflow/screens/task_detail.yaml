@@ -99,6 +99,26 @@ task_detail:
             tokens_override:
               title_style: "typography.body"
 
+      # ---------- Media attachment ----------
+      - id: media_attachment
+        condition: "task.attachment.media_type != null"
+        padding_h: "spacing.page_margin"
+        margin_top: "spacing.md"
+        children:
+          - contract: x_media_player
+            variant: inline
+            props:
+              source: "{task.attachment.url}"
+              media_type: "{task.attachment.media_type}"
+              title: "{task.attachment.filename}"
+              poster: "{task.attachment.thumbnail}"
+              show_controls: true
+            tokens_override:
+              radius: "spacing.md"
+            adaptive:
+              compact: { variant: inline }
+              expanded: { variant: inline, max_width: 640 }
+
       # ---------- Details section ----------
       - id: details
         padding_h: "spacing.page_margin"

@@ -201,6 +201,23 @@ const GROUPS: Record<string, ValidationGroup> = {
       return errors;
     },
   },
+
+  custom_contracts: {
+    label: "Custom contracts",
+    run(ajv) {
+      let errors = 0;
+      for (const f of listFiles(join(EXAMPLES_DIR, "contracts"), ".yaml")) {
+        if (basename(f).startsWith("x_")) {
+          errors += validateFile(
+            ajv,
+            f,
+            `${BASE}custom-contract.schema.json`,
+          );
+        }
+      }
+      return errors;
+    },
+  },
 };
 
 // ── main ─────────────────────────────────────────────────────────────

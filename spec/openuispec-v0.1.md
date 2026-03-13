@@ -44,7 +44,8 @@ project/
 │   ├── nav_container.yaml
 │   ├── feedback.yaml
 │   ├── surface.yaml
-│   └── collection.yaml
+│   ├── collection.yaml
+│   └── x_media_player.yaml    # Custom contract (Section 12)
 ├── screens/
 │   ├── home.yaml
 │   ├── order_detail.yaml
@@ -2884,6 +2885,198 @@ i18n:
 - Generate translation key extraction reports
 - Support pluralization categories beyond `=0`, `one`, `other` (e.g., `two`, `few`, `many` for languages that need them)
 - Support nested ICU messages (selects within plurals)
+
+---
+
+## 12. Custom contract extensions
+
+Custom contracts allow spec authors to define domain-specific component families — media players, charts, maps, code editors — that follow the same anatomy as built-in contracts but are not part of the core spec. The 7 built-in families cover general UI; custom contracts handle specialized, app-specific components.
+
+### 12.1 Purpose
+
+Use a custom contract when the component:
+
+- Has domain-specific behavior that doesn't map cleanly to any built-in family
+- Requires a dedicated state machine (e.g., play/pause/seek for media)
+- Needs platform-specific libraries or frameworks not covered by core contracts
+- Would clutter the core spec if included as a built-in
+
+Do **not** use a custom contract when a built-in family with the right variant already covers the use case. A data card is `data_display`, not `x_data_card`.
+
+### 12.2 Naming
+
+Custom contract names **MUST**:
+
+- Start with the `x_` prefix
+- Use lowercase `snake_case`
+- Be descriptive of the component's role: `x_media_player`, `x_chart`, `x_code_editor`, `x_map_view`
+
+The `x_` prefix is reserved for custom contracts. Future spec versions will never define built-in families starting with `x_`.
+
+### 12.3 Contract definition format
+
+Custom contracts follow the same anatomy as built-in contracts (Section 4):
+
+```yaml
+# contracts/x_media_player.yaml
+x_media_player:
+  semantic: "Plays audio and video media with transport controls"
+
+  props:
+    source: { type: string, required: true }
+    media_type: { type: enum, values: [audio, video], required: true }
+    variant: { type: enum, values: [inline, fullscreen, mini], default: inline }
+    autoplay: { type: bool, default: false }
+    # ... additional props
+
+  states:
+    idle:
+      transitions_to: [loading]
+      visual: "Shows poster or placeholder"
+    loading:
+      transitions_to: [playing, error]
+      feedback: "Loading indicator visible"
+    playing:
+      transitions_to: [paused, ended, loading, error]
+    paused:
+      transitions_to: [playing, loading]
+    ended:
+      transitions_to: [playing, loading]
+    error:
+      transitions_to: [loading]
+      feedback: "Error message with retry"
+
+  a11y:
+    role: "media"
+    label: "props.title"
+    focus:
+      keyboard:
+        play_pause: "Space"
+        seek_forward: "ArrowRight"
+
+  tokens:
+    inline:
+      min_height: [200, 280]
+      radius: "spacing.md"
+      # ... variant-specific tokens
+
+  platform_mapping:
+    ios:
+      inline: { component: "VideoPlayer", framework: "AVKit" }
+    android:
+      inline: { component: "PlayerView", library: "androidx.media3" }
+    web:
+      inline: { element: "video" }
+
+  # -- Fields unique to custom contracts --
+
+  dependencies:
+    ios:
+      frameworks: [AVKit, AVFoundation]
+    android:
+      libraries: ["androidx.media3:media3-ui", "androidx.media3:media3-exoplayer"]
+    web:
+      packages: []
+
+  generation:
+    must_handle:
+      - "All declared states with correct transitions"
+      - "Keyboard shortcuts for accessibility"
+    should_handle:
+      - "Progress bar with seek"
+    may_handle:
+      - "Picture-in-picture"
+
+  test_cases:
+    - id: play_pause_toggle
+      description: "Play/pause toggles playback state"
+      given: "Player is in idle state with a valid source"
+      when: "User taps play"
+      then: "State transitions to loading, then playing"
+```
+
+**Required fields:** `semantic`, `props`, `states`, `a11y`, `tokens`, `platform_mapping`
+
+**Optional fields:** `dependencies`, `generation`, `test_cases`
+
+The `dependencies` field is unique to custom contracts — since custom components may require platform-specific libraries that are not part of the standard framework imports.
+
+### 12.4 Registration
+
+Custom contracts are registered in the root manifest via the `custom_contracts` array:
+
+```yaml
+# openuispec.yaml
+spec_version: "0.1"
+project:
+  name: "MyApp"
+
+custom_contracts:
+  - "./contracts/x_media_player.yaml"
+  - "./contracts/x_chart.yaml"
+
+includes:
+  tokens: "./tokens/"
+  contracts: "./contracts/"
+  # ...
+```
+
+Each entry is a path (relative to the manifest) to a custom contract YAML file. The file must contain exactly one root key matching the `x_` naming convention.
+
+### 12.5 Usage in screens
+
+Custom contracts are used in screens identically to built-in contracts:
+
+```yaml
+# screens/task_detail.yaml
+- contract: x_media_player
+  variant: inline
+  props:
+    source: "{task.attachment.url}"
+    media_type: "{task.attachment.media_type}"
+    title: "{task.attachment.filename}"
+    show_controls: true
+  tokens_override:
+    radius: "spacing.md"
+  adaptive:
+    compact: { variant: inline }
+    expanded: { variant: inline, max_width: 640 }
+```
+
+The `contract` field accepts both built-in family names (`action_trigger`, `data_display`, etc.) and custom contract names (`x_media_player`, `x_chart`).
+
+### 12.6 Platform overrides
+
+Custom contracts support the same platform override pattern as built-in families (Section 7):
+
+```yaml
+# platform/ios.yaml
+ios:
+  overrides:
+    x_media_player:
+      inline:
+        uses_native_player: true
+        pip_enabled: true
+```
+
+### 12.7 AI generation requirements
+
+**MUST:**
+- Read and parse all registered custom contract definitions before generating code
+- Handle every declared state in the state machine
+- Apply `platform_mapping` to select the correct native component
+- Include all `dependencies` in the generated project configuration (Package.swift, build.gradle, package.json)
+- Implement all items listed in `generation.must_handle`
+
+**SHOULD:**
+- Implement items listed in `generation.should_handle`
+- Apply token bindings from the `tokens` section per variant
+- Generate accessibility support matching the `a11y` definition
+
+**MAY:**
+- Implement items listed in `generation.may_handle`
+- Generate test code based on `test_cases`
+- Add platform-specific enhancements beyond what the contract specifies
 
 ---
 

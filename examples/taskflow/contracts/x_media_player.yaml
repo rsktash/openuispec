@@ -1,0 +1,185 @@
+# ============================================================
+# Custom Contract: x_media_player
+# ============================================================
+# A media playback contract for audio and video content.
+# Demonstrates the custom contract extension mechanism
+# (see spec Section 12).
+# ============================================================
+
+x_media_player:
+  semantic: "Plays audio and video media with transport controls, state management, and platform-native playback"
+
+  props:
+    source: { type: string, required: true, description: "Media URL or asset path" }
+    media_type:
+      type: enum
+      values: [audio, video]
+      required: true
+      description: "Type of media content"
+    variant:
+      type: enum
+      values: [inline, fullscreen, mini]
+      default: inline
+      description: "Player presentation style"
+    autoplay: { type: bool, default: false, description: "Begin playback automatically when source loads" }
+    loop: { type: bool, default: false, description: "Restart playback when media ends" }
+    show_controls: { type: bool, default: true, description: "Display transport controls" }
+    poster: { type: media_ref, required: false, description: "Preview image shown before playback (video only)" }
+    title: { type: string, required: false, description: "Media title for display and accessibility" }
+    subtitle: { type: string, required: false, description: "Secondary text (artist, channel, etc.)" }
+    playback_rate: { type: enum, values: ["0.5", "0.75", "1", "1.25", "1.5", "2"], default: "1", description: "Playback speed multiplier" }
+    muted: { type: bool, default: false, description: "Start with audio muted" }
+
+  states:
+    idle:
+      semantic: "No media loaded or playback not started"
+      transitions_to: [loading]
+      visual: "Shows poster image or placeholder; controls hidden or minimal"
+    loading:
+      semantic: "Media source is buffering"
+      transitions_to: [playing, error]
+      duration: "motion.standard"
+      feedback: "Loading indicator visible"
+      visual: "Spinner or progress bar overlaid on poster"
+    playing:
+      semantic: "Media is actively playing"
+      transitions_to: [paused, ended, loading, error]
+      behavior: "Progress bar advances, elapsed time updates"
+      visual: "Active playback with visible progress and controls"
+    paused:
+      semantic: "Playback is paused at current position"
+      transitions_to: [playing, loading]
+      visual: "Frozen frame (video) or paused waveform (audio); play button prominent"
+    ended:
+      semantic: "Playback reached the end of the media"
+      transitions_to: [playing, loading]
+      behavior: "If loop is true, transitions to playing automatically"
+      visual: "Replay button visible; poster or last frame shown"
+    error:
+      semantic: "Media failed to load or playback encountered an error"
+      transitions_to: [loading]
+      feedback: "Error message displayed with retry option"
+      visual: "Error icon and message; retry button visible"
+
+  a11y:
+    role: "media"
+    label: "props.title"
+    traits:
+      playing: { announces: "Playing" }
+      paused: { announces: "Paused" }
+      loading: { announces: "Loading media" }
+      error: { announces: "Media playback error" }
+    focus:
+      keyboard:
+        play_pause: "Space"
+        seek_forward: "ArrowRight"
+        seek_backward: "ArrowLeft"
+        volume_up: "ArrowUp"
+        volume_down: "ArrowDown"
+        fullscreen: "f"
+        mute: "m"
+
+  tokens:
+    inline:
+      min_height: [200, 280]
+      radius: "spacing.md"
+      background: "color.surface.secondary"
+      controls_background: "rgba(0, 0, 0, 0.5)"
+      controls_color: "#FFFFFF"
+      progress_active: "color.brand.primary"
+      progress_inactive: "rgba(255, 255, 255, 0.3)"
+      progress_height: [3, 4]
+      title_style: "typography.caption"
+      subtitle_style: "typography.small"
+    fullscreen:
+      background: "#000000"
+      controls_background: "rgba(0, 0, 0, 0.6)"
+      controls_color: "#FFFFFF"
+      progress_active: "color.brand.primary"
+      progress_inactive: "rgba(255, 255, 255, 0.3)"
+      progress_height: [4, 6]
+      title_style: "typography.subtitle"
+      subtitle_style: "typography.body"
+    mini:
+      height: [48, 64]
+      radius: "spacing.sm"
+      background: "color.surface.secondary"
+      progress_active: "color.brand.primary"
+      progress_height: [2, 3]
+      title_style: "typography.caption"
+
+  platform_mapping:
+    ios:
+      inline: { component: "VideoPlayer", framework: "AVKit" }
+      fullscreen: { component: "AVPlayerViewController", framework: "AVKit" }
+      mini: { component: "Custom mini player view", framework: "AVKit" }
+      audio: { component: "Custom audio player", framework: "AVFoundation" }
+    android:
+      inline: { component: "PlayerView", library: "androidx.media3" }
+      fullscreen: { component: "PlayerView (fullscreen activity)", library: "androidx.media3" }
+      mini: { component: "Custom mini player composable", library: "androidx.media3" }
+      audio: { component: "PlayerView (audio mode)", library: "androidx.media3" }
+    web:
+      inline: { element: "video", fallback: "audio" }
+      fullscreen: { element: "video", api: "Fullscreen API" }
+      mini: { element: "Custom mini player component" }
+      audio: { element: "audio" }
+
+  dependencies:
+    ios:
+      frameworks: [AVKit, AVFoundation]
+    android:
+      libraries: ["androidx.media3:media3-ui", "androidx.media3:media3-exoplayer"]
+    web:
+      packages: []
+
+  generation:
+    must_handle:
+      - "All 6 states (idle, loading, playing, paused, ended, error) with correct transitions"
+      - "Keyboard shortcuts for accessibility (Space, arrows, f, m)"
+      - "Poster/placeholder display in idle state"
+      - "Error state with retry action"
+      - "Platform-native player component per platform_mapping"
+    should_handle:
+      - "Playback rate selection UI"
+      - "Progress bar with seek interaction"
+      - "Volume control"
+      - "Elapsed / remaining time display"
+      - "Mini variant with compact controls"
+    may_handle:
+      - "Picture-in-picture support (iOS, web)"
+      - "AirPlay / Cast integration"
+      - "Subtitle / closed caption support"
+      - "Background audio playback"
+      - "Gesture controls (swipe to seek, pinch to zoom)"
+
+  test_cases:
+    - id: play_pause_toggle
+      description: "Tapping play starts playback; tapping pause freezes it"
+      given: "Player is in idle state with a valid source"
+      when: "User taps the play button"
+      then: "State transitions to loading, then playing; tapping pause transitions to paused"
+
+    - id: error_retry
+      description: "Failed media shows error with retry"
+      given: "Player source URL is unreachable"
+      when: "Player attempts to load the media"
+      then: "State transitions to error; retry button is visible; tapping retry transitions to loading"
+
+    - id: ended_loop
+      description: "Loop restarts playback at end"
+      given: "Player is playing with loop=true"
+      when: "Media reaches the end"
+      then: "State transitions to playing from the beginning without user interaction"
+
+    - id: keyboard_controls
+      description: "Keyboard shortcuts control playback"
+      given: "Player is focused and in playing state"
+      when: "User presses Space"
+      then: "State transitions to paused; pressing Space again transitions to playing"
+
+    - id: fullscreen_variant
+      description: "Fullscreen variant fills the viewport"
+      given: "Player variant is fullscreen"
+      when: "Player renders"
+      then: "Player fills the screen with black background; controls overlay the content"

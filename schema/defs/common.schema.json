@@ -57,6 +57,10 @@
       ],
       "description": "One of the 7 component contract families"
     },
+    "contract_ref": {
+      "type": "string",
+      "description": "Built-in contract family or custom contract (x_ prefixed)"
+    },
     "platform_target": {
       "type": "string",
       "enum": [
@@ -268,7 +272,7 @@
       "description": "An inline contract instance used in props (leading/trailing/content)",
       "properties": {
         "contract": {
-          "$ref": "https://openuispec.org/schema/defs/common.schema.json#/$defs/contract_family"
+          "$ref": "https://openuispec.org/schema/defs/common.schema.json#/$defs/contract_ref"
         },
         "variant": {
           "type": "string"

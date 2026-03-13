@@ -1,0 +1,257 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openuispec.org/schema/custom-contract.schema.json",
+  "title": "OpenUISpec Custom Contract",
+  "description": "Custom contract extension — root key must be x_ prefixed, value follows the standard contract anatomy",
+  "type": "object",
+  "minProperties": 1,
+  "maxProperties": 1,
+  "propertyNames": {
+    "pattern": "^x_[a-z][a-z0-9_]*$"
+  },
+  "additionalProperties": {
+    "$ref": "https://openuispec.org/schema/custom-contract.schema.json#/$defs/contract_def"
+  },
+  "$defs": {
+    "contract_def": {
+      "type": "object",
+      "description": "A custom contract definition following the standard contract anatomy",
+      "properties": {
+        "semantic": {
+          "type": "string",
+          "description": "Human-readable description of this contract's purpose"
+        },
+        "props": {
+          "type": "object",
+          "description": "Typed property definitions for this contract",
+          "additionalProperties": {
+            "$ref": "https://openuispec.org/schema/custom-contract.schema.json#/$defs/prop_def"
+          }
+        },
+        "states": {
+          "type": "object",
+          "description": "State machine definition — each key is a state name",
+          "additionalProperties": {
+            "$ref": "https://openuispec.org/schema/custom-contract.schema.json#/$defs/state_def"
+          }
+        },
+        "a11y": {
+          "type": "object",
+          "description": "Accessibility requirements",
+          "properties": {
+            "role": {
+              "type": "string",
+              "description": "ARIA/accessibility role"
+            },
+            "label": {
+              "type": "string",
+              "description": "Accessibility label source (usually a props reference)"
+            },
+            "traits": {
+              "type": "object",
+              "description": "Per-state accessibility traits",
+              "additionalProperties": true
+            },
+            "focus": {
+              "type": "object",
+              "description": "Focus and keyboard interaction definitions",
+              "additionalProperties": true
+            }
+          },
+          "required": ["role", "label"],
+          "additionalProperties": true
+        },
+        "tokens": {
+          "type": "object",
+          "description": "Per-variant visual token bindings",
+          "additionalProperties": true
+        },
+        "platform_mapping": {
+          "type": "object",
+          "description": "Per-platform native component mapping",
+          "properties": {
+            "ios": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "android": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "web": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          },
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "dependencies": {
+          "type": "object",
+          "description": "Per-platform library/framework requirements",
+          "additionalProperties": {
+            "$ref": "https://openuispec.org/schema/custom-contract.schema.json#/$defs/dependency_def"
+          }
+        },
+        "generation": {
+          "type": "object",
+          "description": "AI generation compliance hints",
+          "properties": {
+            "must_handle": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Requirements the generator MUST implement"
+            },
+            "should_handle": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Requirements the generator SHOULD implement"
+            },
+            "may_handle": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Optional enhancements the generator MAY implement"
+            }
+          },
+          "additionalProperties": false
+        },
+        "test_cases": {
+          "type": "array",
+          "description": "Behavioral verification scenarios",
+          "items": {
+            "$ref": "https://openuispec.org/schema/custom-contract.schema.json#/$defs/test_case"
+          }
+        }
+      },
+      "required": ["semantic", "props", "states", "a11y", "tokens", "platform_mapping"],
+      "additionalProperties": false
+    },
+    "prop_def": {
+      "type": "object",
+      "description": "A single prop definition",
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "Data type of this prop"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "default": {},
+        "description": {
+          "type": "string"
+        },
+        "values": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Allowed values for enum types"
+        },
+        "position": {
+          "type": "string",
+          "description": "UI position hint"
+        },
+        "binding": {
+          "type": "boolean",
+          "description": "Whether this prop supports two-way data binding"
+        },
+        "condition": {
+          "type": "string",
+          "description": "Condition when this prop is applicable"
+        }
+      },
+      "required": ["type"],
+      "additionalProperties": false
+    },
+    "state_def": {
+      "type": "object",
+      "description": "A single state in the state machine",
+      "properties": {
+        "semantic": {
+          "type": "string"
+        },
+        "transitions_to": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "States this state can transition to"
+        },
+        "duration": {
+          "type": "string",
+          "description": "Transition duration token reference"
+        },
+        "behavior": {
+          "type": "string",
+          "description": "Behavioral description of this state"
+        },
+        "condition": {
+          "type": "string",
+          "description": "Condition that triggers this state"
+        },
+        "feedback": {
+          "type": "string",
+          "description": "User feedback during this state"
+        },
+        "label_override": {
+          "type": "string",
+          "description": "Accessibility label override for this state"
+        },
+        "style": {
+          "type": "object",
+          "description": "Visual style overrides for this state",
+          "additionalProperties": true
+        },
+        "visual": {
+          "type": "string",
+          "description": "Visual description of this state"
+        }
+      },
+      "additionalProperties": false
+    },
+    "dependency_def": {
+      "type": "object",
+      "description": "Platform-specific dependencies",
+      "properties": {
+        "frameworks": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Required frameworks"
+        },
+        "libraries": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Required libraries"
+        },
+        "packages": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Required packages"
+        }
+      },
+      "additionalProperties": false
+    },
+    "test_case": {
+      "type": "object",
+      "description": "A behavioral test case",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "given": {
+          "type": "string"
+        },
+        "when": {
+          "type": "string"
+        },
+        "then": {
+          "type": "string"
+        }
+      },
+      "required": ["id", "description", "given", "when", "then"],
+      "additionalProperties": false
+    }
+  }
+}

@@ -21,6 +21,9 @@ includes:
   platform: "./platform/"
   locales: "./locales/"
 
+custom_contracts:
+  - "./contracts/x_media_player.yaml"
+
 i18n:
   default_locale: "en"
   supported_locales: [en]
