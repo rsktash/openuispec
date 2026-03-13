@@ -17,11 +17,11 @@ The result: each platform feels native, but every app stays consistent because i
 
 ## How it works
 
-![How OpenUISpec works](docs/images/how-it-works.jpg)
+![How OpenUISpec works](https://raw.githubusercontent.com/rsktash/openuispec/main/docs/images/how-it-works.jpg)
 
 ## Workflows
 
-![OpenUISpec workflows](docs/images/workflows.png)
+![OpenUISpec workflows](https://raw.githubusercontent.com/rsktash/openuispec/main/docs/images/workflows.png)
 
 ## Key concepts
 
