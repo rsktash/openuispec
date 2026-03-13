@@ -170,6 +170,39 @@ OpenUISpec is a YAML-based format that describes your app's UI semantically — 
 - \`draft\` — actively being specced. Tracked by drift.
 - \`ready\` — fully specified (default if omitted). Tracked by drift.
 
+## JSON Schemas (validation & file structure)
+
+**IMPORTANT:** Before creating or editing any spec file, read the corresponding JSON Schema to understand the valid structure. Schemas are located in the installed package:
+
+\`\`\`
+node_modules/openuispec/schema/
+├── openuispec.schema.json        ← root manifest (openuispec.yaml)
+├── screen.schema.json            ← screen files (screens/*.yaml)
+├── flow.schema.json              ← flow files (flows/*.yaml)
+├── platform.schema.json          ← platform overrides (platform/*.yaml)
+├── locale.schema.json            ← locale files (locales/*.json)
+├── custom-contract.schema.json   ← custom contracts (contracts/*.yaml)
+├── tokens/
+│   ├── color.schema.json         ← tokens/color.yaml
+│   ├── typography.schema.json    ← tokens/typography.yaml
+│   ├── spacing.schema.json       ← tokens/spacing.yaml
+│   ├── elevation.schema.json     ← tokens/elevation.yaml
+│   ├── motion.schema.json        ← tokens/motion.yaml
+│   ├── layout.schema.json        ← tokens/layout.yaml
+│   ├── themes.schema.json        ← tokens/themes.yaml
+│   └── icons.schema.json         ← tokens/icons.yaml
+└── defs/
+    ├── common.schema.json        ← shared types (icons, badges, etc.)
+    ├── action.schema.json        ← 13 action types (discriminated union)
+    ├── data-binding.schema.json  ← data sources, state, params
+    ├── adaptive.schema.json      ← adaptive override pattern
+    └── validation.schema.json    ← validation rule definitions
+\`\`\`
+
+**Workflow:** read the schema → create the YAML file → run \`openuispec validate\` to verify.
+
+**Example spec files:** \`node_modules/openuispec/examples/taskflow/\` — a complete app demonstrating all file types. Read these for real-world examples of screens, flows, tokens, and platform overrides.
+
 ## Spec format quick reference
 
 - **7 contract families:** nav_container, surface, action_trigger, input_field, data_display, collection, feedback
@@ -254,6 +287,20 @@ This means the project has existing UI code but hasn't been specced yet. Your jo
 1. Run \`openuispec validate\` to check specs against the schema.
 2. Run \`openuispec drift --snapshot --target <target>\` for each affected platform.
 3. Run \`openuispec drift\` to verify no untracked drift remains.
+
+## JSON Schemas — read before creating spec files
+Before creating or editing any spec file, read the corresponding JSON Schema to understand the valid structure. Schemas are in the installed package:
+- \`node_modules/openuispec/schema/openuispec.schema.json\` — root manifest
+- \`node_modules/openuispec/schema/screen.schema.json\` — screens
+- \`node_modules/openuispec/schema/flow.schema.json\` — flows
+- \`node_modules/openuispec/schema/platform.schema.json\` — platform overrides
+- \`node_modules/openuispec/schema/locale.schema.json\` — locales
+- \`node_modules/openuispec/schema/custom-contract.schema.json\` — custom contracts
+- \`node_modules/openuispec/schema/tokens/*.schema.json\` — token files (color, typography, spacing, elevation, motion, layout, themes, icons)
+- \`node_modules/openuispec/schema/defs/*.schema.json\` — shared types (actions, data-binding, adaptive, validation, common)
+
+Workflow: read the schema → create the YAML → run \`openuispec validate\`.
+Example spec files: \`node_modules/openuispec/examples/taskflow/\` — a complete app with all file types.
 
 ## Spec format reference
 - 7 contract families: nav_container, surface, action_trigger, input_field, data_display, collection, feedback
