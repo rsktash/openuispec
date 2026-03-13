@@ -36,7 +36,8 @@ project/
 │   ├── spacing.yaml
 │   ├── motion.yaml
 │   ├── layout.yaml
-│   └── themes.yaml
+│   ├── themes.yaml
+│   └── icons.yaml
 ├── contracts/
 │   ├── action_trigger.yaml
 │   ├── data_display.yaml
@@ -427,6 +428,111 @@ themes:
       prefers_color_scheme: true
       css_custom_properties: true
 ```
+
+---
+
+### 3.8 Icon tokens
+
+Icon tokens provide a **semantic registry** that maps abstract icon names to platform-specific implementations. The registry is not an asset library — it is a lookup table that tells generators which native icon to use for each semantic concept.
+
+#### Structure
+
+```yaml
+icons:
+  sizes:
+    sm: { semantic: "Inline indicators", value: 16 }
+    md: { semantic: "Default actions and list items", value: 20 }
+    lg: { semantic: "Prominent icons, section headers", value: 24 }
+    xl: { semantic: "Hero icons, onboarding", value: 32 }
+
+  variants:
+    default: "outline"
+    suffixes:
+      _fill: "Filled/solid variant — selected or active states"
+
+  fallback:
+    strategy: "name_passthrough"   # or "error"
+    missing_icon: "questionmark_circle"
+
+  registry:
+    navigation:
+      chevron_right:
+        semantic: "Navigate forward, disclosure indicator"
+        platform:
+          ios: "chevron.right"
+          android: "chevron_right"
+          web: "chevron-right"
+    actions:
+      checkmark:
+        semantic: "Confirm, complete, done"
+        variants: ["circle", "circle_fill", "list"]
+        platform:
+          ios: "checkmark"
+          android: "check"
+          web: "check"
+
+  custom:
+    my_app:
+      custom_icon:
+        semantic: "App-specific icon"
+        platform:
+          ios: "custom.symbol"
+          android: "custom_icon"
+          web: "custom-icon"
+```
+
+#### Registry categories
+
+Icons are organized by semantic purpose:
+
+| Category | Examples |
+|----------|----------|
+| `navigation` | chevron_right, chevron_left, arrow_uturn_left |
+| `actions` | plus, pencil, trash, search, checkmark, square_arrow_up |
+| `status` | flag, circle_fill, exclamationmark_triangle |
+| `objects` | folder, calendar, clock, tag, gear, person |
+| `content` | briefcase, rocket, star, heart, lightbulb |
+
+#### Sizing scale
+
+Four named sizes map to pixel values:
+
+| Size | Value | Use case |
+|------|-------|----------|
+| `sm` | 16px | Inline indicators, badge icons |
+| `md` | 20px | Default for actions and list items |
+| `lg` | 24px | Section headers, empty states |
+| `xl` | 32px | Hero icons, onboarding illustrations |
+
+#### Variants
+
+Icons default to the **outline** style. Suffixes modify the style:
+
+- `_fill` — filled/solid, used for selected or active states (e.g. `folder_fill`, `flag_fill`)
+- Additional suffixes (e.g. `_circle`, `_circle_fill`) are declared per icon in the `variants` array
+
+When a variant suffix is appended, the generator applies the corresponding platform convention (e.g. `folder_fill` → SF Symbol `folder.fill` on iOS, `folder` with filled style on Android).
+
+#### Fallback
+
+Two strategies for icons not found in the registry:
+
+- **`name_passthrough`** — pass the icon name directly to the native platform API. Useful during development and for platform-specific icons.
+- **`error`** — fail validation if an icon is not registered. Useful for strict design systems.
+
+The `missing_icon` field specifies a fallback icon to display when resolution fails at runtime.
+
+#### Custom icons
+
+The `custom` section follows the same shape as `registry` categories. App-specific icons are registered here to keep the canonical registry clean.
+
+#### AI generation requirements
+
+- **MUST** resolve every `icon_ref` string against the registry and use the platform-specific mapping for the target platform.
+- **MUST** support all icons declared in the registry and custom sections.
+- **SHOULD** apply the correct variant style based on suffix conventions.
+- **SHOULD** use the sizing scale when no explicit size is provided.
+- **MAY** use `name_passthrough` to support icons not in the registry when the fallback strategy allows it.
 
 ---
 

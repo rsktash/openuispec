@@ -1,0 +1,189 @@
+# TaskFlow — Icon Tokens
+
+icons:
+  sizes:
+    sm:
+      semantic: "Inline indicators, badge icons"
+      value: 16
+    md:
+      semantic: "Default icon size for actions and list items"
+      value: 20
+    lg:
+      semantic: "Prominent icons, empty states, section headers"
+      value: 24
+    xl:
+      semantic: "Hero icons, onboarding illustrations"
+      value: 32
+
+  variants:
+    default: "outline"
+    suffixes:
+      _fill: "Filled/solid variant — used for selected or active states"
+
+  fallback:
+    strategy: "name_passthrough"
+    missing_icon: "questionmark_circle"
+
+  registry:
+    navigation:
+      chevron_right:
+        semantic: "Navigate forward, disclosure indicator"
+        platform:
+          ios: "chevron.right"
+          android: "chevron_right"
+          web: "chevron-right"
+      chevron_left:
+        semantic: "Navigate back"
+        platform:
+          ios: "chevron.left"
+          android: "chevron_left"
+          web: "chevron-left"
+      arrow_uturn_left:
+        semantic: "Undo, revert to previous state"
+        platform:
+          ios: "arrow.uturn.left"
+          android: "undo"
+          web: "undo-2"
+
+    actions:
+      plus:
+        semantic: "Create new item"
+        variants: ["circle"]
+        platform:
+          ios: "plus"
+          android: "add"
+          web: "plus"
+      pencil:
+        semantic: "Edit, modify content"
+        platform:
+          ios: "pencil"
+          android: "edit"
+          web: "pencil"
+      trash:
+        semantic: "Delete, remove item"
+        platform:
+          ios: "trash"
+          android: "delete"
+          web: "trash-2"
+      search:
+        semantic: "Search, find content"
+        platform:
+          ios: "magnifyingglass"
+          android: "search"
+          web: "search"
+      checkmark:
+        semantic: "Confirm, complete, done"
+        variants: ["circle", "circle_fill", "list"]
+        platform:
+          ios: "checkmark"
+          android: "check"
+          web: "check"
+      square_arrow_up:
+        semantic: "Share, export content"
+        platform:
+          ios: "square.and.arrow.up"
+          android: "share"
+          web: "share"
+
+    status:
+      flag:
+        semantic: "Priority indicator, flagged item"
+        variants: ["fill"]
+        platform:
+          ios: "flag"
+          android: "flag"
+          web: "flag"
+      circle_fill:
+        semantic: "Status dot, filled indicator"
+        platform:
+          ios: "circle.fill"
+          android: "circle"
+          web: "circle"
+      exclamationmark_triangle:
+        semantic: "Warning, caution, attention needed"
+        platform:
+          ios: "exclamationmark.triangle"
+          android: "warning"
+          web: "alert-triangle"
+
+    objects:
+      folder:
+        semantic: "Project, collection, file group"
+        variants: ["fill"]
+        platform:
+          ios: "folder"
+          android: "folder"
+          web: "folder"
+      calendar:
+        semantic: "Date, schedule, due date"
+        variants: ["fill"]
+        platform:
+          ios: "calendar"
+          android: "calendar_today"
+          web: "calendar"
+      clock:
+        semantic: "Time, duration, recent"
+        platform:
+          ios: "clock"
+          android: "schedule"
+          web: "clock"
+      tag:
+        semantic: "Label, category, classification"
+        platform:
+          ios: "tag"
+          android: "label"
+          web: "tag"
+      gear:
+        semantic: "Settings, configuration, preferences"
+        variants: ["fill"]
+        platform:
+          ios: "gear"
+          android: "settings"
+          web: "settings"
+      person:
+        semantic: "User, profile, assignee"
+        platform:
+          ios: "person"
+          android: "person"
+          web: "user"
+
+    content:
+      briefcase:
+        semantic: "Work, professional context"
+        platform:
+          ios: "briefcase"
+          android: "work"
+          web: "briefcase"
+      rocket:
+        semantic: "Launch, progress, momentum"
+        platform:
+          ios: "rocket"
+          android: "rocket_launch"
+          web: "rocket"
+      star:
+        semantic: "Favorite, important, featured"
+        platform:
+          ios: "star"
+          android: "star"
+          web: "star"
+      heart:
+        semantic: "Like, love, health"
+        platform:
+          ios: "heart"
+          android: "favorite"
+          web: "heart"
+      lightbulb:
+        semantic: "Idea, tip, suggestion"
+        platform:
+          ios: "lightbulb"
+          android: "lightbulb"
+          web: "lightbulb"
+
+  custom:
+    taskflow:
+      checkmark_list:
+        semantic: "Task list, todo checklist"
+        platform:
+          ios: "checklist"
+          android: "checklist"
+          web: "list-checks"

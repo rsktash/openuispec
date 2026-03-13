@@ -1,0 +1,149 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openuispec.org/schema/tokens/icons.schema.json",
+  "title": "OpenUISpec Icon Tokens",
+  "description": "Semantic icon registry with platform mappings, sizes, and variant conventions",
+  "type": "object",
+  "required": [
+    "icons"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "icons": {
+      "type": "object",
+      "properties": {
+        "sizes": {
+          "type": "object",
+          "description": "Named sizing scale for icons",
+          "additionalProperties": {
+            "$ref": "#/$defs/size_entry"
+          }
+        },
+        "variants": {
+          "$ref": "#/$defs/variant_config"
+        },
+        "fallback": {
+          "$ref": "#/$defs/fallback_config"
+        },
+        "registry": {
+          "type": "object",
+          "description": "Canonical icon set grouped by category",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/$defs/icon_entry"
+            }
+          }
+        },
+        "custom": {
+          "type": "object",
+          "description": "App-specific icon entries following the same shape as registry categories",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/$defs/icon_entry"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "$defs": {
+    "size_entry": {
+      "type": "object",
+      "properties": {
+        "semantic": {
+          "type": "string"
+        },
+        "value": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "semantic",
+        "value"
+      ],
+      "additionalProperties": false
+    },
+    "variant_config": {
+      "type": "object",
+      "description": "Icon variant conventions",
+      "properties": {
+        "default": {
+          "type": "string",
+          "description": "Default variant style when no suffix is present"
+        },
+        "suffixes": {
+          "type": "object",
+          "description": "Suffix conventions for icon style variants",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "fallback_config": {
+      "type": "object",
+      "description": "Strategy for icons not found in the registry",
+      "properties": {
+        "strategy": {
+          "type": "string",
+          "enum": [
+            "name_passthrough",
+            "error"
+          ],
+          "description": "name_passthrough: pass unknown icon names directly to the native API. error: fail if icon is not in the registry."
+        },
+        "missing_icon": {
+          "type": "string",
+          "description": "Fallback icon to display when an icon cannot be resolved"
+        }
+      },
+      "required": [
+        "strategy"
+      ],
+      "additionalProperties": false
+    },
+    "icon_entry": {
+      "type": "object",
+      "properties": {
+        "semantic": {
+          "type": "string",
+          "description": "Human-readable description of what this icon represents"
+        },
+        "variants": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Available variant suffixes for this icon (e.g. ['fill'])"
+        },
+        "platform": {
+          "type": "object",
+          "properties": {
+            "ios": {
+              "type": "string",
+              "description": "SF Symbols name (dot-notation)"
+            },
+            "android": {
+              "type": "string",
+              "description": "Material Icons name"
+            },
+            "web": {
+              "type": "string",
+              "description": "Web icon library name (e.g. Lucide, Heroicons)"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "semantic",
+        "platform"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

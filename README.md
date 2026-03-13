@@ -71,7 +71,8 @@ openuispec/
 │   │   ├── elevation.schema.json       # Elevation token schema
 │   │   ├── motion.schema.json          # Motion token schema
 │   │   ├── layout.schema.json          # Layout token schema
-│   │   └── themes.schema.json          # Theme token schema
+│   │   ├── themes.schema.json          # Theme token schema
+│   │   └── icons.schema.json          # Icon token schema
 │   ├── defs/
 │   │   ├── common.schema.json          # Shared types (icons, badges, etc.)
 │   │   ├── action.schema.json          # 13 action types (discriminated union)
@@ -88,7 +89,8 @@ openuispec/
 │       │   ├── elevation.yaml           # 4-level elevation (none/sm/md/lg)
 │       │   ├── motion.yaml              # Durations, easings, patterns
 │       │   ├── layout.yaml              # Size classes, primitives, reflow rules
-│       │   └── themes.yaml              # Light, dark, warm variants
+│       │   ├── themes.yaml              # Light, dark, warm variants
+│       │   └── icons.yaml              # Icon registry with platform mappings
 │       ├── contracts/                   # 7 contract family stubs + custom contracts
 │       │   └── x_media_player.yaml    # Custom media player contract (Section 12)
 │       ├── screens/
@@ -118,7 +120,7 @@ openuispec/
 |---------|----------------|
 | 1. Philosophy | Core principles: semantic, constrained, contract-driven, AI-first |
 | 2. Document structure | Project layout and root manifest |
-| 3. Token layer | Color, typography, spacing, elevation, motion, layout, themes |
+| 3. Token layer | Color, typography, spacing, elevation, motion, layout, themes, icons |
 | 4. Component contracts | 7 behavioral families (action_trigger, data_display, input_field, nav_container, feedback, surface, collection) |
 | 5. Screen composition | Contract-based layouts, screen-level keys, adaptive layout system |
 | 6. Navigation flows | Multi-screen journeys with transitions and progress |
@@ -156,7 +158,7 @@ openuispec/
 - [x] Internationalization (i18n) with ICU MessageFormat and `$t:` references
 - [x] JSON Schema for spec validation
 - [x] Custom contract extension mechanism
-- [ ] Icon system definition
+- [x] Icon system definition
 - [ ] Form system (validation rules, field dependencies)
 - [ ] Reference AI generator (spec → SwiftUI proof of concept)
 - [ ] More example apps (e-commerce, social, dashboard)

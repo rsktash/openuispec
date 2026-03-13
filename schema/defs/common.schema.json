@@ -6,7 +6,7 @@
   "$defs": {
     "icon_ref": {
       "type": "string",
-      "description": "Reference to a named icon (e.g. 'checkmark_circle', 'folder_fill')"
+      "description": "Reference to a named icon from the icon registry (e.g. 'checkmark_circle', 'folder_fill'). Resolved against icons.yaml registry with platform-specific mappings at generation time."
     },
     "color_ref": {
       "type": "string",

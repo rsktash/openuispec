@@ -146,6 +146,7 @@ const GROUPS: Record<string, ValidationGroup> = {
         "motion.yaml": "motion.schema.json",
         "layout.yaml": "layout.schema.json",
         "themes.yaml": "themes.schema.json",
+        "icons.yaml": "icons.schema.json",
       };
       for (const [data, schema] of Object.entries(tokenMap)) {
         errors += validateFile(
