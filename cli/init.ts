@@ -181,6 +181,23 @@ If the package is not in node_modules, fetch the full reference from:
 - \`https://openuispec.rsteam.uz/llms-full.txt\` — complete spec + all JSON schemas in one file
 - \`https://openuispec.rsteam.uz/llms.txt\` — concise summary with links
 
+## Token file structure — root wrapper key required
+
+Every token file must have a single root key matching the token type. Do NOT put properties at the top level.
+
+\`\`\`yaml
+# ✅ Correct — tokens/typography.yaml
+typography:
+  font_family: ...
+  scale: ...
+
+# ❌ Wrong — missing root wrapper key
+font_family: ...
+scale: ...
+\`\`\`
+
+Root keys: \`color\`, \`typography\`, \`spacing\`, \`elevation\`, \`motion\`, \`layout\`, \`themes\`, \`icons\`.
+
 ## JSON Schemas (validation & file structure)
 
 **IMPORTANT:** Before creating or editing any spec file, read the corresponding JSON Schema to understand the valid structure. Schemas are located in the installed package:
@@ -308,6 +325,17 @@ All documentation is included in the installed package at \`node_modules/openuis
 If the package is not in node_modules, fetch the full reference from:
 - \`https://openuispec.rsteam.uz/llms-full.txt\` — complete spec + all JSON schemas in one file
 - \`https://openuispec.rsteam.uz/llms.txt\` — concise summary with links
+
+## Token file structure — root wrapper key required
+Every token file must have a single root key matching the token type. Do NOT put properties at the top level.
+- \`tokens/color.yaml\` → root key: \`color\`
+- \`tokens/typography.yaml\` → root key: \`typography\`
+- \`tokens/spacing.yaml\` → root key: \`spacing\`
+- \`tokens/elevation.yaml\` → root key: \`elevation\`
+- \`tokens/motion.yaml\` → root key: \`motion\`
+- \`tokens/layout.yaml\` → root key: \`layout\`
+- \`tokens/themes.yaml\` → root key: \`themes\`
+- \`tokens/icons.yaml\` → root key: \`icons\`
 
 ## JSON Schemas — read before creating spec files
 Before creating or editing any spec file, read the corresponding JSON Schema to understand the valid structure:
