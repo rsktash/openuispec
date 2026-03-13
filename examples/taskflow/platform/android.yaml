@@ -1,0 +1,32 @@
+# TaskFlow — Android Platform Adaptation
+
+android:
+  framework: compose
+  min_sdk: 26
+  target_sdk: 35
+
+  overrides:
+    nav_container:
+      tab_bar: { height: 56, uses_NavigationBar: true }
+    surface:
+      sheet: { uses_ModalBottomSheet: true, skip_partial_collapse: false }
+    feedback:
+      snackbar: { uses_system_snackbar: true }
+    action_trigger:
+      primary: { ripple: true }
+    collection:
+      list: { edge_to_edge_items: true }
+
+  behaviors:
+    material_you: true
+    predictive_back: true
+    edge_to_edge: true
+    dynamic_color: true
+
+  generation:
+    dependencies:
+      - "material3"
+      - "navigation-compose"
+      - "lifecycle-viewmodel-compose"
+    architecture: "MVVM with ViewModel + StateFlow"
+    naming: "Kotlin conventions"

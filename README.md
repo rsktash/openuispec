@@ -34,10 +34,13 @@ The result: each platform feels native, but every app stays consistent because i
 
 ## Key concepts
 
-- **Tokens**: Design values (color, typography, spacing) with semantic names and constrained ranges — not exact pixels, not pure abstraction
-- **Contracts**: Behavioral component families (`action_trigger`, `data_display`, `input_field`, etc.) defined by role, props, state machines, and accessibility — not by widget names
-- **Screens**: Compositions of contracts with data bindings and layout rules
+- **Tokens**: Design values (color, typography, spacing, elevation, motion) with semantic names and constrained ranges
+- **Contracts**: 7 behavioral component families defined by role, props, state machines, and accessibility
+- **Screens**: Compositions of contracts with data bindings, adaptive layout, and conditional rendering
 - **Flows**: Multi-screen navigation journeys, intent-based and platform-agnostic
+- **Actions**: 13 typed action types with composition, error handling, and optimistic updates
+- **Data binding**: Reactive state, format expressions, caching, and loading/error/empty states
+- **Adaptive layout**: Size classes (compact/regular/expanded) with per-section overrides
 - **Platform adaptation**: Per-target overrides for iOS, Android, and Web behaviors
 
 ## Quick start
@@ -53,27 +56,52 @@ The result: each platform feels native, but every app stays consistent because i
 ```
 openuispec/
 ├── spec/
-│   └── openuispec-v0.1.md          # Full specification document
+│   └── openuispec-v0.1.md              # Full specification (10 sections)
 ├── examples/
-│   └── taskflow/                    # Complete example app
-│       ├── openuispec.yaml          # Root manifest + data model
-│       ├── tokens/                  # Color, typography, spacing, motion, themes
-│       ├── screens/                 # Home, task detail, projects, settings
-│       ├── flows/                   # Create task flow
-│       └── platform/               # iOS, Android, Web adaptations
+│   └── taskflow/                        # Complete example app
+│       ├── openuispec.yaml              # Root manifest + data model + API endpoints
+│       ├── tokens/
+│       │   ├── color.yaml               # Brand + semantic + status colors
+│       │   ├── typography.yaml          # Font family + 9-step type scale
+│       │   ├── spacing.yaml             # 4px base unit, 9-step scale
+│       │   ├── elevation.yaml           # 4-level elevation (none/sm/md/lg)
+│       │   ├── motion.yaml              # Durations, easings, patterns
+│       │   ├── layout.yaml              # Size classes, primitives, reflow rules
+│       │   └── themes.yaml              # Light, dark, warm variants
+│       ├── contracts/                   # 7 contract family stubs (see spec Section 4)
+│       ├── screens/
+│       │   ├── home.yaml                # Task list with search, filters, FAB, adaptive nav
+│       │   ├── task_detail.yaml         # Full task view with actions + assignee sheet
+│       │   ├── projects.yaml            # Project grid + new project dialog
+│       │   ├── project_detail.yaml      # Single project with task list (stub)
+│       │   ├── settings.yaml            # Preferences, toggles, account management
+│       │   ├── profile_edit.yaml        # Edit profile form (stub)
+│       │   └── calendar.yaml            # Calendar view (stub)
+│       ├── flows/
+│       │   ├── create_task.yaml         # Task creation form (sheet presentation)
+│       │   └── edit_task.yaml           # Task editing flow
+│       └── platform/
+│           ├── ios.yaml                 # SwiftUI overrides + behaviors
+│           ├── android.yaml             # Compose overrides + behaviors
+│           └── web.yaml                 # React overrides + responsive rules
 ├── LICENSE
 └── README.md
 ```
 
 ## Spec at a glance
 
-| Layer | What it defines | Format |
-|-------|----------------|--------|
-| Tokens | Colors, type, spacing, motion, themes | Semantic names + value ranges |
-| Contracts | 7 behavioral families covering ~95% of UI | Props, state machines, a11y, platform mapping |
-| Screens | Contract compositions with layout + data binding | Declarative YAML |
-| Flows | Multi-screen navigation with transitions | Intent-based, no platform graph |
-| Platform | Per-target overrides and behaviors | iOS / Android / Web YAML files |
+| Section | What it defines |
+|---------|----------------|
+| 1. Philosophy | Core principles: semantic, constrained, contract-driven, AI-first |
+| 2. Document structure | Project layout and root manifest |
+| 3. Token layer | Color, typography, spacing, elevation, motion, layout, themes |
+| 4. Component contracts | 7 behavioral families (action_trigger, data_display, input_field, nav_container, feedback, surface, collection) |
+| 5. Screen composition | Contract-based layouts, screen-level keys, adaptive layout system |
+| 6. Navigation flows | Multi-screen journeys with transitions and progress |
+| 7. Platform adaptation | Per-target overrides for iOS, Android, Web |
+| 8. AI generation contract | Compliance levels (MUST/SHOULD/MAY), validation, drift detection |
+| 9. Action system | 13 action types, composition, optimistic updates |
+| 10. Data binding & state | Sources, paths, format expressions, reactivity, caching |
 
 ## The 7 contract families
 
@@ -89,14 +117,20 @@ openuispec/
 
 ## Status
 
-**v0.1 — Draft**. The spec covers tokens, all 7 contract families, screen composition, navigation flows, platform adaptation, and AI generation contracts. One complete example app (TaskFlow) demonstrates full coverage.
+**v0.1 — Draft**. The spec covers all foundational layers. One complete example app (TaskFlow) demonstrates full coverage.
 
 ### Roadmap
 
+- [x] Token system with constrained ranges
+- [x] 7 component contract families
+- [x] Adaptive layout system (size classes + reflow rules)
+- [x] Action system (13 types, composition, optimistic updates)
+- [x] Data binding & state management (sources, expressions, caching)
+- [x] Format expression grammar with computed expressions
 - [ ] JSON Schema for spec validation
-- [ ] Formal grammar for format expressions (`{value | format:name}`)
 - [ ] Custom contract extension mechanism
 - [ ] Icon system definition
+- [ ] Form system (validation rules, field dependencies)
 - [ ] Reference AI generator (spec → SwiftUI proof of concept)
 - [ ] More example apps (e-commerce, social, dashboard)
 

@@ -1,0 +1,23 @@
+# ============================================================
+# TaskFlow — Calendar Screen (stub)
+# ============================================================
+# Not yet implemented in v0.1. Referenced by home.yaml nav.
+# Planned contracts: collection (grid/list), data_display, surface
+# ============================================================
+
+calendar:
+  semantic: "Calendar view of tasks organized by date"
+  status: stub
+
+  layout:
+    type: scroll_vertical
+    safe_area: true
+    padding: "spacing.page_margin"
+
+    sections:
+      - id: placeholder
+        contract: data_display
+        variant: hero
+        props:
+          title: "Calendar"
+          subtitle: "Coming in a future version"

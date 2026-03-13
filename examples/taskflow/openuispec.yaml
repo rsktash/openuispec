@@ -1,0 +1,133 @@
+# ============================================================
+# TaskFlow — OpenUISpec v0.1 Example Application
+# ============================================================
+# A task management app demonstrating all 7 contract families,
+# theming, navigation flows, adaptive layout, and the formal
+# action system and data binding model.
+# ============================================================
+
+spec_version: "0.1"
+
+project:
+  name: "TaskFlow"
+  description: "A simple task management app for individuals and small teams"
+  icon: "checkmark_circle"
+  
+includes:
+  tokens: "./tokens/"
+  contracts: "./contracts/"
+  screens: "./screens/"
+  flows: "./flows/"
+  platform: "./platform/"
+
+generation:
+  targets: [ios, android, web]
+  output_format:
+    ios: { language: swift, framework: swiftui, min_version: "17.0" }
+    android: { language: kotlin, framework: compose, min_sdk: 26 }
+    web: { language: typescript, framework: react, bundler: vite }
+
+# ============================================================
+# Custom formatters & mappers (see spec Section 10.5)
+# ============================================================
+formatters:
+  greeting:
+    input: time_of_day
+    output: string
+    mapping:
+      morning: "morning"
+      afternoon: "afternoon"
+      evening: "evening"
+
+  status_label:
+    input: enum
+    output: string
+    mapping:
+      todo: "To do"
+      in_progress: "In progress"
+      done: "Done"
+
+  priority_label:
+    input: enum
+    output: string
+    mapping:
+      low: "Low"
+      medium: "Medium"
+      high: "High"
+      urgent: "Urgent"
+
+mappers:
+  status_severity:
+    todo: neutral
+    in_progress: info
+    done: success
+
+  priority_to_severity:
+    low: neutral
+    medium: info
+    high: warning
+    urgent: error
+
+# ============================================================
+# Data model
+# ============================================================
+data_model:
+  task:
+    id: { type: string, format: uuid }
+    title: { type: string, max_length: 200 }
+    description: { type: string, required: false }
+    status: { type: enum, values: [todo, in_progress, done] }
+    priority: { type: enum, values: [low, medium, high, urgent] }
+    due_date: { type: date, required: false }
+    project_id: { type: string, required: false }
+    assignee: { type: user, required: false }
+    tags: { type: "list<string>", default: [] }
+    created_at: { type: datetime }
+    updated_at: { type: datetime }
+
+  project:
+    id: { type: string, format: uuid }
+    name: { type: string, max_length: 100 }
+    color: { type: color_ref }
+    icon: { type: icon_ref }
+    task_count: { type: int }
+    
+  user:
+    id: { type: string, format: uuid }
+    name: { type: string }
+    avatar: { type: media_ref, required: false }
+    email: { type: string, format: email }
+
+# ============================================================
+# API endpoints (informational — helps AI generators produce
+# correct API client code)
+# ============================================================
+api:
+  base_url: "/api/v1"
+  auth: "bearer_token"
+  
+  endpoints:
+    tasks:
+      list: { method: GET, path: "/tasks", params: [filter, sort, search] }
+      getById: { method: GET, path: "/tasks/:id" }
+      create: { method: POST, path: "/tasks", body: "task" }
+      update: { method: PUT, path: "/tasks/:id", body: "task" }
+      delete: { method: DELETE, path: "/tasks/:id" }
+      toggleStatus: { method: PATCH, path: "/tasks/:id/status" }
+      assignTo: { method: PATCH, path: "/tasks/:id/assign", body: { user_id: string } }
+      counts: { method: GET, path: "/tasks/counts" }
+    projects:
+      list: { method: GET, path: "/projects" }
+      getById: { method: GET, path: "/projects/:id" }
+      create: { method: POST, path: "/projects", body: "project" }
+    users:
+      list: { method: GET, path: "/users", params: [search] }
+    auth:
+      currentUser: { method: GET, path: "/auth/me" }
+      updateProfile: { method: PATCH, path: "/auth/me", body: { name: string, email: string } }
+      deleteAccount: { method: DELETE, path: "/auth/account" }
+    preferences:
+      get: { method: GET, path: "/preferences" }
+      update: { method: PATCH, path: "/preferences", body: { key: string, value: any } }
+    data:
+      export: { method: POST, path: "/data/export" }

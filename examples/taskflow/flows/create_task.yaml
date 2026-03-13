@@ -1,0 +1,167 @@
+# ============================================================
+# TaskFlow — Create Task Flow
+# ============================================================
+# Exercises: input_field (text, multiline, select, date, toggle),
+#            action_trigger, feedback (toast, banner), surface
+# ============================================================
+
+create_task:
+  semantic: "Multi-step flow to create a new task"
+
+  entry: "task_form"
+
+  # Single-screen flow presented as a sheet
+  screens:
+    task_form:
+      screen_inline:
+        semantic: "Task creation form with all input types"
+
+        state:
+          is_submitting: { type: bool, default: false }
+
+        layout:
+          type: scroll_vertical
+          safe_area: true
+          padding: "spacing.page_margin"
+
+          sections:
+            # ---------- Sheet header ----------
+            - id: header
+              layout: { type: row, justify: "space-between", align: "center" }
+              children:
+                - contract: action_trigger
+                  variant: ghost
+                  size: sm
+                  props: { label: "Cancel" }
+                  action: { type: dismiss }
+
+                - contract: data_display
+                  variant: inline
+                  props:
+                    title: "New task"
+                  tokens_override:
+                    title_style: "typography.heading_sm"
+
+                - contract: action_trigger
+                  variant: primary
+                  size: sm
+                  props:
+                    label: "Save"
+                    loading_label: "Saving..."
+                  state_binding:
+                    loading: "state.is_submitting"
+                  action:
+                    type: submit_form
+                    form_id: "task_form"
+
+            # ---------- Form fields ----------
+            - id: form
+              form_id: "task_form"
+              margin_top: "spacing.lg"
+              layout: { type: stack, spacing: "spacing.md" }
+              children:
+                # Title (text)
+                - contract: input_field
+                  input_type: text
+                  props:
+                    label: "Title"
+                    placeholder: "What needs to be done?"
+                    required: true
+                    max_length: 200
+                  data_binding: "form.title"
+
+                # Description (multiline)
+                - contract: input_field
+                  input_type: multiline
+                  props:
+                    label: "Description"
+                    placeholder: "Add details, notes, or context..."
+                    required: false
+                  data_binding: "form.description"
+                  tokens_override:
+                    min_height: 100
+
+                # Project (select)
+                - contract: input_field
+                  input_type: select
+                  props:
+                    label: "Project"
+                    placeholder: "Select a project"
+                    options:
+                      source: "api.projects.list"
+                      value_key: "id"
+                      label_key: "name"
+                      icon_key: "icon"
+                    required: false
+                  data_binding: "form.project_id"
+
+                # Priority (select)
+                - contract: input_field
+                  input_type: select
+                  props:
+                    label: "Priority"
+                    options:
+                      - { value: "low", label: "Low", icon: "flag", color: "color.priority.low" }
+                      - { value: "medium", label: "Medium", icon: "flag_fill", color: "color.priority.medium" }
+                      - { value: "high", label: "High", icon: "flag_fill", color: "color.priority.high" }
+                      - { value: "urgent", label: "Urgent", icon: "exclamationmark_triangle", color: "color.priority.urgent" }
+                    required: true
+                  data_binding: "form.priority"
+
+                # Due date (date picker)
+                - contract: input_field
+                  input_type: date
+                  props:
+                    label: "Due date"
+                    placeholder: "No due date"
+                    required: false
+                  data_binding: "form.due_date"
+
+                # Tags (text with tokenization)
+                - contract: input_field
+                  input_type: text
+                  props:
+                    label: "Tags"
+                    placeholder: "Add tags separated by commas"
+                    helper_text: "Press comma or Enter to add a tag"
+                    required: false
+                  data_binding: "form.tags"
+                  behavior:
+                    tokenize_on: [",", "Enter"]
+                    display_as: chips
+
+                # Assign to me toggle
+                - contract: input_field
+                  input_type: toggle
+                  props:
+                    label: "Assign to me"
+                    value: true
+                  data_binding: "form.assign_to_self"
+
+          # ---------- Form submission ----------
+          on_submit:
+            type: sequence
+            actions:
+              - { type: set_state, is_submitting: true }
+              - type: api_call
+                endpoint: "api.tasks.create"
+                body: "form"
+                on_success:
+                  type: sequence
+                  actions:
+                    - { type: set_state, is_submitting: false }
+                    - { type: feedback, variant: toast, message: "Task created", severity: success, icon: "checkmark_circle", duration: 3000 }
+                    - { type: dismiss }
+                    - { type: refresh, target: "screens/home.tasks" }
+                on_error:
+                  type: sequence
+                  actions:
+                    - { type: set_state, is_submitting: false }
+                    - { type: feedback, variant: banner, title: "Couldn't create task", message: "{error.message}", severity: error }
+
+      transitions: {}                   # single screen, no transitions
+
+  platform_hints:
+    ios: { presentation: "sheet", detents: [large] }
+    android: { presentation: "bottom_sheet", fullscreen: false }
+    web: { presentation: "modal", size: "md" }

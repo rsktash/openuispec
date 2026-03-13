@@ -1,0 +1,70 @@
+# ============================================================
+# TaskFlow — Profile Edit Screen (stub)
+# ============================================================
+# Referenced by settings.yaml profile card.
+# ============================================================
+
+profile_edit:
+  semantic: "Edit user profile (name, email, avatar)"
+  status: stub
+
+  data:
+    user: { source: "api.auth.currentUser" }
+
+  layout:
+    type: scroll_vertical
+    safe_area: true
+    padding: "spacing.page_margin"
+
+    sections:
+      - id: avatar
+        layout: { type: stack, align: "center", spacing: "spacing.md" }
+        children:
+          - contract: data_display
+            variant: inline
+            props:
+              leading:
+                media: "user.avatar"
+                fallback: { initials: "user.name", background: "color.brand.primary" }
+                size: 80
+                radius: 40
+          - contract: action_trigger
+            variant: tertiary
+            size: sm
+            props: { label: "Change photo" }
+
+      - id: form
+        margin_top: "spacing.lg"
+        layout: { type: stack, spacing: "spacing.md" }
+        children:
+          - contract: input_field
+            input_type: text
+            props:
+              label: "Name"
+              value: "user.name"
+              required: true
+            data_binding: "form.name"
+
+          - contract: input_field
+            input_type: email
+            props:
+              label: "Email"
+              value: "user.email"
+              required: true
+            data_binding: "form.email"
+
+      - id: save
+        margin_top: "spacing.lg"
+        contract: action_trigger
+        variant: primary
+        full_width: true
+        props: { label: "Save changes" }
+        action:
+          type: api_call
+          endpoint: "api.auth.updateProfile"
+          body: "form"
+          on_success:
+            type: sequence
+            actions:
+              - { type: navigate, destination: "$back" }
+              - { type: feedback, variant: toast, message: "Profile updated", severity: success }

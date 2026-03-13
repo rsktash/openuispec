@@ -1,0 +1,63 @@
+# ============================================================
+# TaskFlow — Project Detail Screen (stub)
+# ============================================================
+# Referenced by projects.yaml and task_detail.yaml.
+# Planned: project header, filtered task list, project settings.
+# ============================================================
+
+project_detail:
+  semantic: "Displays a single project with its tasks"
+  status: stub
+
+  params:
+    project_id: { type: string, required: true }
+
+  data:
+    project:
+      source: "api.projects.getById"
+      params: { id: "params.project_id" }
+    tasks:
+      source: "api.tasks.list"
+      params: { project_id: "params.project_id" }
+
+  layout:
+    type: scroll_vertical
+    safe_area: true
+    padding: "spacing.page_margin"
+
+    sections:
+      - id: header
+        contract: data_display
+        variant: hero
+        props:
+          title: "{project.name}"
+          subtitle: "{project.task_count} tasks"
+          leading:
+            icon: "{project.icon}"
+            color: "{project.color}"
+
+      - id: task_list
+        margin_top: "spacing.md"
+        contract: collection
+        variant: list
+        props:
+          data: "tasks"
+          item_contract: data_display
+          item_variant: compact
+          item_props_map:
+            title: "item.title"
+            subtitle: "{item.due_date | format:date_relative}"
+            trailing:
+              badge:
+                dot: true
+                severity: "{item.priority | map:priority_to_severity}"
+          interactive: true
+          pull_to_refresh: true
+          empty_state:
+            icon: "checkmark_circle_fill"
+            title: "No tasks in this project"
+            body: "Add a task to get started."
+        action:
+          type: navigate
+          destination: "screens/task_detail"
+          params: { task_id: "item.id" }

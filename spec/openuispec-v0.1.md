@@ -331,7 +331,7 @@ motion:
 
 ### 3.5 Layout tokens
 
-Layout tokens define the adaptive breakpoint vocabulary and layout primitives. See **Section 5.5** for the full adaptive layout system.
+Layout tokens define the adaptive breakpoint vocabulary and layout primitives. See **Section 5.2** for the full adaptive layout system.
 
 ```yaml
 # tokens/layout.yaml
@@ -1383,7 +1383,7 @@ order_detail:
       - id: actions
         margin_top: "spacing.lg"
         layout:
-          type: horizontal
+          type: row
           spacing: "spacing.sm"
         children:
           - contract: action_trigger
@@ -1409,13 +1409,123 @@ order_detail:
               params: { order_id: "order.id" }
 ```
 
+### 5.1 Screen-level keys
+
+Beyond contract props and layout primitives, screen files use several keys that modify how sections and contract instances behave. These keys are available on any section or contract instance within a screen's `sections:` array.
+
+#### `tokens_override`
+
+Locally overrides token values for a specific contract instance. The keys inside `tokens_override` correspond to the token names defined in the contract's `tokens:` block (Section 4).
+
+```yaml
+- contract: data_display
+  variant: inline
+  props:
+    title: "Projects"
+  tokens_override:
+    title_style: "typography.heading_lg"      # override the default inline title style
+    background: "color.surface.secondary"     # override background token
+    radius: "spacing.sm"                      # override border radius
+```
+
+**Rules:**
+- Keys must match token names defined in the contract's `tokens:` section for the active variant
+- Values must be valid token references or literal values within the token's constraint range
+- `tokens_override` on an `adaptive` block applies only to that size class
+- Overrides are local — they do not propagate to child contracts
+
+```yaml
+# Adaptive tokens_override — larger title on expanded screens
+adaptive:
+  expanded:
+    tokens_override:
+      title_style: "typography.display"
+```
+
+#### `condition`
+
+Controls whether a section or contract instance is rendered. When the expression evaluates to `false`, the element is excluded from layout (not hidden — fully removed from the render tree).
+
+```yaml
+- id: description
+  condition: "task.description != null"
+  contract: data_display
+  variant: inline
+  props:
+    title: "{task.description}"
+```
+
+**Expression syntax:** Conditions use the same expression grammar as computed expressions (Section 10.5): `data_path comparator value`. Supported comparators: `==`, `!=`, `>`, `<`, `>=`, `<=`. Boolean data paths can be used directly: `condition: "preferences.notifications_enabled"`.
+
+#### `position`
+
+Controls the positioning mode of a section. By default, sections flow in document order within their parent layout. The `position` key overrides this.
+
+| Value | Behavior | Platform mapping |
+|-------|----------|-----------------|
+| (default) | Normal document flow | — |
+| `"floating-bottom-trailing"` | Floats above content, anchored to bottom-trailing corner | iOS: overlay + alignment, Android: Scaffold FAB slot, Web: `position: fixed` |
+| `"floating-bottom-center"` | Floats above content, anchored to bottom center | Same, centered |
+| `"inline"` | Explicit normal flow (used in adaptive overrides to un-float an element) | — |
+
+```yaml
+- id: fab
+  position: "floating-bottom-trailing"
+  contract: action_trigger
+  variant: primary
+  props: { label: "New task", icon: "plus" }
+  # Un-float on expanded screens:
+  adaptive:
+    expanded:
+      position: "inline"
+```
+
+#### `item_variant`
+
+Used alongside `item_contract` in collection props to specify which variant of the item contract to use for rendering each item.
+
+```yaml
+- contract: collection
+  variant: list
+  props:
+    data: "tasks"
+    item_contract: data_display
+    item_variant: compact                     # each item renders as data_display.compact
+    item_props_map:
+      title: "item.title"
+```
+
+When omitted, the item contract's default variant is used.
+
+#### `state_binding`
+
+Binds a contract's state machine states to data paths. This allows screen-level data to drive contract states declaratively, without requiring an explicit action.
+
+```yaml
+- contract: action_trigger
+  variant: primary
+  props:
+    label: "Save"
+    loading_label: "Saving..."
+  state_binding:
+    loading: "state.is_submitting"            # button enters loading state when is_submitting is true
+    disabled: "state.form_invalid"            # button enters disabled state when form_invalid is true
+```
+
+**Rules:**
+- Keys must be valid states from the contract's `states:` definition
+- Values must be data paths that resolve to `bool`
+- When the bound value is `true`, the contract transitions to that state
+- When the bound value returns to `false`, the contract transitions back to `default`
+- If multiple state bindings are `true` simultaneously, priority follows the contract's state machine (e.g., `loading` takes precedence over `disabled`)
+
 ---
 
-## 5.5 Adaptive layout
+## 5.2 Adaptive layout
 
 Screens must work across phones, tablets, and desktops. OpenUISpec provides a three-layer adaptive system: **size classes** (global vocabulary), **layout primitives** (building blocks), and **per-section adaptive overrides** (co-located in screen files).
 
-### 5.5.1 Size classes
+### 5.2.1 Size classes
 
 Size classes are the universal breakpoint vocabulary. Every platform maps to the same three semantic classes.
 
@@ -1449,7 +1559,7 @@ layout:
 
 Screens and sections reference size classes by name (`compact`, `regular`, `expanded`), never by pixel values. This ensures the same spec works across platforms where pixel thresholds differ.
 
-### 5.5.2 Layout primitives
+### 5.2.2 Layout primitives
 
 Layout primitives are the building blocks for arranging content. They replace the informal `type: horizontal` / `type: vertical` patterns.
 
@@ -1484,7 +1594,7 @@ split_view:
   collapse_at: "size_class"           # collapses to single-column below this
 ```
 
-### 5.5.3 The `adaptive` key
+### 5.2.3 The `adaptive` key
 
 Any section, contract instance, or layout in a screen file can include an `adaptive` key. It maps size classes to property overrides.
 
@@ -1538,7 +1648,7 @@ surfaces:
       expanded: { variant: panel, width: 360 }
 ```
 
-### 5.5.4 Fallback behavior
+### 5.2.4 Fallback behavior
 
 If a size class is not specified, the system falls back to the nearest smaller class:
 - `expanded` falls back to `regular`, then `compact`
@@ -1547,7 +1657,7 @@ If a size class is not specified, the system falls back to the nearest smaller c
 
 This means you only need to specify overrides for size classes that differ from the default.
 
-### 5.5.5 Reflow rules
+### 5.2.5 Reflow rules
 
 Reflow rules define default adaptive behaviors that AI generators should apply automatically, even when screens don't explicitly declare `adaptive` overrides:
 
@@ -1574,7 +1684,7 @@ reflow_rules:
 
 Explicit `adaptive` overrides in screen files take precedence over reflow rules. Reflow rules serve as sensible defaults so that screens without adaptive annotations still behave reasonably across size classes.
 
-### 5.5.6 AI generation requirements
+### 5.2.6 AI generation requirements
 
 For adaptive layout, AI generators:
 
@@ -1721,29 +1831,27 @@ web:
   language: typescript
   
   overrides:
-    nav_container:
-      variant_responsive:
-        phone: "tab_bar"
-        tablet: "rail"
-        desktop: "sidebar"
+    # Navigation variant is handled by the adaptive key on nav_container
+    # in screen files — no ad-hoc variant_responsive needed here.
     surface:
-      sheet: { falls_back_to: "modal", reason: "no native sheet on web" }
+      sheet: { falls_back_to: "modal" }
     feedback:
       dialog: { uses_native_dialog_element: true }
 
   behaviors:
     prefers_color_scheme: true
     keyboard_navigation: true
-    responsive_breakpoints:
-      phone: { max: 640 }
-      tablet: { min: 641, max: 1024 }
-      desktop: { min: 1025 }
-    
+    # Breakpoints reference layout.size_classes (defined in tokens/layout.yaml):
+    # compact: max 600px, regular: 601-1024px, expanded: 1025px+
+    keyboard_shortcuts:
+      new_task: { key: "n", modifier: "cmd/ctrl" }
+      search: { key: "k", modifier: "cmd/ctrl" }
+
   generation:
     bundler: "vite"
-    css: "css_modules or tailwind"
+    css: "tailwind"
     routing: "react_router"
-    state: "zustand or context"
+    state: "zustand"
     naming: "React conventions (PascalCase components, camelCase props)"
 ```
 
@@ -1794,6 +1902,777 @@ After initial generation, AI tools SHOULD support **drift detection**: comparing
 
 ---
 
+## 9. Action system
+
+Actions define what happens when a user interacts with the UI. Every `action:` property in a screen file references this system. Actions are composable, typed, and have defined error handling semantics.
+
+### 9.1 Action vocabulary
+
+Every action has a `type` and typed parameters. The full vocabulary:
+
+| Type | Purpose | Params |
+|------|---------|--------|
+| `navigate` | Move to a screen or flow | `destination`, `params`, `presentation`, `animation` |
+| `api_call` | Call a backend endpoint | `endpoint`, `params`, `body`, `method`, `on_success`, `on_error` |
+| `set_state` | Update local screen state | `target`, `value` (or shorthand `{ key: value }`) |
+| `present` | Show a surface (sheet, modal, popover) | `surface` (reference to surfaces section) |
+| `dismiss` | Close the current surface or flow | (none, or `{ animate: bool }`) |
+| `submit_form` | Validate and submit a form | `form_id` |
+| `confirm` | Show a confirmation before proceeding | `confirmation` (feedback contract instance) |
+| `refresh` | Re-fetch a data source | `target` (data path, e.g., `"screens/home.tasks"`) |
+| `open_url` | Open an external URL | `url`, `in_app: bool` |
+| `share` | Invoke the platform share sheet | `content` (text, url, or data ref) |
+| `copy` | Copy text to clipboard | `value`, `feedback` (optional toast) |
+| `sequence` | Execute multiple actions in order | `actions: list<action>` |
+| `conditional` | Branch based on a condition | `condition`, `then`, `else` |
+| `feedback` | Emit a feedback contract instance (toast, banner, etc.) | `variant`, `message`, `severity`, `duration`, `title`, `icon` |
+
+### 9.2 Action definitions
+
+#### `navigate`
+
+```yaml
+action:
+  type: navigate
+  destination: "screens/task_detail"   # screen ref or flow ref
+  params: { task_id: "item.id" }       # passed as screen params
+  presentation: "push"                 # push | sheet | modal | fullscreen | replace
+  animation: "default"                 # default | fade | none
+```
+
+**Presentation modes:**
+
+| Mode | Behavior | iOS | Android | Web |
+|------|----------|-----|---------|-----|
+| `push` | Adds to navigation stack | `NavigationLink` | `NavController.navigate` | route push |
+| `sheet` | Presents as bottom sheet | `.sheet` | `ModalBottomSheet` | modal or drawer |
+| `modal` | Presents as centered dialog | `.sheet` or `.fullScreenCover` | `Dialog` | `<dialog>` |
+| `fullscreen` | Covers entire screen | `.fullScreenCover` | fullscreen `Dialog` | full-viewport |
+| `replace` | Replaces current screen (no back) | replaces stack | `popUpTo` + navigate | route replace |
+
+**Special destinations:**
+- `$back` — pop the current screen
+- `$root` — return to the root of the navigation stack
+- `$dismiss` — dismiss the current surface (sheet, modal)
+
+#### `api_call`
+
+```yaml
+action:
+  type: api_call
+  endpoint: "api.tasks.create"
+  method: "POST"                        # GET | POST | PUT | PATCH | DELETE (default: inferred from endpoint)
+  params: { id: "task.id" }             # URL/query params
+  body: "form"                          # request body (form data, or explicit object)
+  headers: {}                           # optional additional headers
+  
+  on_success:
+    type: sequence
+    actions:
+      - { type: set_state, is_submitting: false }
+      - { type: feedback, variant: toast, message: "Task created", severity: success }
+      - { type: dismiss }
+      - { type: refresh, target: "screens/home.tasks" }
+      
+  on_error:
+    type: sequence
+    actions:
+      - { type: set_state, is_submitting: false }
+      - { type: feedback, variant: banner, title: "Couldn't create task", message: "{error.message}", severity: error }
+```
+
+**Error object shape:**
+When an API call fails, the `on_error` handler receives an `error` object:
+```yaml
+error:
+  message: string          # human-readable error message
+  code: string             # error code (e.g., "VALIDATION_ERROR", "NOT_FOUND")
+  status: int              # HTTP status code (e.g., 400, 404, 500)
+  fields: map<string, string>  # per-field validation errors (optional)
+```
+
+#### `set_state`
+
+```yaml
+# Full form
+action:
+  type: set_state
+  target: "state.active_filter"
+  value: "today"
+
+# Shorthand — multiple state updates
+action:
+  type: set_state
+  is_submitting: true
+  error_message: null
+
+# Computed value
+action:
+  type: set_state
+  target: "state.item_count"
+  value: "{state.item_count + 1}"
+```
+
+#### `confirm`
+
+Wraps a destructive or significant action in a confirmation dialog:
+
+```yaml
+action:
+  type: confirm
+  confirmation:
+    contract: feedback
+    variant: dialog
+    props:
+      title: "Delete task?"
+      message: "This action cannot be undone."
+      severity: error
+      actions:
+        - label: "Cancel"
+          variant: secondary
+          action: { type: dismiss }
+        - label: "Delete"
+          variant: destructive
+          action:                         # the actual action, executed on confirm
+            type: api_call
+            endpoint: "api.tasks.delete"
+            params: { id: "task.id" }
+```
+
+#### `sequence`
+
+Executes actions in order. Each action completes before the next begins.
+
+```yaml
+action:
+  type: sequence
+  actions:
+    - { type: set_state, is_submitting: true }
+    - type: api_call
+      endpoint: "api.tasks.create"
+      body: "form"
+    - { type: feedback, variant: toast, message: "Created", severity: success }
+    - { type: dismiss }
+```
+
+**Sequence stops on failure.** If any action in a sequence fails (e.g., `api_call` returns an error), subsequent actions do not execute. The `on_error` handler of the failed action runs instead.
+
+#### `conditional`
+
+Branches based on a runtime condition:
+
+```yaml
+action:
+  type: conditional
+  condition: "task.status == done"
+  then:
+    type: api_call
+    endpoint: "api.tasks.reopen"
+    params: { id: "task.id" }
+  else:
+    type: api_call
+    endpoint: "api.tasks.complete"
+    params: { id: "task.id" }
+```
+
+#### `feedback`
+
+Emits a feedback contract instance (toast, banner, snackbar) as a side effect. Unlike `present`, this does not block the action chain — the feedback displays while execution continues.
+
+```yaml
+action:
+  type: feedback
+  variant: toast                        # toast | banner | snackbar | inline
+  message: "Task created"
+  severity: success                     # info | success | warning | error | neutral
+  title: null                           # optional title (used by banner and dialog)
+  icon: "checkmark_circle"              # optional, defaults from severity
+  duration: 3000                        # ms, null = manual dismiss
+```
+
+#### `present`
+
+Shows a named surface (sheet, modal, popover) defined in the screen's `surfaces:` block:
+
+```yaml
+action:
+  type: present
+  surface: "assignee_picker"            # key from surfaces: block
+```
+
+#### `dismiss`
+
+Closes the current surface or flow. If called from within a sheet/modal, dismisses it. If called from within a flow, exits the flow.
+
+```yaml
+action:
+  type: dismiss
+  animate: true                         # default true; false = instant dismiss
+```
+
+#### `submit_form`
+
+Validates all fields in the referenced form, then triggers the form's `on_submit:` handler. If validation fails, error states are set on individual fields.
+
+```yaml
+action:
+  type: submit_form
+  form_id: "task_form"                  # matches form_id on the form section
+```
+
+**Validation behavior:**
+1. All fields with `required: true` are checked for non-empty values
+2. Fields with `max_length` are checked for length
+3. Fields with `input_type: email` are checked for email format
+4. If any field fails, its state transitions to `error` with `error_text` set
+5. If all fields pass, the `on_submit:` handler executes
+
+#### `refresh`
+
+Re-fetches a data source. The target is a data path pointing to a screen's data entry.
+
+```yaml
+action:
+  type: refresh
+  target: "screens/home.tasks"          # screen.data_key
+```
+
+#### `open_url`
+
+Opens an external URL in the system browser or an in-app browser.
+
+```yaml
+action:
+  type: open_url
+  url: "https://example.com/help"
+  in_app: false                         # true = in-app browser; false = system browser
+```
+
+#### `share`
+
+Invokes the platform share sheet:
+
+```yaml
+action:
+  type: share
+  content:
+    text: "Check out this task: {task.title}"
+    url: "https://app.taskflow.io/tasks/{task.id}"
+```
+
+#### `copy`
+
+Copies a value to the clipboard, with an optional feedback toast:
+
+```yaml
+action:
+  type: copy
+  value: "{task.id}"
+  feedback: { variant: toast, message: "Copied to clipboard", severity: info, duration: 2000 }
+```
+
+### 9.3 Inline action shorthand
+
+For common single-action cases, a shorthand form is allowed:
+
+```yaml
+# Full form
+action:
+  type: navigate
+  destination: "screens/task_detail"
+  params: { task_id: "item.id" }
+
+# Shorthand for navigate
+action: { navigate: "screens/task_detail", params: { task_id: "item.id" } }
+
+# Shorthand for dismiss
+action: { dismiss: true }
+
+# Shorthand for set_state
+action: { set_state: { is_loading: true } }
+
+# Shorthand for feedback (inline in on_success)
+on_success:
+  feedback: { variant: toast, message: "Done", severity: success }
+```
+
+AI generators MUST support both the full form and shorthand form.
+
+### 9.4 Optimistic updates
+
+For actions that modify data, the spec supports optimistic UI updates:
+
+```yaml
+action:
+  type: api_call
+  endpoint: "api.tasks.toggleStatus"
+  params: { id: "task.id" }
+  
+  optimistic:
+    target: "task.status"
+    value: "{task.status == done ? 'todo' : 'done'}"
+    revert_on_error: true
+```
+
+**Behavior:**
+1. The `target` data path is updated immediately with `value`
+2. The UI re-renders with the new value (no loading state)
+3. The API call executes in the background
+4. On success: the optimistic value is confirmed (or replaced with the server response)
+5. On error: if `revert_on_error` is true, the value reverts to its previous state and the `on_error` handler runs
+
+### 9.5 Action composition patterns
+
+Common patterns that AI generators should recognize:
+
+**Submit with loading state:**
+```yaml
+action:
+  type: sequence
+  actions:
+    - { type: set_state, is_submitting: true }
+    - type: api_call
+      endpoint: "api.tasks.create"
+      body: "form"
+      on_success:
+        type: sequence
+        actions:
+          - { type: set_state, is_submitting: false }
+          - { type: dismiss }
+      on_error:
+        type: sequence
+        actions:
+          - { type: set_state, is_submitting: false }
+          - { type: feedback, variant: banner, severity: error, message: "{error.message}" }
+```
+
+**Delete with confirmation and navigation:**
+```yaml
+action:
+  type: confirm
+  confirmation:
+    # ... dialog props ...
+    actions:
+      - label: "Delete"
+        variant: destructive
+        action:
+          type: api_call
+          endpoint: "api.tasks.delete"
+          params: { id: "task.id" }
+          on_success:
+            type: sequence
+            actions:
+              - { type: navigate, destination: "$back" }
+              - { type: feedback, variant: toast, message: "Deleted", severity: neutral }
+```
+
+**Toggle with optimistic update:**
+```yaml
+action:
+  type: api_call
+  endpoint: "api.tasks.toggleStatus"
+  params: { id: "task.id" }
+  optimistic:
+    target: "task.status"
+    value: "{task.status == done ? 'todo' : 'done'}"
+    revert_on_error: true
+  on_error:
+    feedback: { variant: toast, message: "Couldn't update status", severity: error }
+```
+
+### 9.6 AI generation requirements
+
+**MUST:**
+- Implement all action types in the vocabulary
+- Support both full form and shorthand syntax
+- Execute sequences in order, stopping on failure
+- Wire `on_success` and `on_error` handlers for every `api_call`
+- Map `navigate` presentations to correct platform APIs
+- Implement `confirm` as a blocking dialog before the inner action
+
+**SHOULD:**
+- Support optimistic updates with automatic revert
+- Debounce rapid-fire actions (e.g., toggle tapped multiple times)
+- Show loading indicators during `api_call` when no optimistic update is defined
+- Handle network errors gracefully with retry affordances
+
+**MAY:**
+- Support action middleware (logging, analytics events)
+- Queue actions when offline and replay on reconnection
+
+
+---
+
+## 10. Data binding & state management
+
+Every screen in OpenUISpec connects to data: API responses, local state, user input, and derived values. This section formalizes how data flows through the spec.
+
+### 10.1 Data sources
+
+A screen's `data:` block declares its data dependencies. Each entry has a source, optional params, and defined refresh behavior.
+
+```yaml
+data:
+  tasks:
+    source: "api.tasks.list"
+    params:
+      filter: "state.active_filter"     # reactive — re-fetches when state changes
+      sort: "state.sort_order"
+    refresh:
+      on: [screen_appear, pull_to_refresh]
+      interval: null                     # no polling (use for real-time: 30000 = 30s)
+    
+  task_counts:
+    source: "api.tasks.counts"
+    refresh:
+      on: [screen_appear]
+      
+  user:
+    source: "api.auth.currentUser"
+    cache: session                       # persists for the session
+```
+
+**Source types:**
+
+| Source type | Syntax | Behavior |
+|-------------|--------|----------|
+| API endpoint | `"api.tasks.list"` | HTTP request, returns async data |
+| Local state | `"state.active_filter"` | In-memory, synchronous |
+| Derived | `"derived.overdue_count"` | Computed from other data sources |
+| Static | inline value | Literal data, no fetching |
+| Param | `"params.task_id"` | Passed from caller (navigate action) |
+
+**API source resolution:**
+API sources use dot-notation that maps to REST endpoints. The AI generator resolves these based on the project's API conventions:
+
+```yaml
+# These are equivalent — the generator infers the HTTP method and path
+source: "api.tasks.list"          # → GET /api/tasks
+source: "api.tasks.getById"       # → GET /api/tasks/:id
+source: "api.tasks.create"        # → POST /api/tasks
+source: "api.tasks.update"        # → PUT /api/tasks/:id
+source: "api.tasks.delete"        # → DELETE /api/tasks/:id
+```
+
+The spec does not mandate a specific API format. AI generators adapt to REST, GraphQL, or any backend the project uses.
+
+**Derived sources:**
+
+```yaml
+data:
+  tasks:
+    source: "api.tasks.list"
+    
+  overdue_count:
+    source: derived
+    expression: "tasks.filter(t => t.due_date < now && t.status != 'done').length"
+    depends_on: [tasks]               # re-computes when tasks changes
+```
+
+### 10.2 Screen state
+
+The `state:` block declares local, ephemeral state that lives only while the screen is mounted.
+
+```yaml
+state:
+  active_filter:
+    type: enum
+    values: [all, today, upcoming, done]
+    default: today
+    
+  sort_order:
+    type: enum
+    values: [due_date, priority, created_at]
+    default: due_date
+    
+  search_query:
+    type: string
+    default: ""
+    
+  is_submitting:
+    type: bool
+    default: false
+    
+  selected_task_id:
+    type: string
+    default: null
+```
+
+**State is reactive.** When state changes (via `set_state` action), any data source or UI element that references that state value re-evaluates automatically. This drives the reactive update model.
+
+### 10.3 Data path syntax
+
+Data paths use dot-notation to traverse objects. They appear in props, conditions, format expressions, and action params.
+
+**Grammar:**
+
+```
+data_path     := segment ('.' segment)*
+segment       := identifier | indexed
+identifier    := [a-zA-Z_][a-zA-Z0-9_]*
+indexed       := identifier '[' (integer | '*') ']'
+```
+
+**Examples:**
+
+| Path | Resolves to |
+|------|------------|
+| `task.title` | The title field of the task object |
+| `task.project.name` | Nested object traversal |
+| `order.items[0].name` | First item's name |
+| `order.items[*].total` | Array of all items' totals |
+| `state.active_filter` | Local screen state value |
+| `params.task_id` | Screen parameter from caller |
+| `form.title` | Form field value |
+| `error.message` | Error object from `on_error` handler |
+| `user.first_name` | Current user's first name |
+
+**Special path prefixes:**
+
+| Prefix | Scope | Lifetime |
+|--------|-------|----------|
+| `state.` | Local screen state | While screen is mounted |
+| `params.` | Screen parameters | Passed from navigate action |
+| `form.` | Form field values | While form exists |
+| `data.` or bare name | Data source results | Fetched from API |
+| `error.` | Error object | Within `on_error` handler only |
+| `item.` | Current iteration item | Within collection `item_props_map` |
+
+### 10.4 Binding direction
+
+Props can be **read-only** (one-way) or **two-way bound** (read-write).
+
+**One-way (default):** The prop displays a value but cannot modify it.
+
+```yaml
+props:
+  title: "{task.title}"                 # displays task.title, read-only
+  subtitle: "{task.due_date | format:date_relative}"
+```
+
+**Two-way binding:** The prop both displays and modifies a value. Indicated by `binding: true` in the contract prop definition, and `data_binding:` in the screen file.
+
+```yaml
+# In the contract definition:
+props:
+  value: { type: any, required: false, binding: true }
+
+# In the screen file:
+- contract: input_field
+  input_type: text
+  props:
+    label: "Title"
+    placeholder: "What needs to be done?"
+  data_binding: "form.title"            # two-way: reads from and writes to form.title
+```
+
+**Two-way binding targets must be writable:** Only `state.*` and `form.*` paths are writable. API data paths are read-only — to modify API data, use an `api_call` action.
+
+### 10.5 Format expressions
+
+Format expressions transform values for display. They appear inside `{}` delimiters in string props.
+
+**Syntax:**
+
+```
+interpolation := '{' (piped_expr | computed_expr) '}'
+piped_expr    := data_path ('|' pipe)*
+pipe          := operation ':' argument
+operation     := 'format' | 'map' | 'default'
+computed_expr := data_path comparator value '?' literal ':' literal
+comparator    := '==' | '!=' | '>' | '<' | '>=' | '<='
+```
+
+OpenUISpec supports two expression types inside `{}`:
+
+1. **Piped expressions** — a data path optionally transformed by format/map/default pipes: `{task.due_date | format:date_relative}`
+2. **Computed expressions** — ternary conditionals for inline logic: `{task.status == done ? 'Reopen' : 'Mark complete'}`
+
+Computed expressions are intentionally limited to single ternaries. Complex logic belongs in derived data sources (Section 10.1) or conditional actions (Section 9.2), not in display strings.
+
+**Examples:**
+
+```yaml
+# Simple interpolation
+title: "{task.title}"
+
+# With formatter
+subtitle: "{task.due_date | format:date_relative}"
+
+# With mapper
+severity: "{task.status | map:status_severity}"
+
+# With default
+trailing: "{task.assignee.name | default:'Unassigned'}"
+
+# Multiple interpolations
+subtitle: "{item.project.name} · {item.due_date | format:date_relative}"
+
+# Computed expression
+label: "{task.status == done ? 'Reopen task' : 'Mark complete'}"
+
+# Compound with format
+subtitle: "{item.quantity} × {item.unit_price | format:currency}"
+```
+
+**Built-in formatters:**
+
+| Formatter | Input | Output | Locale-aware |
+|-----------|-------|--------|-------------|
+| `currency` | number | "$1,234.56" | Yes |
+| `date` | date/datetime | "Mar 13, 2026" | Yes |
+| `date_relative` | date/datetime | "2 hours ago", "yesterday" | Yes |
+| `date_short` | date/datetime | "Mar 13" | Yes |
+| `time` | datetime | "3:45 PM" | Yes |
+| `number` | number | "1,234" | Yes |
+| `percentage` | number (0-1) | "45%" | No |
+| `status_label` | enum string | "In Progress" (title case) | No |
+| `pluralize` | number | "1 task" / "3 tasks" | Yes |
+| `file_size` | number (bytes) | "2.4 MB" | No |
+
+**Built-in mappers:**
+
+| Mapper | Input → Output |
+|--------|---------------|
+| `status_severity` | status enum → severity enum (e.g., "done" → "success") |
+| `priority_to_severity` | priority enum → severity enum (e.g., "urgent" → "error") |
+| `bool_to_label` | true/false → "Yes"/"No" (or custom mapping) |
+
+**Custom formatters and mappers** can be defined in the project manifest:
+
+```yaml
+# openuispec.yaml
+formatters:
+  weight:
+    input: number
+    output: string
+    pattern: "{value} kg"
+    
+mappers:
+  status_severity:
+    todo: neutral
+    in_progress: info
+    done: success
+    
+  priority_to_severity:
+    low: neutral
+    medium: info
+    high: warning
+    urgent: error
+```
+
+### 10.6 Reactive update model
+
+OpenUISpec uses a **pull-based reactive model**: when a data source or state value changes, all UI elements referencing it re-evaluate.
+
+**Update triggers:**
+
+| Trigger | What re-evaluates |
+|---------|------------------|
+| `set_state` action | All elements referencing the changed state path |
+| `api_call` success | The data source that was refreshed |
+| `refresh` action | The specified data source |
+| `data_binding` change | The bound state/form path + any elements referencing it |
+| Screen appear | All data sources with `refresh.on: [screen_appear]` |
+| Pull-to-refresh gesture | All data sources with `refresh.on: [pull_to_refresh]` |
+
+**Reactive dependency chain:** If `state.active_filter` changes, and `data.tasks` depends on `state.active_filter` as a param, then:
+1. The state value updates
+2. `data.tasks` re-fetches with the new filter param
+3. The collection rendering `data.tasks` re-renders with new data
+4. Any derived values depending on `data.tasks` re-compute
+
+### 10.7 Caching & refresh
+
+Data sources can declare caching and refresh behavior:
+
+```yaml
+data:
+  tasks:
+    source: "api.tasks.list"
+    cache: none                         # always fetch fresh (default)
+    refresh:
+      on: [screen_appear, pull_to_refresh]
+      
+  user:
+    source: "api.auth.currentUser"
+    cache: session                      # cached for the app session
+    refresh:
+      on: [explicit]                    # only refreshes when explicitly told to
+      
+  config:
+    source: "api.config.get"
+    cache: persistent                   # survives app restart
+    refresh:
+      interval: 86400000               # refresh every 24 hours
+```
+
+**Cache levels:**
+
+| Level | Lifetime | Survives navigation | Survives restart |
+|-------|----------|-------------------|-----------------|
+| `none` | Per-render | No | No |
+| `screen` | While screen is mounted | No | No |
+| `session` | While app is running | Yes | No |
+| `persistent` | Indefinite | Yes | Yes |
+
+### 10.8 Loading & error states
+
+Every data source has implicit loading and error states. AI generators must handle these:
+
+```yaml
+data:
+  tasks:
+    source: "api.tasks.list"
+    # Implicit states:
+    # tasks.$loading: bool (true while fetching)
+    # tasks.$error: error object (non-null if fetch failed)
+    # tasks.$empty: bool (true if fetch succeeded but returned empty array)
+```
+
+These implicit states are available as data paths:
+
+```yaml
+# Show loading skeleton
+condition: "tasks.$loading"
+
+# Show error state
+condition: "tasks.$error"
+props:
+  title: "Something went wrong"
+  body: "{tasks.$error.message}"
+  
+# Show empty state
+condition: "tasks.$empty"
+```
+
+Collection contracts handle `$loading`, `$error`, and `$empty` automatically via their state machines (see Section 4.7). For non-collection data, screens can use `condition:` to show appropriate UI.
+
+### 10.9 AI generation requirements
+
+**MUST:**
+- Resolve all data paths correctly, including nested traversal and array indexing
+- Implement two-way binding for `data_binding:` props
+- Re-evaluate UI when state or data changes (reactive model)
+- Handle `$loading`, `$error`, and `$empty` states for every data source
+- Implement all built-in formatters with correct locale behavior
+- Implement all built-in mappers (or generate them from project-defined maps)
+
+**SHOULD:**
+- Implement caching at declared levels
+- Re-fetch data sources when their param dependencies change
+- Support computed/derived data sources
+- Debounce rapid state changes (e.g., search input) to avoid excessive re-renders
+- Show skeleton/loading states during data fetches
+
+**MAY:**
+- Support offline data persistence with `cache: persistent`
+- Implement stale-while-revalidate patterns
+- Pre-fetch data for likely navigation targets
+
+
+---
+
 ## Appendix A: Type reference
 
 | Type | Description | Example |
@@ -1808,33 +2687,29 @@ After initial generation, AI tools SHOULD support **drift detection**: comparing
 | `component_ref` | Inline contract instance | `{ contract: data_display, ... }` |
 | `contract_ref` | Contract family name | `"action_trigger"` |
 | `screen_ref` | Screen identifier | `"screens/order_detail"` |
-| `action_ref` | Navigation or mutation action | `{ type: navigate, destination: "..." }` |
-| `data_path` | Dot-notation data binding | `"order.items[0].name"` |
+| `action` | Action definition (see Section 9) | `{ type: navigate, destination: "..." }` |
+| `data_path` | Dot-notation path to a value (see Section 10.3) | `"task.project.name"` |
+| `format_expr` | String with `{}` interpolation (see Section 10.5) | `"{value | format:currency}"` |
 | `badge_config` | `{ text?, count?, dot?, severity? }` | `{ count: 3, severity: "warning" }` |
 | `range_config` | `{ min, max, step?, default? }` | `{ min: 0, max: 100, step: 1 }` |
+| `data_source` | Data dependency declaration (see Section 10.1) | `{ source: "api.tasks.list", params: {...} }` |
+| `cache_level` | Data caching strategy | `none \| screen \| session \| persistent` |
+| `size_class` | Adaptive layout breakpoint | `compact \| regular \| expanded` |
+| `layout_ref` | Layout primitive definition | `{ type: stack, spacing: "spacing.md" }` |
 
-## Appendix B: Format expression syntax
+## Appendix B: Format expression quick reference
 
-Props support inline format expressions for display:
+> Full specification in Section 10.5.
 
-```
-{value | format:formatter_name}
-{value | map:mapping_name}
-{value1} literal text {value2}
-```
+**Syntax:** `{data_path | pipe}` or `{condition ? 'value_a' : 'value_b'}`
 
-Built-in formatters:
-- `currency` — locale-aware currency formatting
-- `date` — locale-aware date formatting
-- `date_relative` — "2 hours ago", "yesterday"
-- `number` — locale-aware number formatting
-- `percentage` — value × 100 with % suffix
-- `status_label` — maps status enum to display string
-- `pluralize` — count-aware pluralization
+**Pipes:** `format:name`, `map:name`, `default:'fallback'`
 
-Built-in mappers:
-- `status_severity` — maps status values to severity enums
-- `bool_to_label` — maps true/false to "Yes"/"No" or custom
+**Built-in formatters:** `currency`, `date`, `date_relative`, `date_short`, `time`, `number`, `percentage`, `status_label`, `pluralize`, `file_size`
+
+**Built-in mappers:** `status_severity`, `priority_to_severity`, `bool_to_label`
+
+**Custom formatters and mappers** are defined in the project's `openuispec.yaml` manifest.
 
 ---
 

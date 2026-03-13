@@ -35,9 +35,9 @@ task_detail:
                 text: "{task.status | format:status_label}"
                 severity: "{task.status | map:status_severity}"
               metadata:
-                priority: "{task.priority | format:status_label}"
+                priority: "{task.priority | format:priority_label}"
 
-          # Stat cards — adaptive: stack on compact, row on regular+
+          # Stat cards — adaptive: grid on compact, row on regular+
           - id: stat_group
             layout:
               adaptive:
@@ -63,7 +63,7 @@ task_detail:
                 variant: stat
                 props:
                   title: "Priority"
-                  body: "{task.priority | format:status_label}"
+                  body: "{task.priority | format:priority_label}"
                   leading:
                     icon: "flag_fill"
                     color: "color.priority.{task.priority}"
@@ -81,7 +81,6 @@ task_detail:
         margin_top: "spacing.md"
         condition: "task.description != null"
         layout: { type: stack, spacing: "spacing.xs" }
-        # Adaptive: constrain description width on large screens
         adaptive:
           expanded:
             max_width: 640
@@ -105,7 +104,6 @@ task_detail:
         padding_h: "spacing.page_margin"
         margin_top: "spacing.lg"
         layout: { type: stack, spacing: "spacing.none" }
-        # Adaptive: side-by-side with description on expanded
         adaptive:
           expanded:
             max_width: 640
@@ -118,6 +116,7 @@ task_detail:
               title_style: "typography.overline"
               title_color: "color.text.tertiary"
 
+          # Project row
           - contract: data_display
             variant: compact
             interactive: true
@@ -130,6 +129,7 @@ task_detail:
               destination: "screens/project_detail"
               params: { project_id: "task.project_id" }
 
+          # Assignee row
           - contract: data_display
             variant: compact
             interactive: true
@@ -141,6 +141,7 @@ task_detail:
               type: present
               surface: "assignee_picker"
 
+          # Tags row
           - contract: data_display
             variant: compact
             props:
@@ -156,6 +157,7 @@ task_detail:
                     title: "item"
               leading: { icon: "tag", color: "color.text.secondary", size: 18 }
 
+          # Created row
           - contract: data_display
             variant: compact
             props:
@@ -167,7 +169,6 @@ task_detail:
       - id: actions
         padding: "spacing.page_margin"
         margin_top: "spacing.xl"
-        # Adaptive: stacked on compact, inline row on regular+
         layout:
           adaptive:
             compact:
@@ -204,14 +205,21 @@ task_detail:
               type: api_call
               endpoint: "api.tasks.toggleStatus"
               params: { id: "task.id" }
+              optimistic:
+                target: "task.status"
+                value: "{task.status == done ? 'todo' : 'done'}"
+                revert_on_error: true
               on_success:
-                feedback:
-                  contract: feedback
-                  variant: toast
-                  props:
-                    message: "Task {task.status == done ? 'reopened' : 'completed'}"
-                    severity: success
-                    duration: 3000
+                type: feedback
+                variant: toast
+                message: "Task updated"
+                severity: success
+                duration: 3000
+              on_error:
+                type: feedback
+                variant: toast
+                message: "Couldn't update status"
+                severity: error
 
           - contract: action_trigger
             variant: destructive
@@ -240,7 +248,14 @@ task_detail:
                         endpoint: "api.tasks.delete"
                         params: { id: "task.id" }
                         on_success:
-                          navigate: { to: "$back", feedback: { variant: toast, message: "Task deleted", severity: neutral } }
+                          type: sequence
+                          actions:
+                            - type: navigate
+                              destination: "$back"
+                            - type: feedback
+                              variant: toast
+                              message: "Task deleted"
+                              severity: neutral
 
   # ---------- Surfaces ----------
   surfaces:
@@ -273,7 +288,6 @@ task_detail:
               endpoint: "api.tasks.assignTo"
               params: { task_id: "task.id", user_id: "item.id" }
               on_success: { type: dismiss }
-      # Adaptive: sheet on compact, side panel on expanded
       adaptive:
         compact: { variant: sheet, detents: [medium] }
         expanded: { variant: panel, width: 360 }

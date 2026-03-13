@@ -1,0 +1,88 @@
+# TaskFlow — Color Tokens
+# Brand: warm indigo + coral accent, neutral warm grays
+
+color:
+  brand:
+    primary:
+      semantic: "Main brand identity — actions, selected states, key UI"
+      reference: "#5B4FE8"
+      range:
+        hue: [240, 250]
+        saturation: [65, 80]
+        lightness: [50, 60]
+      on_color:
+        reference: "#FFFFFF"
+        contrast_min: 4.5
+
+    secondary:
+      semantic: "Accent for highlights, badges, urgency"
+      reference: "#E8634F"
+      range:
+        hue: [10, 18]
+        saturation: [70, 85]
+        lightness: [50, 60]
+      on_color:
+        reference: "#FFFFFF"
+        contrast_min: 4.5
+
+  surface:
+    primary:
+      semantic: "Main content background"
+      reference: "#FFFFFF"
+    secondary:
+      semantic: "Card and grouped backgrounds"
+      reference: "#F7F6F3"
+    tertiary:
+      semantic: "Page canvas behind content"
+      reference: "#EFEEE8"
+
+  text:
+    primary:
+      semantic: "Headings, body text, high emphasis"
+      reference: "#1C1B1A"
+      contrast_min: 7.0
+    secondary:
+      semantic: "Supporting text, descriptions"
+      reference: "#6B6966"
+      contrast_min: 4.5
+    tertiary:
+      semantic: "Placeholders, hints, timestamps"
+      reference: "#9C9A94"
+      contrast_min: 3.0
+    disabled:
+      semantic: "Non-interactive labels"
+      reference: "#C8C6C1"
+
+  semantic:
+    success:
+      reference: "#2D9D5E"
+      range: { hue: [145, 155], saturation: [55, 70], lightness: [35, 45] }
+      on_color: { reference: "#FFFFFF", contrast_min: 4.5 }
+    warning:
+      reference: "#D4920E"
+      range: { hue: [38, 45], saturation: [85, 95], lightness: [40, 50] }
+      on_color: { reference: "#FFFFFF", contrast_min: 3.0 }
+    danger:
+      reference: "#D43B3B"
+      range: { hue: [0, 8], saturation: [65, 80], lightness: [45, 55] }
+      on_color: { reference: "#FFFFFF", contrast_min: 4.5 }
+    info:
+      reference: "#3B82D4"
+      range: { hue: [210, 220], saturation: [60, 75], lightness: [45, 55] }
+      on_color: { reference: "#FFFFFF", contrast_min: 4.5 }
+
+  border:
+    default: { reference: "#E5E3DE", opacity: 0.15 }
+    emphasis: { reference: "#D1CFCA", opacity: 0.3 }
+
+  # App-specific semantic colors
+  priority:
+    low: { reference: "#9CA3AF", semantic: "Low priority indicator" }
+    medium: { reference: "#3B82D4", semantic: "Medium priority indicator" }
+    high: { reference: "#D4920E", semantic: "High priority indicator" }
+    urgent: { reference: "#D43B3B", semantic: "Urgent priority indicator" }
+
+  status:
+    todo: { reference: "#9CA3AF", semantic: "Not started" }
+    in_progress: { reference: "#5B4FE8", semantic: "Currently active" }
+    done: { reference: "#2D9D5E", semantic: "Completed" }

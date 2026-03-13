@@ -1,0 +1,34 @@
+# TaskFlow — Themes
+
+themes:
+  default: "light"
+
+  variants:
+    light:
+      surface.primary: { lightness: [98, 100] }
+      surface.secondary: { lightness: [94, 97] }
+      surface.tertiary: { lightness: [90, 93] }
+      text.primary: { lightness: [5, 12] }
+      text.secondary: { lightness: [38, 45] }
+      text.tertiary: { lightness: [58, 64] }
+      border.default: { opacity: 0.12 }
+
+    dark:
+      surface.primary: { lightness: [10, 14] }
+      surface.secondary: { lightness: [14, 19] }
+      surface.tertiary: { lightness: [7, 11] }
+      text.primary: { lightness: [88, 95] }
+      text.secondary: { lightness: [58, 66] }
+      text.tertiary: { lightness: [42, 50] }
+      border.default: { opacity: 0.18 }
+
+    # Warm-tinted brand variant
+    warm:
+      extends: "light"
+      surface.primary: { hue: 38, saturation: [4, 8], lightness: [96, 99] }
+      surface.secondary: { hue: 38, saturation: [4, 8], lightness: [92, 96] }
+
+  platform:
+    ios: { supports_dynamic: true, system_materials: true }
+    android: { material_you: true, dynamic_color: true }
+    web: { prefers_color_scheme: true, css_custom_properties: true }

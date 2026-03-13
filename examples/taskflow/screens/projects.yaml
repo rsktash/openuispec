@@ -3,7 +3,7 @@
 # ============================================================
 # Exercises: collection (grid), data_display (card),
 #            action_trigger, surface (modal for new project),
-#            adaptive layout (grid columns, modal → panel)
+#            adaptive layout (grid columns)
 # ============================================================
 
 projects:
@@ -63,7 +63,6 @@ projects:
             title: "No projects yet"
             body: "Create a project to organize your tasks."
 
-        # Adaptive: grid columns scale with screen size
         adaptive:
           compact: { columns: 1 }
           regular: { columns: 2 }
@@ -134,7 +133,8 @@ projects:
                       endpoint: "api.projects.create"
                       body: "form"
                       on_success:
-                        sequence:
-                          - dismiss: true
-                          - feedback: { variant: toast, message: "Project created", severity: success }
-                          - refresh: "screens/projects.projects"
+                        type: sequence
+                        actions:
+                          - { type: dismiss }
+                          - { type: feedback, variant: toast, message: "Project created", severity: success }
+                          - { type: refresh, target: "screens/projects.projects" }

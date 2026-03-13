@@ -1,0 +1,178 @@
+# ============================================================
+# TaskFlow — Settings Screen
+# ============================================================
+# Exercises: collection (list with sections), data_display,
+#            input_field (toggle, select), feedback (dialog),
+#            action_trigger (destructive)
+# ============================================================
+
+settings:
+  semantic: "App preferences, account, and data management"
+
+  data:
+    user: { source: "api.auth.currentUser" }
+    preferences: { source: "api.preferences.get" }
+
+  layout:
+    type: scroll_vertical
+    safe_area: true
+
+    sections:
+      # ---------- Profile card ----------
+      - id: profile
+        padding: "spacing.page_margin"
+        contract: data_display
+        variant: card
+        interactive: true
+        props:
+          title: "{user.name}"
+          subtitle: "{user.email}"
+          leading:
+            media: "user.avatar"
+            fallback: { initials: "user.name", background: "color.brand.primary" }
+            size: 48
+            radius: 24
+          trailing: { icon: "chevron_right", color: "color.text.tertiary" }
+        action:
+          type: navigate
+          destination: "screens/profile_edit"
+
+      # ---------- Preferences section ----------
+      - id: preferences_section
+        margin_top: "spacing.lg"
+        padding_h: "spacing.page_margin"
+        layout: { type: stack, spacing: "spacing.none" }
+        children:
+          - contract: data_display
+            variant: inline
+            props: { title: "Preferences" }
+            tokens_override:
+              title_style: "typography.overline"
+              title_color: "color.text.tertiary"
+              margin_bottom: "spacing.sm"
+
+          # Theme picker
+          - contract: input_field
+            input_type: select
+            props:
+              label: "Theme"
+              options:
+                - { value: "system", label: "System" }
+                - { value: "light", label: "Light" }
+                - { value: "dark", label: "Dark" }
+                - { value: "warm", label: "Warm" }
+              value: "preferences.theme"
+            data_binding: "preferences.theme"
+            action:
+              type: api_call
+              endpoint: "api.preferences.update"
+              params: { key: "theme", value: "preferences.theme" }
+
+          # Default priority
+          - contract: input_field
+            input_type: select
+            props:
+              label: "Default priority"
+              options:
+                - { value: "low", label: "Low" }
+                - { value: "medium", label: "Medium" }
+                - { value: "high", label: "High" }
+              value: "preferences.default_priority"
+            data_binding: "preferences.default_priority"
+
+          # Notifications toggle
+          - contract: input_field
+            input_type: toggle
+            props:
+              label: "Push notifications"
+              value: "preferences.notifications_enabled"
+            data_binding: "preferences.notifications_enabled"
+
+          # Due date reminders toggle
+          - contract: input_field
+            input_type: toggle
+            props:
+              label: "Due date reminders"
+              value: "preferences.reminders_enabled"
+              helper_text: "Get notified 1 hour before a task is due"
+            data_binding: "preferences.reminders_enabled"
+
+      # ---------- Data section ----------
+      - id: data_section
+        margin_top: "spacing.xl"
+        padding_h: "spacing.page_margin"
+        layout: { type: stack, spacing: "spacing.none" }
+        children:
+          - contract: data_display
+            variant: inline
+            props: { title: "Data" }
+            tokens_override:
+              title_style: "typography.overline"
+              title_color: "color.text.tertiary"
+              margin_bottom: "spacing.sm"
+
+          # Export data
+          - contract: data_display
+            variant: compact
+            interactive: true
+            props:
+              title: "Export data"
+              leading: { icon: "square_arrow_up", color: "color.text.secondary", size: 18 }
+              trailing: { icon: "chevron_right", color: "color.text.tertiary" }
+            action:
+              type: api_call
+              endpoint: "api.data.export"
+              on_success:
+                feedback: { variant: toast, message: "Export sent to your email", severity: success }
+
+          # Delete account
+          - contract: action_trigger
+            variant: ghost
+            full_width: true
+            props:
+              label: "Delete account"
+              icon: "trash"
+            tokens_override:
+              text: "color.semantic.danger"
+            action:
+              type: confirm
+              confirmation:
+                contract: feedback
+                variant: dialog
+                props:
+                  title: "Delete your account?"
+                  message: "This will permanently delete your account and all your data. This action cannot be undone."
+                  severity: error
+                  actions:
+                    - label: "Cancel"
+                      variant: secondary
+                      action: { type: dismiss }
+                    - label: "Delete my account"
+                      variant: destructive
+                      action:
+                        type: api_call
+                        endpoint: "api.auth.deleteAccount"
+                        on_success:
+                          type: navigate
+                          destination: "$root"
+
+      # ---------- App info ----------
+      - id: app_info
+        margin_top: "spacing.xl"
+        padding: "spacing.page_margin"
+        layout: { type: stack, spacing: "spacing.xs", align: "center" }
+        children:
+          - contract: data_display
+            variant: inline
+            props:
+              title: "TaskFlow v1.0.0"
+            tokens_override:
+              title_style: "typography.caption"
+              title_color: "color.text.tertiary"
+          - contract: data_display
+            variant: inline
+            props:
+              title: "Built with OpenUISpec"
+            tokens_override:
+              title_style: "typography.caption"
+              title_color: "color.text.tertiary"

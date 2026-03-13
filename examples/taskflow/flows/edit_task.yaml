@@ -1,0 +1,131 @@
+# ============================================================
+# TaskFlow — Edit Task Flow (stub)
+# ============================================================
+# Referenced by task_detail.yaml. Same form as create_task
+# but pre-populated with existing task data.
+# ============================================================
+
+edit_task:
+  semantic: "Edit an existing task"
+  status: stub
+
+  params:
+    task_id: { type: string, required: true }
+
+  entry: "task_form"
+
+  screens:
+    task_form:
+      screen_inline:
+        semantic: "Task edit form pre-populated with existing data"
+
+        data:
+          task:
+            source: "api.tasks.getById"
+            params: { id: "params.task_id" }
+
+        state:
+          is_submitting: { type: bool, default: false }
+
+        layout:
+          type: scroll_vertical
+          safe_area: true
+          padding: "spacing.page_margin"
+
+          sections:
+            - id: header
+              layout: { type: row, justify: "space-between", align: "center" }
+              children:
+                - contract: action_trigger
+                  variant: ghost
+                  size: sm
+                  props: { label: "Cancel" }
+                  action: { type: dismiss }
+
+                - contract: data_display
+                  variant: inline
+                  props:
+                    title: "Edit task"
+                  tokens_override:
+                    title_style: "typography.heading_sm"
+
+                - contract: action_trigger
+                  variant: primary
+                  size: sm
+                  props:
+                    label: "Save"
+                    loading_label: "Saving..."
+                  state_binding:
+                    loading: "state.is_submitting"
+                  action:
+                    type: submit_form
+                    form_id: "edit_task_form"
+
+            - id: form
+              form_id: "edit_task_form"
+              margin_top: "spacing.lg"
+              layout: { type: stack, spacing: "spacing.md" }
+              children:
+                - contract: input_field
+                  input_type: text
+                  props:
+                    label: "Title"
+                    value: "task.title"
+                    required: true
+                    max_length: 200
+                  data_binding: "form.title"
+
+                - contract: input_field
+                  input_type: multiline
+                  props:
+                    label: "Description"
+                    value: "task.description"
+                  data_binding: "form.description"
+
+                - contract: input_field
+                  input_type: select
+                  props:
+                    label: "Priority"
+                    value: "task.priority"
+                    options:
+                      - { value: "low", label: "Low", icon: "flag", color: "color.priority.low" }
+                      - { value: "medium", label: "Medium", icon: "flag_fill", color: "color.priority.medium" }
+                      - { value: "high", label: "High", icon: "flag_fill", color: "color.priority.high" }
+                      - { value: "urgent", label: "Urgent", icon: "exclamationmark_triangle", color: "color.priority.urgent" }
+                    required: true
+                  data_binding: "form.priority"
+
+                - contract: input_field
+                  input_type: date
+                  props:
+                    label: "Due date"
+                    value: "task.due_date"
+                  data_binding: "form.due_date"
+
+          on_submit:
+            type: sequence
+            actions:
+              - { type: set_state, is_submitting: true }
+              - type: api_call
+                endpoint: "api.tasks.update"
+                params: { id: "params.task_id" }
+                body: "form"
+                on_success:
+                  type: sequence
+                  actions:
+                    - { type: set_state, is_submitting: false }
+                    - { type: feedback, variant: toast, message: "Task updated", severity: success }
+                    - { type: dismiss }
+                    - { type: refresh, target: "screens/task_detail.task" }
+                on_error:
+                  type: sequence
+                  actions:
+                    - { type: set_state, is_submitting: false }
+                    - { type: feedback, variant: banner, title: "Couldn't update task", message: "{error.message}", severity: error }
+
+      transitions: {}
+
+  platform_hints:
+    ios: { presentation: "sheet", detents: [large] }
+    android: { presentation: "bottom_sheet", fullscreen: false }
+    web: { presentation: "modal", size: "md" }
