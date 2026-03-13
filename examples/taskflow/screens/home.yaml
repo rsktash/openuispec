@@ -2,7 +2,8 @@
 # TaskFlow — Home Screen (Task List)
 # ============================================================
 # Exercises: nav_container, collection, data_display,
-#            action_trigger, input_field (search)
+#            action_trigger, input_field (search),
+#            adaptive layout (size-class-aware sections)
 # ============================================================
 
 home:
@@ -30,10 +31,9 @@ home:
       default: due_date
     search_query: { type: string, default: "" }
 
-  # --- Navigation shell ---
+  # --- Navigation shell (adaptive) ---
   navigation:
     contract: nav_container
-    variant: tab_bar
     props:
       items:
         - id: "home"
@@ -58,16 +58,29 @@ home:
           icon_active: "gear_fill"
           destination: "screens/settings"
       selected: "home"
+    # Adaptive: nav variant changes with screen size
+    adaptive:
+      compact: { variant: tab_bar }
+      regular: { variant: rail }
+      expanded: { variant: sidebar, collapsed: false }
 
-  # --- Screen content ---
+  # --- Screen-level adaptive layout ---
   layout:
-    type: scroll_vertical
-    safe_area: true
+    adaptive:
+      compact:
+        type: scroll_vertical
+        safe_area: true
+      expanded:
+        type: split_view
+        primary_width: 0.38
+        primary: { sections: [header, search, filters, task_list] }
+        secondary: { sections: ["screens/task_detail"], params_from: "selected_task" }
+        collapse_at: compact
 
     sections:
       # ---------- Header ----------
       - id: header
-        layout: { type: vertical, spacing: "spacing.sm" }
+        layout: { type: stack, spacing: "spacing.sm" }
         padding: "spacing.page_margin"
         children:
           - contract: data_display
@@ -79,6 +92,11 @@ home:
             tokens_override:
               title_style: "typography.heading_lg"
               subtitle_style: "typography.body_sm"
+            # Adaptive: larger title on expanded screens
+            adaptive:
+              expanded:
+                tokens_override:
+                  title_style: "typography.display"
 
       # ---------- Search bar ----------
       - id: search
@@ -95,6 +113,10 @@ home:
           background: "color.surface.secondary"
           border: { width: 0 }
           radius: "spacing.sm"
+        # Adaptive: constrain search width on large screens
+        adaptive:
+          expanded:
+            max_width: 480
 
       # ---------- Filter chips ----------
       - id: filters
@@ -155,8 +177,8 @@ home:
           interactive: true
           selectable: false
           pull_to_refresh: true
-          searchable: false               # search is handled by the header
-          
+          searchable: false
+
           empty_state:
             icon: "checkmark_circle_fill"
             title: "All caught up!"
@@ -177,9 +199,17 @@ home:
           label: "New task"
           icon: "plus"
         tokens_override:
-          radius: 28                      # pill shape
+          radius: 28
           shadow: "elevation.lg"
         action:
           type: navigate
           destination: "flows/create_task"
           presentation: "sheet"
+        # Adaptive: FAB becomes inline button on expanded
+        adaptive:
+          expanded:
+            position: "inline"
+            size: md
+            tokens_override:
+              radius: "spacing.sm"
+              shadow: none

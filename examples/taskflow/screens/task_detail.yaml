@@ -2,7 +2,8 @@
 # TaskFlow — Task Detail Screen
 # ============================================================
 # Exercises: data_display (hero, stat, compact), action_trigger,
-#            feedback (dialog), surface (sheet), input_field
+#            feedback (dialog), surface (sheet), input_field,
+#            adaptive layout (stat reflow, action arrangement)
 # ============================================================
 
 task_detail:
@@ -24,7 +25,7 @@ task_detail:
       # ---------- Status + Priority header ----------
       - id: header
         padding: "spacing.page_margin"
-        layout: { type: vertical, spacing: "spacing.md" }
+        layout: { type: stack, spacing: "spacing.md" }
         children:
           - contract: data_display
             variant: hero
@@ -36,9 +37,18 @@ task_detail:
               metadata:
                 priority: "{task.priority | format:status_label}"
 
-          - layout: { type: horizontal, spacing: "spacing.sm" }
+          # Stat cards — adaptive: stack on compact, row on regular+
+          - id: stat_group
+            layout:
+              adaptive:
+                compact:
+                  type: grid
+                  columns: 2
+                  gap: "spacing.sm"
+                regular:
+                  type: row
+                  spacing: "spacing.sm"
             children:
-              # Status stat card
               - contract: data_display
                 variant: stat
                 props:
@@ -49,7 +59,6 @@ task_detail:
                     color: "color.status.{task.status}"
                     size: 10
 
-              # Priority stat card
               - contract: data_display
                 variant: stat
                 props:
@@ -60,7 +69,6 @@ task_detail:
                     color: "color.priority.{task.priority}"
                     size: 14
 
-              # Due date stat card
               - contract: data_display
                 variant: stat
                 props:
@@ -72,7 +80,11 @@ task_detail:
         padding_h: "spacing.page_margin"
         margin_top: "spacing.md"
         condition: "task.description != null"
-        layout: { type: vertical, spacing: "spacing.xs" }
+        layout: { type: stack, spacing: "spacing.xs" }
+        # Adaptive: constrain description width on large screens
+        adaptive:
+          expanded:
+            max_width: 640
         children:
           - contract: data_display
             variant: inline
@@ -92,7 +104,11 @@ task_detail:
       - id: details
         padding_h: "spacing.page_margin"
         margin_top: "spacing.lg"
-        layout: { type: vertical, spacing: "spacing.none" }
+        layout: { type: stack, spacing: "spacing.none" }
+        # Adaptive: side-by-side with description on expanded
+        adaptive:
+          expanded:
+            max_width: 640
         children:
           - contract: data_display
             variant: inline
@@ -102,7 +118,6 @@ task_detail:
               title_style: "typography.overline"
               title_color: "color.text.tertiary"
 
-          # Project row
           - contract: data_display
             variant: compact
             interactive: true
@@ -115,7 +130,6 @@ task_detail:
               destination: "screens/project_detail"
               params: { project_id: "task.project_id" }
 
-          # Assignee row
           - contract: data_display
             variant: compact
             interactive: true
@@ -127,7 +141,6 @@ task_detail:
               type: present
               surface: "assignee_picker"
 
-          # Tags row
           - contract: data_display
             variant: compact
             props:
@@ -143,7 +156,6 @@ task_detail:
                     title: "item"
               leading: { icon: "tag", color: "color.text.secondary", size: 18 }
 
-          # Created row
           - contract: data_display
             variant: compact
             props:
@@ -155,14 +167,25 @@ task_detail:
       - id: actions
         padding: "spacing.page_margin"
         margin_top: "spacing.xl"
-        layout: { type: vertical, spacing: "spacing.sm" }
+        # Adaptive: stacked on compact, inline row on regular+
+        layout:
+          adaptive:
+            compact:
+              type: stack
+              spacing: "spacing.sm"
+            regular:
+              type: row
+              spacing: "spacing.sm"
+              wrap: true
         children:
           - contract: action_trigger
             variant: primary
-            full_width: true
             props:
               label: "Edit task"
               icon: "pencil"
+            adaptive:
+              compact: { full_width: true }
+              regular: { full_width: false }
             action:
               type: navigate
               destination: "flows/edit_task"
@@ -171,10 +194,12 @@ task_detail:
 
           - contract: action_trigger
             variant: secondary
-            full_width: true
             props:
               label: "{task.status == done ? 'Reopen task' : 'Mark complete'}"
               icon: "{task.status == done ? 'arrow_uturn_left' : 'checkmark'}"
+            adaptive:
+              compact: { full_width: true }
+              regular: { full_width: false }
             action:
               type: api_call
               endpoint: "api.tasks.toggleStatus"
@@ -190,10 +215,12 @@ task_detail:
 
           - contract: action_trigger
             variant: destructive
-            full_width: true
             props:
               label: "Delete task"
               icon: "trash"
+            adaptive:
+              compact: { full_width: true }
+              regular: { full_width: false }
             action:
               type: confirm
               confirmation:
@@ -215,14 +242,12 @@ task_detail:
                         on_success:
                           navigate: { to: "$back", feedback: { variant: toast, message: "Task deleted", severity: neutral } }
 
-  # ---------- Surfaces (presented modally) ----------
+  # ---------- Surfaces ----------
   surfaces:
     assignee_picker:
       contract: surface
-      variant: sheet
       props:
         title: "Assign to"
-        detents: [medium]
         content:
           - contract: input_field
             input_type: text
@@ -248,3 +273,7 @@ task_detail:
               endpoint: "api.tasks.assignTo"
               params: { task_id: "task.id", user_id: "item.id" }
               on_success: { type: dismiss }
+      # Adaptive: sheet on compact, side panel on expanded
+      adaptive:
+        compact: { variant: sheet, detents: [medium] }
+        expanded: { variant: panel, width: 360 }

@@ -5,29 +5,23 @@ web:
   language: typescript
 
   overrides:
-    nav_container:
-      variant_responsive:
-        phone: "tab_bar"
-        tablet: "rail"
-        desktop: "sidebar"
+    # Navigation uses layout.size_classes (defined in tokens/layout.yaml)
+    # No need for ad-hoc variant_responsive here — the adaptive key
+    # on the nav_container in home.yaml handles this.
+
     surface:
       sheet: { falls_back_to: "modal" }
     feedback:
       dialog: { uses_native_dialog_element: true }
-    collection:
-      grid:
-        columns_responsive:
-          phone: 1
-          tablet: 2
-          desktop: 3
 
   behaviors:
     prefers_color_scheme: true
     keyboard_navigation: true
-    responsive_breakpoints:
-      phone: { max: 640 }
-      tablet: { min: 641, max: 1024 }
-      desktop: { min: 1025 }
+
+    # Breakpoints now reference layout.size_classes
+    # compact: max 600px, regular: 601-1024px, expanded: 1025px+
+    # These are defined in tokens/layout.yaml and applied globally.
+
     keyboard_shortcuts:
       new_task: { key: "n", modifier: "cmd/ctrl" }
       search: { key: "k", modifier: "cmd/ctrl" }

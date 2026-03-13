@@ -1,8 +1,9 @@
 # ============================================================
 # TaskFlow — Projects Screen
 # ============================================================
-# Exercises: collection (grid), data_display (card), 
-#            action_trigger, surface (modal for new project)
+# Exercises: collection (grid), data_display (card),
+#            action_trigger, surface (modal for new project),
+#            adaptive layout (grid columns, modal → panel)
 # ============================================================
 
 projects:
@@ -19,7 +20,7 @@ projects:
 
     sections:
       - id: header
-        layout: { type: horizontal, justify: "space-between", align: "center" }
+        layout: { type: row, justify: "space-between", align: "center" }
         children:
           - contract: data_display
             variant: inline
@@ -43,7 +44,6 @@ projects:
         variant: grid
         props:
           data: "projects"
-          columns: 2
           item_contract: data_display
           item_variant: card
           item_props_map:
@@ -57,11 +57,17 @@ projects:
               radius: "spacing.sm"
               padding: "spacing.sm"
           interactive: true
-          
+
           empty_state:
             icon: "folder_fill"
             title: "No projects yet"
             body: "Create a project to organize your tasks."
+
+        # Adaptive: grid columns scale with screen size
+        adaptive:
+          compact: { columns: 1 }
+          regular: { columns: 2 }
+          expanded: { columns: 3 }
 
         action:
           type: navigate
@@ -76,7 +82,7 @@ projects:
         title: "New project"
         size: sm
         content:
-          - layout: { type: vertical, spacing: "spacing.md" }
+          - layout: { type: stack, spacing: "spacing.md" }
             children:
               - contract: input_field
                 input_type: text
@@ -112,7 +118,7 @@ projects:
                     - { value: "lightbulb", label: "Lightbulb" }
                 data_binding: "form.icon"
 
-              - layout: { type: horizontal, spacing: "spacing.sm", justify: "flex-end" }
+              - layout: { type: row, spacing: "spacing.sm", justify: "end" }
                 children:
                   - contract: action_trigger
                     variant: secondary

@@ -35,6 +35,7 @@ project/
 │   ├── typography.yaml
 │   ├── spacing.yaml
 │   ├── motion.yaml
+│   ├── layout.yaml
 │   └── themes.yaml
 ├── contracts/
 │   ├── action_trigger.yaml
@@ -328,7 +329,24 @@ motion:
       pattern: "slide-to-leading"
 ```
 
-### 3.5 Themes
+### 3.5 Layout tokens
+
+Layout tokens define the adaptive breakpoint vocabulary and layout primitives. See **Section 5.5** for the full adaptive layout system.
+
+```yaml
+# tokens/layout.yaml
+layout:
+  size_classes:
+    compact:   { width: { max: 600 },            columns: 4,  margin: "spacing.md" }
+    regular:   { width: { min: 601, max: 1024 }, columns: 8,  margin: "spacing.lg" }
+    expanded:  { width: { min: 1025 },           columns: 12, margin: "spacing.xl" }
+
+  primitives: [stack, row, grid, scroll_vertical, split_view, adaptive]
+```
+
+Every screen and section references size classes by name (`compact`, `regular`, `expanded`), never by pixel values.
+
+### 3.6 Themes
 
 ```yaml
 # tokens/themes.yaml
@@ -1393,6 +1411,192 @@ order_detail:
 
 ---
 
+## 5.5 Adaptive layout
+
+Screens must work across phones, tablets, and desktops. OpenUISpec provides a three-layer adaptive system: **size classes** (global vocabulary), **layout primitives** (building blocks), and **per-section adaptive overrides** (co-located in screen files).
+
+### 5.5.1 Size classes
+
+Size classes are the universal breakpoint vocabulary. Every platform maps to the same three semantic classes.
+
+```yaml
+# tokens/layout.yaml
+layout:
+  size_classes:
+    compact:
+      semantic: "Single-column, phone-first layout"
+      width: { max: 600 }
+      columns: 4
+      margin: "spacing.md"
+
+    regular:
+      semantic: "Two-column capable, tablet and large phone layouts"
+      width: { min: 601, max: 1024 }
+      columns: 8
+      margin: "spacing.lg"
+
+    expanded:
+      semantic: "Multi-column, desktop and large tablet layouts"
+      width: { min: 1025 }
+      columns: 12
+      margin: "spacing.xl"
+
+  platform_mapping:
+    ios: { uses: "UIUserInterfaceSizeClass" }
+    android: { uses: "WindowSizeClass" }
+    web: { uses: "media queries" }
+```
+
+Screens and sections reference size classes by name (`compact`, `regular`, `expanded`), never by pixel values. This ensures the same spec works across platforms where pixel thresholds differ.
+
+### 5.5.2 Layout primitives
+
+Layout primitives are the building blocks for arranging content. They replace the informal `type: horizontal` / `type: vertical` patterns.
+
+| Primitive | Behavior | iOS | Android | Web |
+|-----------|----------|-----|---------|-----|
+| `stack` | Vertical, top to bottom | `VStack` | `Column` | `flex-direction: column` |
+| `row` | Horizontal, leading to trailing | `HStack` | `Row` | `flex-direction: row` |
+| `grid` | 2D grid with columns | `LazyVGrid` | `LazyVerticalGrid` | `display: grid` |
+| `scroll_vertical` | Scrollable content area | `ScrollView` | `LazyColumn` | `overflow-y: auto` |
+| `split_view` | Side-by-side master-detail | `NavigationSplitView` | `ListDetailPaneScaffold` | CSS Grid |
+| `adaptive` | Changes layout per size class | — | — | — |
+
+Each primitive has typed props:
+
+```yaml
+stack:
+  spacing: "token_ref"
+  align: [leading, center, trailing, stretch]
+
+row:
+  spacing: "token_ref"
+  align: [top, center, bottom, baseline, stretch]
+  justify: [start, center, end, space-between]
+  wrap: bool
+
+grid:
+  columns: "int or adaptive_map"
+  gap: "token_ref"
+
+split_view:
+  primary_width: "fraction"
+  collapse_at: "size_class"           # collapses to single-column below this
+```
+
+### 5.5.3 The `adaptive` key
+
+Any section, contract instance, or layout in a screen file can include an `adaptive` key. It maps size classes to property overrides.
+
+**On layouts** — changes the arrangement:
+
+```yaml
+- id: actions
+  layout:
+    adaptive:
+      compact:
+        type: stack
+        spacing: "spacing.sm"
+      regular:
+        type: row
+        spacing: "spacing.sm"
+```
+
+**On contract instances** — changes props per size class:
+
+```yaml
+- contract: action_trigger
+  variant: primary
+  props: { label: "Edit task" }
+  adaptive:
+    compact: { full_width: true }
+    regular: { full_width: false }
+```
+
+**On screens** — changes the entire screen structure:
+
+```yaml
+layout:
+  adaptive:
+    compact:
+      type: scroll_vertical
+    expanded:
+      type: split_view
+      primary_width: 0.38
+      primary: { sections: [list] }
+      secondary: { sections: [detail] }
+```
+
+**On surfaces** — changes presentation mode:
+
+```yaml
+surfaces:
+  picker:
+    contract: surface
+    adaptive:
+      compact: { variant: sheet, detents: [medium] }
+      expanded: { variant: panel, width: 360 }
+```
+
+### 5.5.4 Fallback behavior
+
+If a size class is not specified, the system falls back to the nearest smaller class:
+- `expanded` falls back to `regular`, then `compact`
+- `regular` falls back to `compact`
+- `compact` is always required when `adaptive` is used
+
+This means you only need to specify overrides for size classes that differ from the default.
+
+### 5.5.5 Reflow rules
+
+Reflow rules define default adaptive behaviors that AI generators should apply automatically, even when screens don't explicitly declare `adaptive` overrides:
+
+```yaml
+reflow_rules:
+  action_trigger:
+    compact: { full_width: true }
+    regular: { full_width: false }
+
+  collection_grid:
+    compact: { columns: 1 }
+    regular: { columns: 2 }
+    expanded: { columns: 3 }
+
+  nav_container:
+    compact: { variant: "tab_bar" }
+    regular: { variant: "rail" }
+    expanded: { variant: "sidebar" }
+
+  surface_sheet:
+    compact: { variant: "sheet" }
+    expanded: { variant: "panel" }
+```
+
+Explicit `adaptive` overrides in screen files take precedence over reflow rules. Reflow rules serve as sensible defaults so that screens without adaptive annotations still behave reasonably across size classes.
+
+### 5.5.6 AI generation requirements
+
+For adaptive layout, AI generators:
+
+**MUST:**
+- Implement all three size classes (compact, regular, expanded)
+- Map size classes to the correct platform API (`UIUserInterfaceSizeClass`, `WindowSizeClass`, media queries)
+- Apply explicit `adaptive` overrides from screen files
+- Apply reflow rules as defaults when no explicit override exists
+- Handle `split_view.collapse_at` — collapse to single column below the specified class
+
+**SHOULD:**
+- Animate layout transitions smoothly when the size class changes (e.g., device rotation)
+- Support `content_max_width` from size class definitions
+- Apply `margin` from size class definitions as page-level padding
+
+**MAY:**
+- Support intermediate breakpoints beyond the three defined classes
+- Implement `split_view` drag-to-resize on desktop
+
+
+---
+
 ## 6. Navigation flows
 
 Flows define multi-screen journeys. They are intent-based and platform-agnostic.
@@ -1570,7 +1774,8 @@ Every AI generator, regardless of platform target, MUST:
 7. Handle `empty`, `loading`, and `error` states for `collection` contracts.
 8. Wire all `action.navigate` declarations to the platform's navigation system.
 9. Apply `motion.reduced_motion` preferences globally.
-10. Validate all `props` types and report spec errors before generating code.
+10. Implement all three size classes (`compact`, `regular`, `expanded`) and apply `adaptive` overrides from screen files.
+11. Validate all `props` types and report spec errors before generating code.
 
 ### 8.3 Validation
 

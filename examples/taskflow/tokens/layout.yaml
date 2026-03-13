@@ -1,0 +1,156 @@
+# TaskFlow — Layout Tokens
+# Defines size classes, layout primitives, and adaptive rules
+
+layout:
+  # ============================================================
+  # Size classes — the universal breakpoint vocabulary
+  # ============================================================
+  # Every platform maps to these same semantic classes.
+  # Screens and sections reference size classes by name,
+  # never by pixel value.
+  # ============================================================
+  size_classes:
+    compact:
+      semantic: "Single-column, phone-first layout"
+      width: { max: 600 }
+      columns: 4
+      margin: "spacing.md"
+      content_max_width: null           # full width
+      examples: "iPhone portrait, small Android phones"
+
+    regular:
+      semantic: "Two-column capable, tablet and large phone layouts"
+      width: { min: 601, max: 1024 }
+      columns: 8
+      margin: "spacing.lg"
+      content_max_width: 840
+      examples: "iPad portrait, large phones landscape, small tablets"
+
+    expanded:
+      semantic: "Multi-column, desktop and large tablet layouts"
+      width: { min: 1025 }
+      columns: 12
+      margin: "spacing.xl"
+      content_max_width: 1200
+      examples: "iPad landscape, desktop browsers, large tablets"
+
+  # How each platform resolves size classes
+  platform_mapping:
+    ios:
+      uses: "UIUserInterfaceSizeClass"
+      compact: ".compact horizontal"
+      regular: ".regular horizontal"
+      expanded: ".regular horizontal + width > 1024"
+    android:
+      uses: "WindowSizeClass"
+      compact: "WindowWidthSizeClass.Compact"
+      regular: "WindowWidthSizeClass.Medium"
+      expanded: "WindowWidthSizeClass.Expanded"
+    web:
+      uses: "media queries"
+      compact: "@media (max-width: 600px)"
+      regular: "@media (min-width: 601px) and (max-width: 1024px)"
+      expanded: "@media (min-width: 1025px)"
+
+  # ============================================================
+  # Layout primitives — the building blocks
+  # ============================================================
+  primitives:
+    stack:
+      semantic: "Vertical arrangement, items flow top to bottom"
+      props:
+        spacing: { type: token_ref, default: "spacing.md" }
+        align: { type: enum, values: [leading, center, trailing, stretch], default: stretch }
+        padding: { type: token_ref, required: false }
+      platform_mapping:
+        ios: "VStack"
+        android: "Column"
+        web: "flex-direction: column"
+
+    row:
+      semantic: "Horizontal arrangement, items flow leading to trailing"
+      props:
+        spacing: { type: token_ref, default: "spacing.sm" }
+        align: { type: enum, values: [top, center, bottom, baseline, stretch], default: center }
+        justify: { type: enum, values: [start, center, end, space-between, space-around], default: start }
+        wrap: { type: bool, default: false }
+      platform_mapping:
+        ios: "HStack"
+        android: "Row"
+        web: "flex-direction: row"
+
+    grid:
+      semantic: "2D grid with defined columns"
+      props:
+        columns: { type: "int or adaptive_map", default: 2 }
+        gap: { type: token_ref, default: "spacing.md" }
+        item_min_width: { type: int, required: false }
+      platform_mapping:
+        ios: "LazyVGrid"
+        android: "LazyVerticalGrid"
+        web: "display: grid"
+
+    scroll_vertical:
+      semantic: "Vertically scrollable content area"
+      props:
+        safe_area: { type: bool, default: true }
+        padding: { type: token_ref, required: false }
+        refresh: { type: bool, default: false }
+      platform_mapping:
+        ios: "ScrollView(.vertical)"
+        android: "LazyColumn or verticalScroll"
+        web: "overflow-y: auto"
+
+    split_view:
+      semantic: "Side-by-side panes for master-detail layouts"
+      props:
+        primary_width: { type: "fraction or token_ref", default: 0.35 }
+        divider: { type: bool, default: true }
+        collapse_at: { type: size_class, default: "compact" }
+      platform_mapping:
+        ios: "NavigationSplitView"
+        android: "ListDetailPaneScaffold"
+        web: "CSS Grid with two columns"
+
+    adaptive:
+      semantic: "Changes arrangement based on size class"
+      props:
+        compact: { type: layout_ref, required: true }
+        regular: { type: layout_ref, required: false }
+        expanded: { type: layout_ref, required: false }
+      behavior: "Falls back to nearest smaller class if not specified"
+
+  # ============================================================
+  # Content reflow rules
+  # ============================================================
+  # These define how content behaves when crossing size class
+  # boundaries. AI generators should apply these automatically.
+  # ============================================================
+  reflow_rules:
+    # Full-width buttons become inline on larger screens
+    action_trigger:
+      compact: { full_width: true }
+      regular: { full_width: false }
+
+    # Single column becomes multi-column
+    collection_grid:
+      compact: { columns: 1 }
+      regular: { columns: 2 }
+      expanded: { columns: 3 }
+
+    # Stacked stat cards become horizontal row
+    stat_group:
+      compact: { layout: stack, max_per_row: 2 }
+      regular: { layout: row }
+      expanded: { layout: row }
+
+    # Navigation adapts
+    nav_container:
+      compact: { variant: "tab_bar" }
+      regular: { variant: "rail" }
+      expanded: { variant: "sidebar" }
+
+    # Sheets become side panels on larger screens
+    surface_sheet:
+      compact: { variant: "sheet" }
+      expanded: { variant: "panel" }
