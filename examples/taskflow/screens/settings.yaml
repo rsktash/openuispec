@@ -45,7 +45,7 @@ settings:
         children:
           - contract: data_display
             variant: inline
-            props: { title: "Preferences" }
+            props: { title: "$t:settings.preferences" }
             tokens_override:
               title_style: "typography.overline"
               title_color: "color.text.tertiary"
@@ -55,12 +55,12 @@ settings:
           - contract: input_field
             input_type: select
             props:
-              label: "Theme"
+              label: "$t:settings.theme"
               options:
-                - { value: "system", label: "System" }
-                - { value: "light", label: "Light" }
-                - { value: "dark", label: "Dark" }
-                - { value: "warm", label: "Warm" }
+                - { value: "system", label: "$t:settings.theme_system" }
+                - { value: "light", label: "$t:settings.theme_light" }
+                - { value: "dark", label: "$t:settings.theme_dark" }
+                - { value: "warm", label: "$t:settings.theme_warm" }
               value: "preferences.theme"
             data_binding: "preferences.theme"
             action:
@@ -72,11 +72,11 @@ settings:
           - contract: input_field
             input_type: select
             props:
-              label: "Default priority"
+              label: "$t:settings.default_priority"
               options:
-                - { value: "low", label: "Low" }
-                - { value: "medium", label: "Medium" }
-                - { value: "high", label: "High" }
+                - { value: "low", label: "$t:priority.low" }
+                - { value: "medium", label: "$t:priority.medium" }
+                - { value: "high", label: "$t:priority.high" }
               value: "preferences.default_priority"
             data_binding: "preferences.default_priority"
 
@@ -84,7 +84,7 @@ settings:
           - contract: input_field
             input_type: toggle
             props:
-              label: "Push notifications"
+              label: "$t:settings.notifications"
               value: "preferences.notifications_enabled"
             data_binding: "preferences.notifications_enabled"
 
@@ -92,9 +92,9 @@ settings:
           - contract: input_field
             input_type: toggle
             props:
-              label: "Due date reminders"
+              label: "$t:settings.reminders"
               value: "preferences.reminders_enabled"
-              helper_text: "Get notified 1 hour before a task is due"
+              helper_text: "$t:settings.reminders_helper"
             data_binding: "preferences.reminders_enabled"
 
       # ---------- Data section ----------
@@ -105,7 +105,7 @@ settings:
         children:
           - contract: data_display
             variant: inline
-            props: { title: "Data" }
+            props: { title: "$t:settings.data" }
             tokens_override:
               title_style: "typography.overline"
               title_color: "color.text.tertiary"
@@ -116,21 +116,21 @@ settings:
             variant: compact
             interactive: true
             props:
-              title: "Export data"
+              title: "$t:settings.export"
               leading: { icon: "square_arrow_up", color: "color.text.secondary", size: 18 }
               trailing: { icon: "chevron_right", color: "color.text.tertiary" }
             action:
               type: api_call
               endpoint: "api.data.export"
               on_success:
-                feedback: { variant: toast, message: "Export sent to your email", severity: success }
+                feedback: { variant: toast, message: "$t:settings.export_success", severity: success }
 
           # Delete account
           - contract: action_trigger
             variant: ghost
             full_width: true
             props:
-              label: "Delete account"
+              label: "$t:settings.delete_account"
               icon: "trash"
             tokens_override:
               text: "color.semantic.danger"
@@ -140,14 +140,14 @@ settings:
                 contract: feedback
                 variant: dialog
                 props:
-                  title: "Delete your account?"
-                  message: "This will permanently delete your account and all your data. This action cannot be undone."
+                  title: "$t:settings.delete_title"
+                  message: "$t:settings.delete_message"
                   severity: error
                   actions:
-                    - label: "Cancel"
+                    - label: "$t:common.cancel"
                       variant: secondary
                       action: { type: dismiss }
-                    - label: "Delete my account"
+                    - label: "$t:settings.delete_confirm"
                       variant: destructive
                       action:
                         type: api_call
@@ -165,14 +165,14 @@ settings:
           - contract: data_display
             variant: inline
             props:
-              title: "TaskFlow v1.0.0"
+              title: "$t:settings.app_version"
             tokens_override:
               title_style: "typography.caption"
               title_color: "color.text.tertiary"
           - contract: data_display
             variant: inline
             props:
-              title: "Built with OpenUISpec"
+              title: "$t:settings.app_credit"
             tokens_override:
               title_style: "typography.caption"
               title_color: "color.text.tertiary"

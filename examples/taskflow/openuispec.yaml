@@ -19,6 +19,12 @@ includes:
   screens: "./screens/"
   flows: "./flows/"
   platform: "./platform/"
+  locales: "./locales/"
+
+i18n:
+  default_locale: "en"
+  supported_locales: [en]
+  fallback_strategy: "default"
 
 generation:
   targets: [ios, android, web]
@@ -38,23 +44,24 @@ formatters:
       morning: "morning"
       afternoon: "afternoon"
       evening: "evening"
+    # Used as key suffix in $t:home.greeting.{time_of_day | format:greeting}
 
   status_label:
     input: enum
     output: string
     mapping:
-      todo: "To do"
-      in_progress: "In progress"
-      done: "Done"
+      todo: "$t:status.todo"
+      in_progress: "$t:status.in_progress"
+      done: "$t:status.done"
 
   priority_label:
     input: enum
     output: string
     mapping:
-      low: "Low"
-      medium: "Medium"
-      high: "High"
-      urgent: "Urgent"
+      low: "$t:priority.low"
+      medium: "$t:priority.medium"
+      high: "$t:priority.high"
+      urgent: "$t:priority.urgent"
 
 mappers:
   status_severity:

@@ -31,7 +31,9 @@ project_detail:
         variant: hero
         props:
           title: "{project.name}"
-          subtitle: "{project.task_count} tasks"
+          subtitle: "$t:project_detail.task_count"
+          t_params:
+            count: "project.task_count"
           leading:
             icon: "{project.icon}"
             color: "{project.color}"
@@ -55,8 +57,8 @@ project_detail:
           pull_to_refresh: true
           empty_state:
             icon: "checkmark_circle_fill"
-            title: "No tasks in this project"
-            body: "Add a task to get started."
+            title: "$t:project_detail.empty_title"
+            body: "$t:project_detail.empty_body"
         action:
           type: navigate
           destination: "screens/task_detail"

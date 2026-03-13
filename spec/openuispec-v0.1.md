@@ -52,6 +52,8 @@ project/
 ├── flows/
 │   ├── onboarding.yaml
 │   └── checkout.yaml
+├── locales/
+│   └── en.json
 └── platform/
     ├── ios.yaml
     ├── android.yaml
@@ -73,6 +75,7 @@ includes:
   screens: "./screens/"
   flows: "./flows/"
   platform: "./platform/"
+  locales: "./locales/"
 
 generation:
   targets: [ios, android, web]
@@ -1884,6 +1887,7 @@ Every AI generator, regardless of platform target, MUST:
 9. Apply `motion.reduced_motion` preferences globally.
 10. Implement all three size classes (`compact`, `regular`, `expanded`) and apply `adaptive` overrides from screen files.
 11. Validate all `props` types and report spec errors before generating code.
+12. Generate platform-native localization resources from JSON locale files when `i18n` config is present (see Section 11).
 
 ### 8.3 Validation
 
@@ -2475,20 +2479,36 @@ Format expressions transform values for display. They appear inside `{}` delimit
 **Syntax:**
 
 ```
-interpolation := '{' (piped_expr | computed_expr) '}'
-piped_expr    := data_path ('|' pipe)*
-pipe          := operation ':' argument
-operation     := 'format' | 'map' | 'default'
-computed_expr := data_path comparator value '?' literal ':' literal
-comparator    := '==' | '!=' | '>' | '<' | '>=' | '<='
+interpolation  := '{' (piped_expr | computed_expr) '}'
+piped_expr     := data_path ('|' pipe)*
+pipe           := operation ':' argument
+operation      := 'format' | 'map' | 'default'
+computed_expr  := data_path comparator value '?' literal ':' literal
+comparator     := '==' | '!=' | '>' | '<' | '>=' | '<='
+locale_ref     := '$t:' locale_key
+locale_key     := identifier ('.' identifier)*
 ```
 
-OpenUISpec supports two expression types inside `{}`:
+OpenUISpec supports three expression types for display strings:
 
 1. **Piped expressions** — a data path optionally transformed by format/map/default pipes: `{task.due_date | format:date_relative}`
 2. **Computed expressions** — ternary conditionals for inline logic: `{task.status == done ? 'Reopen' : 'Mark complete'}`
+3. **Locale references** — `$t:key` strings resolved from locale JSON files (see Section 11): `"$t:home.new_task"`
 
 Computed expressions are intentionally limited to single ternaries. Complex logic belongs in derived data sources (Section 10.1) or conditional actions (Section 9.2), not in display strings.
+
+**Locale references with parameters:**
+
+When a locale string contains ICU placeholders, supply data via a sibling `t_params` property:
+
+```yaml
+# Locale file: "home.task_count": "{count, plural, =0 {No tasks today} one {# task today} other {# tasks today}}"
+subtitle: "$t:home.task_count"
+t_params:
+  count: "task_counts.today"
+```
+
+The `t_params` keys map to ICU placeholder names; the values are data paths resolved at runtime.
 
 **Examples:**
 
@@ -2657,6 +2677,8 @@ Collection contracts handle `$loading`, `$error`, and `$empty` automatically via
 - Handle `$loading`, `$error`, and `$empty` states for every data source
 - Implement all built-in formatters with correct locale behavior
 - Implement all built-in mappers (or generate them from project-defined maps)
+- Resolve all `$t:` references against the active locale file and pass `t_params` to ICU placeholders
+- Generate platform-native locale files from JSON source when `i18n` config is present (see Section 11)
 
 **SHOULD:**
 - Implement caching at declared levels
@@ -2670,6 +2692,161 @@ Collection contracts handle `$loading`, `$error`, and `$empty` automatically via
 - Implement stale-while-revalidate patterns
 - Pre-fetch data for likely navigation targets
 
+
+---
+
+## 11. Internationalization (i18n)
+
+### 11.1 Overview
+
+OpenUISpec treats **JSON locale files as the single source of truth** for all user-facing strings. Platform generators convert these files into native localization resources (iOS `.xcstrings`, Android `strings.xml` + `plurals.xml`, web JSON bundles). The spec defines the source format and string referencing mechanism; platforms handle locale detection and runtime switching.
+
+Key principles:
+- All user-facing strings live in locale files, not in screen/flow YAML
+- YAML files reference strings via `$t:key` syntax
+- ICU MessageFormat handles plurals, selects, and interpolation within locale strings
+- One JSON file per locale (e.g., `en.json`, `es.json`, `ja.json`)
+
+### 11.2 Locale file format
+
+Locale files use **flat keys with dot-namespacing** and live in the `locales/` directory:
+
+```json
+{
+  "$locale": "en",
+  "$direction": "ltr",
+
+  "nav.tasks": "Tasks",
+  "nav.projects": "Projects",
+
+  "home.task_count": "{count, plural, =0 {No tasks today} one {# task today} other {# tasks today}}",
+  "home.greeting.morning": "Good morning, {name}",
+
+  "task_detail.toggle_status": "{is_done, select, true {Reopen task} other {Mark complete}}",
+  "task_detail.delete_message": "This action cannot be undone. The task \"{title}\" will be permanently removed.",
+
+  "common.cancel": "Cancel",
+  "common.delete": "Delete"
+}
+```
+
+**Metadata keys** (prefixed with `$`):
+- `$locale` — BCP 47 language tag (e.g., `"en"`, `"es"`, `"ja"`)
+- `$direction` — `"ltr"` or `"rtl"`
+
+**String values** use [ICU MessageFormat](https://unicode-org.github.io/icu/userguide/format_parse/messages/) for:
+- **Plurals:** `{count, plural, =0 {No items} one {# item} other {# items}}`
+- **Selects:** `{status, select, active {Active} archived {Archived} other {Unknown}}`
+- **Simple interpolation:** `{name}` placeholder filled from `t_params`
+
+**Key conventions:**
+- Flat, dot-namespaced: `screen_name.element` (not nested JSON objects)
+- Grouped by screen/flow: `home.*`, `task_detail.*`, `create_task.*`
+- Shared strings under `common.*`
+- Enum labels under their enum name: `priority.*`, `status.*`
+
+### 11.3 String references
+
+YAML files reference locale strings with the `$t:` prefix:
+
+```yaml
+# Simple reference
+label: "$t:common.cancel"
+
+# Reference with ICU parameters
+subtitle: "$t:home.task_count"
+t_params:
+  count: "task_counts.today"
+
+# Dynamic key (using format expression in the key path)
+title: "$t:home.greeting.{time_of_day | format:greeting}"
+t_params:
+  name: "user.first_name"
+```
+
+**Rules:**
+- `$t:key` is a standalone string value — it cannot be mixed with other text in the same string
+- `t_params` is a sibling property of the `$t:` string, mapping ICU placeholder names to data paths
+- `t_params` values are data paths (see Section 10.3), resolved at runtime
+- Formatter mappings may also reference locale keys: `mapping: { todo: "$t:status.todo" }`
+
+### 11.4 Formatter localization
+
+Custom formatters defined in `openuispec.yaml` can reference locale keys in their mappings:
+
+```yaml
+formatters:
+  status_label:
+    input: enum
+    output: string
+    mapping:
+      todo: "$t:status.todo"
+      in_progress: "$t:status.in_progress"
+      done: "$t:status.done"
+```
+
+This keeps display labels localized while preserving the enum-to-string mapping structure. Built-in locale-aware formatters (`currency`, `date`, `number`, `pluralize`) use the active locale automatically.
+
+### 11.5 Layout direction
+
+OpenUISpec already uses **logical directions** (`leading`/`trailing` instead of `left`/`right`). For RTL locales:
+
+1. Declare direction in the locale file: `"$direction": "rtl"`
+2. The `i18n` config in the manifest declares which locales are supported
+3. Platform generators map logical directions to physical directions based on the active locale
+
+```yaml
+# Already in the spec — no changes needed
+icon: { ref: "search", position: leading }    # leading = left in LTR, right in RTL
+trailing: { icon: "chevron_right" }           # trailing = right in LTR, left in RTL
+```
+
+**Platform mapping:**
+| Logical | LTR physical | RTL physical |
+|---------|-------------|-------------|
+| `leading` | `left` / `start` | `right` / `end` |
+| `trailing` | `right` / `end` | `left` / `start` |
+| `floating-bottom-trailing` | Bottom-right | Bottom-left |
+
+### 11.6 Platform mapping
+
+Generators produce platform-native localization resources from the JSON source:
+
+| Platform | Output format | Plurals | Notes |
+|----------|--------------|---------|-------|
+| **iOS** | `.xcstrings` (Xcode 15+) | Built-in plural rules | ICU plurals map to `.stringsdict` entries within `.xcstrings` |
+| **Android** | `res/values-{locale}/strings.xml` + `plurals.xml` | `<plurals>` element | ICU selects map to conditional logic in generated code |
+| **Web** | JSON bundles per locale | `react-intl` / `i18next` ICU plugin | Direct ICU MessageFormat — no conversion needed |
+
+The `i18n` config in the project manifest controls generation:
+
+```yaml
+i18n:
+  default_locale: "en"
+  supported_locales: [en, es, ja, ar]
+  fallback_strategy: "default"    # fall back to default_locale for missing keys
+```
+
+### 11.7 AI generation requirements
+
+**MUST:**
+- Resolve every `$t:key` reference to the corresponding locale string
+- Generate platform-native locale files from JSON sources for each supported locale
+- Pass `t_params` data paths to ICU placeholders at runtime
+- Apply `$direction` from the active locale to layout direction
+- Use the `fallback_strategy` for missing keys (default: fall back to `default_locale`)
+
+**SHOULD:**
+- Validate that all `$t:` keys in YAML files exist in every supported locale file
+- Warn when a locale file has keys not referenced by any YAML file
+- Support locale switching at runtime without app restart (hot swap)
+- Use platform-native locale detection for initial locale selection
+
+**MAY:**
+- Support right-to-left layout preview in development tools
+- Generate translation key extraction reports
+- Support pluralization categories beyond `=0`, `one`, `other` (e.g., `two`, `few`, `many` for languages that need them)
+- Support nested ICU messages (selects within plurals)
 
 ---
 
@@ -2696,14 +2873,17 @@ Collection contracts handle `$loading`, `$error`, and `$empty` automatically via
 | `cache_level` | Data caching strategy | `none \| screen \| session \| persistent` |
 | `size_class` | Adaptive layout breakpoint | `compact \| regular \| expanded` |
 | `layout_ref` | Layout primitive definition | `{ type: stack, spacing: "spacing.md" }` |
+| `locale_ref` | Locale string reference (see Section 11) | `"$t:common.cancel"` |
 
 ## Appendix B: Format expression quick reference
 
 > Full specification in Section 10.5.
 
-**Syntax:** `{data_path | pipe}` or `{condition ? 'value_a' : 'value_b'}`
+**Syntax:** `{data_path | pipe}` or `{condition ? 'value_a' : 'value_b'}` or `$t:locale_key`
 
 **Pipes:** `format:name`, `map:name`, `default:'fallback'`
+
+**Locale references:** `$t:key` with optional `t_params:` sibling for ICU placeholders (see Section 11)
 
 **Built-in formatters:** `currency`, `date`, `date_relative`, `date_short`, `time`, `number`, `percentage`, `status_label`, `pluralize`, `file_size`
 

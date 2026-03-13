@@ -19,5 +19,5 @@ calendar:
         contract: data_display
         variant: hero
         props:
-          title: "Calendar"
-          subtitle: "Coming in a future version"
+          title: "$t:calendar.title"
+          subtitle: "$t:calendar.coming_soon"

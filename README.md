@@ -56,7 +56,7 @@ The result: each platform feels native, but every app stays consistent because i
 ```
 openuispec/
 ├── spec/
-│   └── openuispec-v0.1.md              # Full specification (10 sections)
+│   └── openuispec-v0.1.md              # Full specification (11 sections)
 ├── examples/
 │   └── taskflow/                        # Complete example app
 │       ├── openuispec.yaml              # Root manifest + data model + API endpoints
@@ -80,6 +80,8 @@ openuispec/
 │       ├── flows/
 │       │   ├── create_task.yaml         # Task creation form (sheet presentation)
 │       │   └── edit_task.yaml           # Task editing flow
+│       ├── locales/
+│       │   └── en.json                  # English locale (ICU MessageFormat)
 │       └── platform/
 │           ├── ios.yaml                 # SwiftUI overrides + behaviors
 │           ├── android.yaml             # Compose overrides + behaviors
@@ -102,6 +104,7 @@ openuispec/
 | 8. AI generation contract | Compliance levels (MUST/SHOULD/MAY), validation, drift detection |
 | 9. Action system | 13 action types, composition, optimistic updates |
 | 10. Data binding & state | Sources, paths, format expressions, reactivity, caching |
+| 11. Internationalization | Locale files, `$t:` references, ICU MessageFormat, RTL, platform mapping |
 
 ## The 7 contract families
 
@@ -127,6 +130,7 @@ openuispec/
 - [x] Action system (13 types, composition, optimistic updates)
 - [x] Data binding & state management (sources, expressions, caching)
 - [x] Format expression grammar with computed expressions
+- [x] Internationalization (i18n) with ICU MessageFormat and `$t:` references
 - [ ] JSON Schema for spec validation
 - [ ] Custom contract extension mechanism
 - [ ] Icon system definition

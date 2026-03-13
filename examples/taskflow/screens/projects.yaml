@@ -25,14 +25,14 @@ projects:
           - contract: data_display
             variant: inline
             props:
-              title: "Projects"
+              title: "$t:projects.title"
             tokens_override:
               title_style: "typography.heading_lg"
           - contract: action_trigger
             variant: tertiary
             size: sm
             props:
-              label: "New project"
+              label: "$t:projects.new_project"
               icon: "plus_circle"
             action:
               type: present
@@ -48,7 +48,9 @@ projects:
           item_variant: card
           item_props_map:
             title: "item.name"
-            subtitle: "{item.task_count} tasks"
+            subtitle: "$t:projects.task_count"
+            t_params:
+              count: "item.task_count"
             leading:
               icon: "item.icon"
               color: "item.color"
@@ -60,8 +62,8 @@ projects:
 
           empty_state:
             icon: "folder_fill"
-            title: "No projects yet"
-            body: "Create a project to organize your tasks."
+            title: "$t:projects.empty_title"
+            body: "$t:projects.empty_body"
 
         adaptive:
           compact: { columns: 1 }
@@ -78,7 +80,7 @@ projects:
       contract: surface
       variant: modal
       props:
-        title: "New project"
+        title: "$t:projects.dialog_title"
         size: sm
         content:
           - layout: { type: stack, spacing: "spacing.md" }
@@ -86,15 +88,15 @@ projects:
               - contract: input_field
                 input_type: text
                 props:
-                  label: "Project name"
-                  placeholder: "e.g., Product Launch"
+                  label: "$t:projects.field_name"
+                  placeholder: "$t:projects.field_name_placeholder"
                   required: true
                 data_binding: "form.name"
 
               - contract: input_field
                 input_type: select
                 props:
-                  label: "Color"
+                  label: "$t:projects.field_color"
                   options:
                     - { value: "#5B4FE8", label: "Indigo" }
                     - { value: "#E8634F", label: "Coral" }
@@ -107,7 +109,7 @@ projects:
               - contract: input_field
                 input_type: select
                 props:
-                  label: "Icon"
+                  label: "$t:projects.field_icon"
                   options:
                     - { value: "folder", label: "Folder" }
                     - { value: "briefcase", label: "Briefcase" }
@@ -122,12 +124,12 @@ projects:
                   - contract: action_trigger
                     variant: secondary
                     size: sm
-                    props: { label: "Cancel" }
+                    props: { label: "$t:common.cancel" }
                     action: { type: dismiss }
                   - contract: action_trigger
                     variant: primary
                     size: sm
-                    props: { label: "Create" }
+                    props: { label: "$t:common.create" }
                     action:
                       type: api_call
                       endpoint: "api.projects.create"
@@ -136,5 +138,5 @@ projects:
                         type: sequence
                         actions:
                           - { type: dismiss }
-                          - { type: feedback, variant: toast, message: "Project created", severity: success }
+                          - { type: feedback, variant: toast, message: "$t:projects.created", severity: success }
                           - { type: refresh, target: "screens/projects.projects" }

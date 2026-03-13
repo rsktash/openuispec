@@ -39,13 +39,13 @@ edit_task:
                 - contract: action_trigger
                   variant: ghost
                   size: sm
-                  props: { label: "Cancel" }
+                  props: { label: "$t:common.cancel" }
                   action: { type: dismiss }
 
                 - contract: data_display
                   variant: inline
                   props:
-                    title: "Edit task"
+                    title: "$t:edit_task.title"
                   tokens_override:
                     title_style: "typography.heading_sm"
 
@@ -53,8 +53,8 @@ edit_task:
                   variant: primary
                   size: sm
                   props:
-                    label: "Save"
-                    loading_label: "Saving..."
+                    label: "$t:edit_task.save"
+                    loading_label: "$t:edit_task.saving"
                   state_binding:
                     loading: "state.is_submitting"
                   action:
@@ -69,7 +69,7 @@ edit_task:
                 - contract: input_field
                   input_type: text
                   props:
-                    label: "Title"
+                    label: "$t:edit_task.field_title"
                     value: "task.title"
                     required: true
                     max_length: 200
@@ -78,27 +78,27 @@ edit_task:
                 - contract: input_field
                   input_type: multiline
                   props:
-                    label: "Description"
+                    label: "$t:edit_task.field_description"
                     value: "task.description"
                   data_binding: "form.description"
 
                 - contract: input_field
                   input_type: select
                   props:
-                    label: "Priority"
+                    label: "$t:edit_task.field_priority"
                     value: "task.priority"
                     options:
-                      - { value: "low", label: "Low", icon: "flag", color: "color.priority.low" }
-                      - { value: "medium", label: "Medium", icon: "flag_fill", color: "color.priority.medium" }
-                      - { value: "high", label: "High", icon: "flag_fill", color: "color.priority.high" }
-                      - { value: "urgent", label: "Urgent", icon: "exclamationmark_triangle", color: "color.priority.urgent" }
+                      - { value: "low", label: "$t:priority.low", icon: "flag", color: "color.priority.low" }
+                      - { value: "medium", label: "$t:priority.medium", icon: "flag_fill", color: "color.priority.medium" }
+                      - { value: "high", label: "$t:priority.high", icon: "flag_fill", color: "color.priority.high" }
+                      - { value: "urgent", label: "$t:priority.urgent", icon: "exclamationmark_triangle", color: "color.priority.urgent" }
                     required: true
                   data_binding: "form.priority"
 
                 - contract: input_field
                   input_type: date
                   props:
-                    label: "Due date"
+                    label: "$t:edit_task.field_due_date"
                     value: "task.due_date"
                   data_binding: "form.due_date"
 
@@ -114,14 +114,14 @@ edit_task:
                   type: sequence
                   actions:
                     - { type: set_state, is_submitting: false }
-                    - { type: feedback, variant: toast, message: "Task updated", severity: success }
+                    - { type: feedback, variant: toast, message: "$t:edit_task.success", severity: success }
                     - { type: dismiss }
                     - { type: refresh, target: "screens/task_detail.task" }
                 on_error:
                   type: sequence
                   actions:
                     - { type: set_state, is_submitting: false }
-                    - { type: feedback, variant: banner, title: "Couldn't update task", message: "{error.message}", severity: error }
+                    - { type: feedback, variant: banner, title: "$t:edit_task.error_title", message: "{error.message}", severity: error }
 
       transitions: {}
 

@@ -52,7 +52,7 @@ task_detail:
               - contract: data_display
                 variant: stat
                 props:
-                  title: "Status"
+                  title: "$t:task_detail.status"
                   body: "{task.status | format:status_label}"
                   leading:
                     icon: "circle_fill"
@@ -62,7 +62,7 @@ task_detail:
               - contract: data_display
                 variant: stat
                 props:
-                  title: "Priority"
+                  title: "$t:task_detail.priority"
                   body: "{task.priority | format:priority_label}"
                   leading:
                     icon: "flag_fill"
@@ -72,7 +72,7 @@ task_detail:
               - contract: data_display
                 variant: stat
                 props:
-                  title: "Due"
+                  title: "$t:task_detail.due"
                   body: "{task.due_date | format:date_relative}"
 
       # ---------- Description ----------
@@ -88,7 +88,7 @@ task_detail:
           - contract: data_display
             variant: inline
             props:
-              title: "Description"
+              title: "$t:task_detail.description"
             tokens_override:
               title_style: "typography.overline"
               title_color: "color.text.tertiary"
@@ -111,7 +111,7 @@ task_detail:
           - contract: data_display
             variant: inline
             props:
-              title: "Details"
+              title: "$t:task_detail.details"
             tokens_override:
               title_style: "typography.overline"
               title_color: "color.text.tertiary"
@@ -121,7 +121,7 @@ task_detail:
             variant: compact
             interactive: true
             props:
-              title: "Project"
+              title: "$t:task_detail.project"
               trailing: "{task.project.name}"
               leading: { icon: "folder", color: "color.text.secondary", size: 18 }
             action:
@@ -134,8 +134,8 @@ task_detail:
             variant: compact
             interactive: true
             props:
-              title: "Assignee"
-              trailing: "{task.assignee.name | default:'Unassigned'}"
+              title: "$t:task_detail.assignee"
+              trailing: "{task.assignee.name | default:$t:task_detail.unassigned}"
               leading: { icon: "person", color: "color.text.secondary", size: 18 }
             action:
               type: present
@@ -145,7 +145,7 @@ task_detail:
           - contract: data_display
             variant: compact
             props:
-              title: "Tags"
+              title: "$t:task_detail.tags"
               trailing:
                 contract: collection
                 variant: chips
@@ -161,7 +161,7 @@ task_detail:
           - contract: data_display
             variant: compact
             props:
-              title: "Created"
+              title: "$t:task_detail.created"
               trailing: "{task.created_at | format:date}"
               leading: { icon: "clock", color: "color.text.secondary", size: 18 }
 
@@ -182,7 +182,7 @@ task_detail:
           - contract: action_trigger
             variant: primary
             props:
-              label: "Edit task"
+              label: "$t:task_detail.edit"
               icon: "pencil"
             adaptive:
               compact: { full_width: true }
@@ -196,7 +196,9 @@ task_detail:
           - contract: action_trigger
             variant: secondary
             props:
-              label: "{task.status == done ? 'Reopen task' : 'Mark complete'}"
+              label: "$t:task_detail.toggle_status"
+              t_params:
+                is_done: "task.status == done"
               icon: "{task.status == done ? 'arrow_uturn_left' : 'checkmark'}"
             adaptive:
               compact: { full_width: true }
@@ -212,19 +214,19 @@ task_detail:
               on_success:
                 type: feedback
                 variant: toast
-                message: "Task updated"
+                message: "$t:task_detail.task_updated"
                 severity: success
                 duration: 3000
               on_error:
                 type: feedback
                 variant: toast
-                message: "Couldn't update status"
+                message: "$t:task_detail.update_error"
                 severity: error
 
           - contract: action_trigger
             variant: destructive
             props:
-              label: "Delete task"
+              label: "$t:task_detail.delete"
               icon: "trash"
             adaptive:
               compact: { full_width: true }
@@ -235,13 +237,15 @@ task_detail:
                 contract: feedback
                 variant: dialog
                 props:
-                  title: "Delete task?"
-                  message: "This action cannot be undone. The task \"{task.title}\" will be permanently removed."
+                  title: "$t:task_detail.delete_title"
+                  message: "$t:task_detail.delete_message"
+                  t_params:
+                    title: "task.title"
                   actions:
-                    - label: "Cancel"
+                    - label: "$t:common.cancel"
                       variant: secondary
                       action: { type: dismiss }
-                    - label: "Delete"
+                    - label: "$t:common.delete"
                       variant: destructive
                       action:
                         type: api_call
@@ -254,7 +258,7 @@ task_detail:
                               destination: "$back"
                             - type: feedback
                               variant: toast
-                              message: "Task deleted"
+                              message: "$t:task_detail.task_deleted"
                               severity: neutral
 
   # ---------- Surfaces ----------
@@ -262,13 +266,13 @@ task_detail:
     assignee_picker:
       contract: surface
       props:
-        title: "Assign to"
+        title: "$t:task_detail.assign_to"
         content:
           - contract: input_field
             input_type: text
             props:
-              label: "Search people"
-              placeholder: "Name or email..."
+              label: "$t:task_detail.search_people"
+              placeholder: "$t:task_detail.search_people_placeholder"
               icon: { ref: "search", position: leading }
           - contract: collection
             variant: list

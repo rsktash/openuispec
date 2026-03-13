@@ -31,7 +31,7 @@ profile_edit:
           - contract: action_trigger
             variant: tertiary
             size: sm
-            props: { label: "Change photo" }
+            props: { label: "$t:profile.change_photo" }
 
       - id: form
         margin_top: "spacing.lg"
@@ -40,7 +40,7 @@ profile_edit:
           - contract: input_field
             input_type: text
             props:
-              label: "Name"
+              label: "$t:profile.field_name"
               value: "user.name"
               required: true
             data_binding: "form.name"
@@ -48,7 +48,7 @@ profile_edit:
           - contract: input_field
             input_type: email
             props:
-              label: "Email"
+              label: "$t:profile.field_email"
               value: "user.email"
               required: true
             data_binding: "form.email"
@@ -58,7 +58,7 @@ profile_edit:
         contract: action_trigger
         variant: primary
         full_width: true
-        props: { label: "Save changes" }
+        props: { label: "$t:profile.save" }
         action:
           type: api_call
           endpoint: "api.auth.updateProfile"
@@ -67,4 +67,4 @@ profile_edit:
             type: sequence
             actions:
               - { type: navigate, destination: "$back" }
-              - { type: feedback, variant: toast, message: "Profile updated", severity: success }
+              - { type: feedback, variant: toast, message: "$t:profile.success", severity: success }

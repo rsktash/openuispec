@@ -32,13 +32,13 @@ create_task:
                 - contract: action_trigger
                   variant: ghost
                   size: sm
-                  props: { label: "Cancel" }
+                  props: { label: "$t:common.cancel" }
                   action: { type: dismiss }
 
                 - contract: data_display
                   variant: inline
                   props:
-                    title: "New task"
+                    title: "$t:create_task.title"
                   tokens_override:
                     title_style: "typography.heading_sm"
 
@@ -46,8 +46,8 @@ create_task:
                   variant: primary
                   size: sm
                   props:
-                    label: "Save"
-                    loading_label: "Saving..."
+                    label: "$t:create_task.save"
+                    loading_label: "$t:create_task.saving"
                   state_binding:
                     loading: "state.is_submitting"
                   action:
@@ -64,8 +64,8 @@ create_task:
                 - contract: input_field
                   input_type: text
                   props:
-                    label: "Title"
-                    placeholder: "What needs to be done?"
+                    label: "$t:create_task.field_title"
+                    placeholder: "$t:create_task.field_title_placeholder"
                     required: true
                     max_length: 200
                   data_binding: "form.title"
@@ -74,8 +74,8 @@ create_task:
                 - contract: input_field
                   input_type: multiline
                   props:
-                    label: "Description"
-                    placeholder: "Add details, notes, or context..."
+                    label: "$t:create_task.field_description"
+                    placeholder: "$t:create_task.field_description_placeholder"
                     required: false
                   data_binding: "form.description"
                   tokens_override:
@@ -85,8 +85,8 @@ create_task:
                 - contract: input_field
                   input_type: select
                   props:
-                    label: "Project"
-                    placeholder: "Select a project"
+                    label: "$t:create_task.field_project"
+                    placeholder: "$t:create_task.field_project_placeholder"
                     options:
                       source: "api.projects.list"
                       value_key: "id"
@@ -99,12 +99,12 @@ create_task:
                 - contract: input_field
                   input_type: select
                   props:
-                    label: "Priority"
+                    label: "$t:create_task.field_priority"
                     options:
-                      - { value: "low", label: "Low", icon: "flag", color: "color.priority.low" }
-                      - { value: "medium", label: "Medium", icon: "flag_fill", color: "color.priority.medium" }
-                      - { value: "high", label: "High", icon: "flag_fill", color: "color.priority.high" }
-                      - { value: "urgent", label: "Urgent", icon: "exclamationmark_triangle", color: "color.priority.urgent" }
+                      - { value: "low", label: "$t:priority.low", icon: "flag", color: "color.priority.low" }
+                      - { value: "medium", label: "$t:priority.medium", icon: "flag_fill", color: "color.priority.medium" }
+                      - { value: "high", label: "$t:priority.high", icon: "flag_fill", color: "color.priority.high" }
+                      - { value: "urgent", label: "$t:priority.urgent", icon: "exclamationmark_triangle", color: "color.priority.urgent" }
                     required: true
                   data_binding: "form.priority"
 
@@ -112,8 +112,8 @@ create_task:
                 - contract: input_field
                   input_type: date
                   props:
-                    label: "Due date"
-                    placeholder: "No due date"
+                    label: "$t:create_task.field_due_date"
+                    placeholder: "$t:create_task.field_due_date_placeholder"
                     required: false
                   data_binding: "form.due_date"
 
@@ -121,9 +121,9 @@ create_task:
                 - contract: input_field
                   input_type: text
                   props:
-                    label: "Tags"
-                    placeholder: "Add tags separated by commas"
-                    helper_text: "Press comma or Enter to add a tag"
+                    label: "$t:create_task.field_tags"
+                    placeholder: "$t:create_task.field_tags_placeholder"
+                    helper_text: "$t:create_task.field_tags_helper"
                     required: false
                   data_binding: "form.tags"
                   behavior:
@@ -134,7 +134,7 @@ create_task:
                 - contract: input_field
                   input_type: toggle
                   props:
-                    label: "Assign to me"
+                    label: "$t:create_task.field_assign_to_me"
                     value: true
                   data_binding: "form.assign_to_self"
 
@@ -150,14 +150,14 @@ create_task:
                   type: sequence
                   actions:
                     - { type: set_state, is_submitting: false }
-                    - { type: feedback, variant: toast, message: "Task created", severity: success, icon: "checkmark_circle", duration: 3000 }
+                    - { type: feedback, variant: toast, message: "$t:create_task.success", severity: success, icon: "checkmark_circle", duration: 3000 }
                     - { type: dismiss }
                     - { type: refresh, target: "screens/home.tasks" }
                 on_error:
                   type: sequence
                   actions:
                     - { type: set_state, is_submitting: false }
-                    - { type: feedback, variant: banner, title: "Couldn't create task", message: "{error.message}", severity: error }
+                    - { type: feedback, variant: banner, title: "$t:create_task.error_title", message: "{error.message}", severity: error }
 
       transitions: {}                   # single screen, no transitions
 

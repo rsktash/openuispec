@@ -37,23 +37,23 @@ home:
     props:
       items:
         - id: "home"
-          label: "Tasks"
+          label: "$t:nav.tasks"
           icon: "checkmark_list"
           icon_active: "checkmark_list_fill"
           destination: "screens/home"
           badge: { count: "task_counts.today", severity: "info" }
         - id: "projects"
-          label: "Projects"
+          label: "$t:nav.projects"
           icon: "folder"
           icon_active: "folder_fill"
           destination: "screens/projects"
         - id: "calendar"
-          label: "Calendar"
+          label: "$t:nav.calendar"
           icon: "calendar"
           icon_active: "calendar_fill"
           destination: "screens/calendar"
         - id: "settings"
-          label: "Settings"
+          label: "$t:nav.settings"
           icon: "gear"
           icon_active: "gear_fill"
           destination: "screens/settings"
@@ -86,8 +86,11 @@ home:
           - contract: data_display
             variant: inline
             props:
-              title: "Good {time_of_day | format:greeting}, {user.first_name}"
-              subtitle: "{task_counts.today} tasks today"
+              title: "$t:home.greeting.{time_of_day | format:greeting}"
+              subtitle: "$t:home.task_count"
+              t_params:
+                name: "user.first_name"
+                count: "task_counts.today"
               emphasis: default
             tokens_override:
               title_style: "typography.heading_lg"
@@ -104,8 +107,8 @@ home:
         contract: input_field
         input_type: text
         props:
-          label: "Search tasks"
-          placeholder: "Search by title, tag, or project..."
+          label: "$t:home.search_label"
+          placeholder: "$t:home.search_placeholder"
           value: "state.search_query"
           icon: { ref: "search", position: leading }
           clearable: true
@@ -126,10 +129,10 @@ home:
         variant: chips
         props:
           data:
-            - { id: "all", label: "All", count: "task_counts.all" }
-            - { id: "today", label: "Today", count: "task_counts.today" }
-            - { id: "upcoming", label: "Upcoming", count: "task_counts.upcoming" }
-            - { id: "done", label: "Done", count: "task_counts.done" }
+            - { id: "all", label: "$t:home.filter.all", count: "task_counts.all" }
+            - { id: "today", label: "$t:home.filter.today", count: "task_counts.today" }
+            - { id: "upcoming", label: "$t:home.filter.upcoming", count: "task_counts.upcoming" }
+            - { id: "done", label: "$t:home.filter.done", count: "task_counts.done" }
           item_contract: action_trigger
           item_variant: ghost
           item_props_map:
@@ -159,7 +162,9 @@ home:
               input_type: checkbox
               props:
                 value: "item.status == done"
-                label: "Mark {item.title} complete"
+                label: "$t:home.mark_complete"
+                t_params:
+                  title: "item.title"
               action:
                 type: api_call
                 endpoint: "api.tasks.toggleStatus"
@@ -181,8 +186,8 @@ home:
 
           empty_state:
             icon: "checkmark_circle_fill"
-            title: "All caught up!"
-            body: "No tasks match this filter. Tap + to add one."
+            title: "$t:home.empty_title"
+            body: "$t:home.empty_body"
 
         action:
           type: navigate
@@ -196,7 +201,7 @@ home:
         variant: primary
         size: lg
         props:
-          label: "New task"
+          label: "$t:home.new_task"
           icon: "plus"
         tokens_override:
           radius: 28
