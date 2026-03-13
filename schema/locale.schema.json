@@ -18,9 +18,25 @@
   },
   "patternProperties": {
     "^[a-zA-Z_][a-zA-Z0-9_.]*$": {
-      "type": "string",
-      "description": "Translation string (ICU MessageFormat)"
+      "$ref": "#/$defs/message_value"
     }
   },
-  "additionalProperties": false
+  "additionalProperties": false,
+  "$defs": {
+    "message_value": {
+      "description": "Translation string (ICU MessageFormat) or nested group of translations",
+      "oneOf": [
+        { "type": "string" },
+        {
+          "type": "object",
+          "patternProperties": {
+            "^[a-zA-Z_][a-zA-Z0-9_.]*$": {
+              "$ref": "#/$defs/message_value"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    }
+  }
 }

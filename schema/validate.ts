@@ -148,9 +148,46 @@ function validateFile(
 
 // ── validation groups ────────────────────────────────────────────────
 
+// ── includes resolution ──────────────────────────────────────────────
+
+interface Includes {
+  tokens: string;
+  contracts: string;
+  screens: string;
+  flows: string;
+  platform: string;
+  locales: string;
+}
+
+const DEFAULT_INCLUDES: Includes = {
+  tokens: "./tokens/",
+  contracts: "./contracts/",
+  screens: "./screens/",
+  flows: "./flows/",
+  platform: "./platform/",
+  locales: "./locales/",
+};
+
+function readIncludes(projectDir: string): Includes {
+  const manifestPath = join(projectDir, "openuispec.yaml");
+  try {
+    const manifest = loadYaml(manifestPath) as Record<string, unknown>;
+    const inc = manifest?.includes as Partial<Includes> | undefined;
+    return { ...DEFAULT_INCLUDES, ...inc };
+  } catch {
+    return DEFAULT_INCLUDES;
+  }
+}
+
+function resolveInclude(projectDir: string, includePath: string): string {
+  return resolve(projectDir, includePath);
+}
+
+// ── validation groups ────────────────────────────────────────────────
+
 interface ValidationGroup {
   label: string;
-  run(ajv: AjvInstance, projectDir: string): number;
+  run(ajv: AjvInstance, projectDir: string, includes: Includes): number;
 }
 
 const GROUPS: Record<string, ValidationGroup> = {
@@ -167,8 +204,9 @@ const GROUPS: Record<string, ValidationGroup> = {
 
   tokens: {
     label: "Tokens",
-    run(ajv, projectDir) {
+    run(ajv, projectDir, includes) {
       let errors = 0;
+      const tokensDir = resolveInclude(projectDir, includes.tokens);
       const tokenMap: Record<string, string> = {
         "color.yaml": "color.schema.json",
         "typography.yaml": "typography.schema.json",
@@ -180,7 +218,7 @@ const GROUPS: Record<string, ValidationGroup> = {
         "icons.yaml": "icons.schema.json",
       };
       for (const [data, schema] of Object.entries(tokenMap)) {
-        const filePath = join(projectDir, "tokens", data);
+        const filePath = join(tokensDir, data);
         if (existsSync(filePath)) {
           errors += validateFile(ajv, filePath, `${BASE}tokens/${schema}`);
         }
@@ -191,9 +229,10 @@ const GROUPS: Record<string, ValidationGroup> = {
 
   screens: {
     label: "Screens",
-    run(ajv, projectDir) {
+    run(ajv, projectDir, includes) {
       let errors = 0;
-      for (const f of listFiles(join(projectDir, "screens"), ".yaml")) {
+      const dir = resolveInclude(projectDir, includes.screens);
+      for (const f of listFiles(dir, ".yaml")) {
         errors += validateFile(ajv, f, `${BASE}screen.schema.json`);
       }
       return errors;
@@ -202,9 +241,10 @@ const GROUPS: Record<string, ValidationGroup> = {
 
   flows: {
     label: "Flows",
-    run(ajv, projectDir) {
+    run(ajv, projectDir, includes) {
       let errors = 0;
-      for (const f of listFiles(join(projectDir, "flows"), ".yaml")) {
+      const dir = resolveInclude(projectDir, includes.flows);
+      for (const f of listFiles(dir, ".yaml")) {
         errors += validateFile(ajv, f, `${BASE}flow.schema.json`);
       }
       return errors;
@@ -213,9 +253,10 @@ const GROUPS: Record<string, ValidationGroup> = {
 
   platform: {
     label: "Platform",
-    run(ajv, projectDir) {
+    run(ajv, projectDir, includes) {
       let errors = 0;
-      for (const f of listFiles(join(projectDir, "platform"), ".yaml")) {
+      const dir = resolveInclude(projectDir, includes.platform);
+      for (const f of listFiles(dir, ".yaml")) {
         errors += validateFile(ajv, f, `${BASE}platform.schema.json`);
       }
       return errors;
@@ -224,9 +265,10 @@ const GROUPS: Record<string, ValidationGroup> = {
 
   locales: {
     label: "Locales",
-    run(ajv, projectDir) {
+    run(ajv, projectDir, includes) {
       let errors = 0;
-      for (const f of listFiles(join(projectDir, "locales"), ".json")) {
+      const dir = resolveInclude(projectDir, includes.locales);
+      for (const f of listFiles(dir, ".json")) {
         errors += validateFile(ajv, f, `${BASE}locale.schema.json`);
       }
       return errors;
@@ -235,9 +277,10 @@ const GROUPS: Record<string, ValidationGroup> = {
 
   custom_contracts: {
     label: "Custom contracts",
-    run(ajv, projectDir) {
+    run(ajv, projectDir, includes) {
       let errors = 0;
-      for (const f of listFiles(join(projectDir, "contracts"), ".yaml")) {
+      const dir = resolveInclude(projectDir, includes.contracts);
+      for (const f of listFiles(dir, ".yaml")) {
         if (basename(f).startsWith("x_")) {
           errors += validateFile(
             ajv,
@@ -291,13 +334,14 @@ export function runValidate(argv: string[]): void {
   }
 
   const projectDir = findProjectDir(process.cwd());
+  const includes = readIncludes(projectDir);
   const ajv = buildAjv();
   let totalErrors = 0;
 
   for (const key of selected) {
     const group = GROUPS[key];
     console.log(`\n${group.label}:`);
-    totalErrors += group.run(ajv, projectDir);
+    totalErrors += group.run(ajv, projectDir, includes);
   }
 
   console.log(`\n${"=".repeat(50)}`);

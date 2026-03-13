@@ -137,6 +137,12 @@ OpenUISpec is a YAML-based format that describes your app's UI semantically — 
 | \`platform/\` | Platform overrides — per-target (iOS, Android, Web) behaviors |
 | \`locales/\` | Localization — i18n strings (JSON, ICU MessageFormat) |
 
+All directory paths are configured in \`openuispec.yaml\` under \`includes:\` and support relative paths. For example, to share locales across projects:
+\`\`\`yaml
+includes:
+  locales: "../../shared/locales"   # resolved relative to openuispec.yaml
+\`\`\`
+
 ## Getting started
 
 **Start here:** read \`openuispec.yaml\` — it's the root manifest that defines the project structure, data model, API endpoints, and generation targets.
@@ -280,6 +286,8 @@ OpenUISpec is a YAML-based spec format that describes an app's UI semantically �
 - Contracts: \`${specDir}/contracts/\` — UI component definitions
 - Platform: \`${specDir}/platform/\` — per-target overrides (iOS, Android, Web)
 - Locales: \`${specDir}/locales/\` — i18n strings (JSON, ICU MessageFormat)
+
+**Note:** These are the default paths. Actual paths are in \`includes:\` in \`openuispec.yaml\` and may use relative paths (e.g. \`../../shared/locales\`). Always read \`openuispec.yaml\` to find the real directories.
 
 ## If spec directories are empty (first-time setup)
 This means the project has existing UI code but hasn't been specced yet. Your job:
