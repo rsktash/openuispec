@@ -35,13 +35,9 @@ async function askList(
   options: string[],
   defaults: string[]
 ): Promise<string[]> {
-  console.log(`${question}`);
-  for (const opt of options) {
-    const mark = defaults.includes(opt) ? "[x]" : "[ ]";
-    console.log(`  ${mark} ${opt}`);
-  }
+  const defaultStr = defaults.join(", ");
   const raw = (
-    await rl.question(`Enter choices (comma-separated, enter for defaults): `)
+    await rl.question(`${question} [${options.join(", ")}] (${defaultStr}): `)
   ).trim();
   if (!raw) return defaults;
   return raw
@@ -122,84 +118,6 @@ api:
 `;
 }
 
-function starterColorTokens(): string {
-  return `# Design tokens: Color palette
-brand:
-  primary:
-    "50": "#EEF2FF"
-    "100": "#E0E7FF"
-    "500": "#6366F1"
-    "600": "#4F46E5"
-    "900": "#312E81"
-
-surface:
-  background: "#FFFFFF"
-  card: "#F9FAFB"
-  elevated: "#FFFFFF"
-
-text:
-  primary: "#111827"
-  secondary: "#6B7280"
-  disabled: "#D1D5DB"
-
-semantic:
-  success: "#10B981"
-  warning: "#F59E0B"
-  error: "#EF4444"
-  info: "#3B82F6"
-`;
-}
-
-function starterTypographyTokens(): string {
-  return `# Design tokens: Typography
-font_families:
-  sans: { default: "System" }
-
-type_scale:
-  title_lg:   { size: 28, weight: bold, tracking: 0, line_height: 1.2 }
-  title_md:   { size: 22, weight: semibold, tracking: 0, line_height: 1.3 }
-  title_sm:   { size: 17, weight: semibold, tracking: 0, line_height: 1.3 }
-  body_lg:    { size: 17, weight: regular, tracking: 0, line_height: 1.5 }
-  body_md:    { size: 15, weight: regular, tracking: 0, line_height: 1.5 }
-  body_sm:    { size: 13, weight: regular, tracking: 0, line_height: 1.4 }
-  label_lg:   { size: 15, weight: medium, tracking: 0.02, line_height: 1.3 }
-  label_md:   { size: 13, weight: medium, tracking: 0.02, line_height: 1.3 }
-  caption:    { size: 11, weight: regular, tracking: 0.02, line_height: 1.3 }
-`;
-}
-
-function starterSpacingTokens(): string {
-  return `# Design tokens: Spacing
-base_unit: 4
-platform_flex: "10%"
-
-scale:
-  "0":   0
-  "1":   4
-  "2":   8
-  "3":   12
-  "4":   16
-  "5":   20
-  "6":   24
-  "8":   32
-  "10":  40
-  "12":  48
-  "16":  64
-`;
-}
-
-function starterLocale(): string {
-  return JSON.stringify(
-    {
-      app: {
-        name: "My App",
-      },
-    },
-    null,
-    2
-  );
-}
-
 function aiRulesBlock(specDir: string, targets: string[]): string {
   const targetList = targets.map((t) => `"${t}"`).join(", ");
   return `
@@ -261,10 +179,9 @@ export async function init(): Promise<void> {
   console.log("\nOpenUISpec — Project Setup\n");
 
   try {
-    // 1. Project name
+    // 1. Project name (display name in manifest, derived from current folder)
     const cwd = process.cwd();
-    const defaultName =
-      cwd.split("/").pop()?.replace(/[^a-zA-Z0-9]/g, "") || "MyApp";
+    const defaultName = cwd.split("/").pop() || "MyApp";
     const name = await ask(rl, "Project name", defaultName);
 
     // 2. Spec directory
@@ -276,23 +193,13 @@ export async function init(): Promise<void> {
       rl,
       "\nWhich platforms?",
       allTargets,
-      ["ios", "android"]
+      allTargets
     );
 
     if (targets.length === 0) {
       console.error("At least one target is required.");
       process.exit(1);
     }
-
-    // 4. Starter tokens?
-    const wantTokens = await ask(rl, "Include starter tokens? (y/n)", "y");
-
-    // 5. AI rules?
-    const wantRules = await ask(
-      rl,
-      "Add rules to CLAUDE.md and AGENTS.md? (y/n)",
-      "y"
-    );
 
     rl.close();
 
@@ -322,27 +229,6 @@ export async function init(): Promise<void> {
       manifestTemplate(name, targets, specDir)
     );
 
-    // ── starter tokens ─────────────────────────────────────────────
-
-    if (wantTokens.toLowerCase().startsWith("y")) {
-      writeIfMissing(join(root, "tokens", "color.yaml"), starterColorTokens());
-      writeIfMissing(
-        join(root, "tokens", "typography.yaml"),
-        starterTypographyTokens()
-      );
-      writeIfMissing(
-        join(root, "tokens", "spacing.yaml"),
-        starterSpacingTokens()
-      );
-    }
-
-    // ── starter locale ─────────────────────────────────────────────
-
-    writeIfMissing(
-      join(root, "locales", "en.json"),
-      starterLocale() + "\n"
-    );
-
     // ── .gitkeep for empty dirs ────────────────────────────────────
 
     for (const d of dirs) {
@@ -361,23 +247,21 @@ export async function init(): Promise<void> {
 
     // ── AI assistant rules ─────────────────────────────────────────
 
-    if (wantRules.toLowerCase().startsWith("y")) {
-      const rules = aiRulesBlock(specDir, targets);
+    const rules = aiRulesBlock(specDir, targets);
 
-      for (const file of ["CLAUDE.md", "AGENTS.md"]) {
-        const filePath = join(cwd, file);
-        if (existsSync(filePath)) {
-          const existing = readFileSync(filePath, "utf-8");
-          if (existing.includes("OpenUISpec")) {
-            console.log(`  skip ${file} (already has OpenUISpec rules)`);
-            continue;
-          }
-          appendFileSync(filePath, "\n" + rules);
-          console.log(`  update ${file} (appended rules)`);
-        } else {
-          writeFileSync(filePath, rules.trimStart());
-          console.log(`  create ${file}`);
+    for (const file of ["CLAUDE.md", "AGENTS.md"]) {
+      const filePath = join(cwd, file);
+      if (existsSync(filePath)) {
+        const existing = readFileSync(filePath, "utf-8");
+        if (existing.includes("OpenUISpec")) {
+          console.log(`  skip ${file} (already has OpenUISpec rules)`);
+          continue;
         }
+        appendFileSync(filePath, "\n" + rules);
+        console.log(`  update ${file} (appended rules)`);
+      } else {
+        writeFileSync(filePath, rules.trimStart());
+        console.log(`  create ${file}`);
       }
     }
 
@@ -386,14 +270,28 @@ export async function init(): Promise<void> {
     console.log(`
 Done! Your spec project is ready at ./${specDir}/
 
-Next steps:
-  1. Edit ${specDir}/openuispec.yaml to define your data model and API
-  2. Add screens in ${specDir}/screens/
-  3. Add flows in ${specDir}/flows/
-  4. Generate code for your target platform
+Getting started (new project):
+  1. Edit ${specDir}/openuispec.yaml — define your data model and API
+  2. Create screens in ${specDir}/screens/ (one YAML per screen)
+  3. Create flows in ${specDir}/flows/ (multi-step navigation)
+  4. Ask AI to generate native code from the spec
   5. Run \`openuispec drift --snapshot --target ${targets[0]}\` to baseline
 
-Learn more: https://github.com/anthropics/openuispec
+Getting started (existing project):
+  1. Ask AI to read your existing UI code and generate spec files:
+     "Read src/screens/HomeScreen.swift and create ${specDir}/screens/home.yaml as status: stub"
+  2. Spec screens incrementally: stub → draft → ready
+  3. Only ready/draft screens are tracked by drift detection
+  4. Run \`openuispec validate\` to check specs against the schema
+
+Commands:
+  openuispec validate             Validate spec files
+  openuispec drift --target ios   Check for spec changes
+  openuispec drift --snapshot --target ios   Save current state
+
+AI rules have been added to CLAUDE.md and AGENTS.md.
+
+Learn more: https://github.com/rsktash/openuispec
 `);
   } catch (err) {
     rl.close();
