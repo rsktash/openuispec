@@ -1,9 +1,20 @@
 {
   "name": "openuispec",
   "version": "0.1.0",
-  "private": true,
   "type": "module",
   "description": "A semantic UI specification format for AI-native, platform-native app development",
+  "files": [
+    "cli/",
+    "drift/",
+    "schema/",
+    "spec/",
+    "examples/",
+    "README.md",
+    "LICENSE"
+  ],
+  "bin": {
+    "openuispec": "./cli/index.ts"
+  },
   "scripts": {
     "validate": "tsx schema/validate.ts",
     "validate:manifest": "tsx schema/validate.ts manifest",
@@ -12,14 +23,17 @@
     "validate:flows": "tsx schema/validate.ts flows",
     "validate:platform": "tsx schema/validate.ts platform",
     "validate:locales": "tsx schema/validate.ts locales",
-    "generate:ios": "tsx generator/ios/index.ts"
+    "drift": "tsx drift/index.ts",
+    "drift:snapshot": "tsx drift/index.ts --snapshot --target"
+  },
+  "dependencies": {
+    "tsx": "^4.19.4",
+    "yaml": "^2.7.1"
   },
   "devDependencies": {
     "@types/node": "^25.5.0",
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
-    "tsx": "^4.19.4",
-    "typescript": "^5.8.3",
-    "yaml": "^2.7.1"
+    "typescript": "^5.8.3"
   }
 }
