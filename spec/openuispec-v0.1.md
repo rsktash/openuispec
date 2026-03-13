@@ -3564,6 +3564,73 @@ action:
 
 ---
 
+## 14. Development workflow
+
+OpenUISpec is not just a code generation input — it is a **shared sync layer** that keeps platform teams aligned. The spec lives in version control alongside the code it describes, acting as a human-readable changelog of UI decisions. This section defines the two workflows that make this possible.
+
+### 14.1 Two modes
+
+| Mode | Direction | When to use |
+|------|-----------|-------------|
+| **Design mode** (spec-first) | Spec → Code | New features, design system changes, screen additions |
+| **Development mode** (platform-first) | Code → Spec → Code | Day-to-day iteration, tweaks, bug fixes, polish |
+
+Both modes use the same spec format. The difference is which artifact is edited first and how changes propagate.
+
+### 14.2 Design mode (spec-first)
+
+In design mode, the spec is the starting point:
+
+1. **Define** — Author or generate spec YAML (tokens, contracts, screens, flows)
+2. **Generate** — AI produces native code per platform from the spec
+3. **Refine** — Platform teams adjust the generated code for native feel
+
+This is the natural workflow when creating new screens, onboarding flows, or applying design system changes across all platforms simultaneously. The reference generator (`npm run generate:ios`) demonstrates this path.
+
+Design mode works best when:
+- A feature does not yet exist on any platform
+- A designer has produced a new design that needs implementation on all platforms
+- A design system change (new tokens, contract variants) must roll out consistently
+
+### 14.3 Development mode (platform-first)
+
+In development mode, a developer works in their IDE first:
+
+1. **Code** — Edit native code in Xcode, Android Studio, or a web editor with live preview
+2. **Sync** — AI reads the code changes and updates the spec YAML to reflect them
+3. **Propagate** — Other platform teams see the spec diff and update their code accordingly
+
+This is the everyday workflow. A developer fixing a layout issue on iOS should not have to manually edit YAML and re-generate — they fix it in SwiftUI with instant preview, then the spec catches up.
+
+The sync step can be manual (developer updates spec by hand), AI-assisted (AI reads a diff and proposes spec changes), or automated (a CI tool detects drift and opens a PR). The spec does not prescribe a specific tool — it defines the format that any such tool operates on.
+
+### 14.4 Drift detection
+
+**Drift** occurs when platform code and spec disagree — a screen was updated in code but the spec was not changed, or vice versa. Drift is normal and expected during development; the goal is to detect and resolve it, not prevent it.
+
+A drift detector compares:
+- **Spec → Code**: Does the generated code match what the spec describes? (e.g., a button's action type, a screen's data sources, a flow's step order)
+- **Code → Spec**: Does the current platform code contain UI decisions not reflected in the spec? (e.g., a new field added to a form, a navigation path changed)
+
+Drift detection is scoped to the semantic layer — it compares behavioral intent (contracts, props, state machines, data bindings), not visual details (padding values, animation curves). Platform-specific polish is expected to diverge from the spec; behavioral contracts are not.
+
+Resolution strategies:
+- **Update spec** — The code change is intentional; update the spec to match
+- **Update code** — The spec change is authoritative; regenerate or manually update the code
+- **Platform override** — The divergence is intentional and platform-specific; document it in `platform/*.yaml`
+
+### 14.5 Spec as communication layer
+
+When the spec lives in version control, it becomes a communication tool between platform teams:
+
+- **Spec commits are UI decisions.** A diff to `screens/home.yaml` tells every platform team what changed in the home screen — without reading Swift, Kotlin, or TypeScript.
+- **Review across platforms.** A PR that modifies spec files can be reviewed by any team member regardless of their platform expertise.
+- **Changelog by default.** The git history of spec files is a human-readable record of every UI change, who made it, and why.
+
+This is the spec's primary value beyond code generation: it gives cross-platform teams a shared language for UI changes that doesn't require reading each other's native code.
+
+---
+
 ## Appendix A: Type reference
 
 | Type | Description | Example |

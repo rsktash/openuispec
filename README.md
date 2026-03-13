@@ -32,6 +32,31 @@ The result: each platform feels native, but every app stays consistent because i
   (iOS)   (Android)    (Web)
 ```
 
+## Workflows
+
+OpenUISpec supports two complementary workflows — one for designing new features, another for day-to-day development.
+
+```
+DESIGN MODE (spec-first)              DEVELOPMENT MODE (platform-first)
+For new features & design changes     For iteration, tweaks & bug fixes
+
+  Spec (YAML)                           Xcode / Android Studio
+      │                                        │
+      ▼                                        ▼
+  AI generates native code              Developer edits native code
+      │                                        │
+      ▼                                        ▼
+  Refine per platform               AI syncs changes back to spec
+                                               │
+                                               ▼
+                                    Other platforms see spec diff
+                                    and update their code
+```
+
+**Design mode** is the starting point: you write (or generate) spec YAML, then AI produces native SwiftUI, Compose, or React code. This is how new screens, flows, and design system changes enter the project.
+
+**Development mode** is where most time is spent: a developer works in their IDE with live preview, iterating on layout, interactions, and fixes. When they're done, AI reads the code changes and updates the spec YAML. Other platform teams see the spec diff in version control and propagate the changes to their codebase. The spec acts as a shared sync layer — a UI changelog that keeps all platforms consistent.
+
 ## Key concepts
 
 - **Tokens**: Design values (color, typography, spacing, elevation, motion) with semantic names and constrained ranges
@@ -56,7 +81,7 @@ The result: each platform feels native, but every app stays consistent because i
 ```
 openuispec/
 ├── spec/
-│   └── openuispec-v0.1.md              # Full specification (13 sections)
+│   └── openuispec-v0.1.md              # Full specification (14 sections)
 ├── schema/                              # JSON Schema for validation (draft 2020-12)
 │   ├── openuispec.schema.json          # Root manifest schema
 │   ├── screen.schema.json              # Screen composition schema
@@ -141,6 +166,7 @@ openuispec/
 | 11. Internationalization | Locale files, `$t:` references, ICU MessageFormat, RTL, platform mapping |
 | 12. Custom contract extensions | `x_` prefixed domain-specific contracts, registration, dependencies |
 | 13. Form validation & field dependencies | Validation rules, field dependencies, cross-field checks, async validation |
+| 14. Development workflow | Dual-workflow model, drift detection, spec as sync layer |
 
 ## The 7 contract families
 
@@ -172,6 +198,8 @@ openuispec/
 - [x] Icon system definition
 - [x] Form system (validation rules, field dependencies)
 - [x] Reference AI generator (spec → SwiftUI proof of concept)
+- [ ] Drift detection (spec vs platform code comparison)
+- [ ] Code-to-spec sync (reverse generator)
 - [ ] More example apps (e-commerce, social, dashboard)
 
 ## Contributing
