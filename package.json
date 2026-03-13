@@ -4,6 +4,7 @@
   "license": "MIT",
   "type": "module",
   "description": "A semantic UI specification format for AI-native, platform-native app development",
+  "homepage": "https://openuispec.rsteam.uz",
   "repository": {
     "type": "git",
     "url": "https://github.com/rsktash/openuispec.git"

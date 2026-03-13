@@ -170,13 +170,16 @@ OpenUISpec is a YAML-based format that describes your app's UI semantically — 
 - \`draft\` — actively being specced. Tracked by drift.
 - \`ready\` — fully specified (default if omitted). Tracked by drift.
 
-## All documentation is local — do not fetch from the internet
+## Learning OpenUISpec — local files and online reference
 
-Everything you need is in \`node_modules/openuispec/\`. Read files from disk, not from URLs.
+All documentation is included in the installed package at \`node_modules/openuispec/\`:
+1. **Full specification:** \`node_modules/openuispec/spec/openuispec-v0.1.md\`
+2. **Example app:** \`node_modules/openuispec/examples/taskflow/\`
+3. **JSON Schemas:** \`node_modules/openuispec/schema/\`
 
-- **Full specification:** \`node_modules/openuispec/spec/openuispec-v0.1.md\`
-- **Example app:** \`node_modules/openuispec/examples/taskflow/\`
-- **JSON Schemas:** \`node_modules/openuispec/schema/\`
+If the package is not in node_modules, fetch the full reference from:
+- \`https://openuispec.rsteam.uz/llms-full.txt\` — complete spec + all JSON schemas in one file
+- \`https://openuispec.rsteam.uz/llms.txt\` — concise summary with links
 
 ## JSON Schemas (validation & file structure)
 
@@ -296,13 +299,15 @@ This means the project has existing UI code but hasn't been specced yet. Your jo
 2. Run \`openuispec drift --snapshot --target <target>\` for each affected platform.
 3. Run \`openuispec drift\` to verify no untracked drift remains.
 
-## IMPORTANT: All documentation is local — do not fetch from the internet
-Everything you need is installed locally in \`node_modules/openuispec/\`. Do NOT curl, fetch, or download from GitHub or any URL. Read files directly from disk.
-
-## Learning OpenUISpec — read these local files
+## Learning OpenUISpec — local files and online reference
+All documentation is included in the installed package at \`node_modules/openuispec/\`:
 1. **Full specification:** \`node_modules/openuispec/spec/openuispec-v0.1.md\` — the complete spec (read this to understand the format)
 2. **Example app:** \`node_modules/openuispec/examples/taskflow/\` — a complete working app with all file types
 3. **JSON Schemas:** \`node_modules/openuispec/schema/\` — validation schemas that define the exact structure of every file type
+
+If the package is not in node_modules, fetch the full reference from:
+- \`https://openuispec.rsteam.uz/llms-full.txt\` — complete spec + all JSON schemas in one file
+- \`https://openuispec.rsteam.uz/llms.txt\` — concise summary with links
 
 ## JSON Schemas — read before creating spec files
 Before creating or editing any spec file, read the corresponding JSON Schema to understand the valid structure:
