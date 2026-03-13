@@ -3,26 +3,33 @@
  * OpenUISpec CLI
  *
  * Usage:
- *   openuispec init          # scaffold a new spec project
- *   openuispec drift         # check for spec drift (all targets)
- *   openuispec drift --target ios
- *   openuispec drift --snapshot --target ios
+ *   openuispec init                           Create a new spec project
+ *   openuispec drift [--target <t>]           Check for spec drift
+ *   openuispec drift --snapshot --target <t>  Snapshot current state
+ *   openuispec validate [group...]            Validate spec files against schemas
  */
 
 import { init } from "./init.js";
 
 async function main(): Promise<void> {
-  const [command] = process.argv.slice(2);
+  const [command, ...rest] = process.argv.slice(2);
 
   switch (command) {
     case "init":
       await init();
       break;
 
-    case "drift":
-      console.error("drift command coming soon — use npm run drift for now");
-      process.exit(1);
+    case "drift": {
+      const { runDrift } = await import("../drift/index.js");
+      runDrift(rest);
       break;
+    }
+
+    case "validate": {
+      const { runValidate } = await import("../schema/validate.js");
+      runValidate(rest);
+      break;
+    }
 
     case undefined:
     case "--help":
@@ -34,8 +41,11 @@ Usage:
   openuispec init                           Create a new spec project
   openuispec drift [--target <t>]           Check for spec drift
   openuispec drift --snapshot --target <t>  Snapshot current state
+  openuispec validate [group...]            Validate spec files
 
-Learn more: https://github.com/anthropics/openuispec
+Validate groups: manifest, tokens, screens, flows, platform, locales, custom_contracts
+
+Learn more: https://github.com/rsktash/openuispec
 `);
       break;
 

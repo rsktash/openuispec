@@ -223,6 +223,18 @@ function aiRulesBlock(specDir: string, targets: string[]): string {
 2. Targets in this project: ${targetList}.
 3. Run \`openuispec drift\` to verify no untracked drift remains.
 
+## Screen and flow status
+Screens and flows have a \`status\` field that controls drift tracking:
+- \`stub\` — placeholder, not yet specced. Drift detection skips these.
+- \`draft\` — in progress, actively being specced. Tracked by drift.
+- \`ready\` — fully specified (default if omitted). Tracked by drift.
+
+When adopting OpenUISpec in an existing project:
+1. Create spec files for existing screens as \`status: stub\` initially.
+2. When speccing a screen from existing code, change status to \`draft\`.
+3. Once the spec is complete and reviewed, change to \`ready\` (or remove the field).
+4. Only \`draft\` and \`ready\` screens trigger drift failures in CI.
+
 ## Spec file conventions
 - Tokens (colors, typography, spacing, motion, icons) live in \`${specDir}/tokens/\`.
 - Contracts (UI component definitions) live in \`${specDir}/contracts/\`.

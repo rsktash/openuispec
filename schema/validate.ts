@@ -1,14 +1,14 @@
 #!/usr/bin/env tsx
 /**
- * Validate all TaskFlow example files against their OpenUISpec JSON Schemas.
+ * Validate OpenUISpec files against their JSON Schemas.
  *
  * Usage:
- *   npm run validate              # validate everything
- *   npm run validate:tokens       # validate only tokens
- *   npx tsx schema/validate.ts screens flows  # multiple groups
+ *   openuispec validate                    # validate all spec files
+ *   openuispec validate tokens screens     # validate specific groups
+ *   npm run validate                       # from repo (uses examples/taskflow)
  */
 
-import { readFileSync, readdirSync } from "node:fs";
+import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { resolve, join, basename } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
@@ -21,7 +21,6 @@ const addFormats = require("ajv-formats") as typeof import("ajv-formats").defaul
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 const SCHEMA_DIR = resolve(__dirname);
-const EXAMPLES_DIR = resolve(SCHEMA_DIR, "..", "examples", "taskflow");
 
 type AjvInstance = InstanceType<typeof Ajv2020>;
 
@@ -119,16 +118,16 @@ const BASE = "https://openuispec.org/schema/";
 
 interface ValidationGroup {
   label: string;
-  run(ajv: AjvInstance): number;
+  run(ajv: AjvInstance, projectDir: string): number;
 }
 
 const GROUPS: Record<string, ValidationGroup> = {
   manifest: {
     label: "Root manifest",
-    run(ajv) {
+    run(ajv, projectDir) {
       return validateFile(
         ajv,
-        join(EXAMPLES_DIR, "openuispec.yaml"),
+        join(projectDir, "openuispec.yaml"),
         `${BASE}openuispec.schema.json`,
       );
     },
@@ -136,7 +135,7 @@ const GROUPS: Record<string, ValidationGroup> = {
 
   tokens: {
     label: "Tokens",
-    run(ajv) {
+    run(ajv, projectDir) {
       let errors = 0;
       const tokenMap: Record<string, string> = {
         "color.yaml": "color.schema.json",
@@ -149,11 +148,10 @@ const GROUPS: Record<string, ValidationGroup> = {
         "icons.yaml": "icons.schema.json",
       };
       for (const [data, schema] of Object.entries(tokenMap)) {
-        errors += validateFile(
-          ajv,
-          join(EXAMPLES_DIR, "tokens", data),
-          `${BASE}tokens/${schema}`,
-        );
+        const filePath = join(projectDir, "tokens", data);
+        if (existsSync(filePath)) {
+          errors += validateFile(ajv, filePath, `${BASE}tokens/${schema}`);
+        }
       }
       return errors;
     },
@@ -161,9 +159,9 @@ const GROUPS: Record<string, ValidationGroup> = {
 
   screens: {
     label: "Screens",
-    run(ajv) {
+    run(ajv, projectDir) {
       let errors = 0;
-      for (const f of listFiles(join(EXAMPLES_DIR, "screens"), ".yaml")) {
+      for (const f of listFiles(join(projectDir, "screens"), ".yaml")) {
         errors += validateFile(ajv, f, `${BASE}screen.schema.json`);
       }
       return errors;
@@ -172,9 +170,9 @@ const GROUPS: Record<string, ValidationGroup> = {
 
   flows: {
     label: "Flows",
-    run(ajv) {
+    run(ajv, projectDir) {
       let errors = 0;
-      for (const f of listFiles(join(EXAMPLES_DIR, "flows"), ".yaml")) {
+      for (const f of listFiles(join(projectDir, "flows"), ".yaml")) {
         errors += validateFile(ajv, f, `${BASE}flow.schema.json`);
       }
       return errors;
@@ -183,9 +181,9 @@ const GROUPS: Record<string, ValidationGroup> = {
 
   platform: {
     label: "Platform",
-    run(ajv) {
+    run(ajv, projectDir) {
       let errors = 0;
-      for (const f of listFiles(join(EXAMPLES_DIR, "platform"), ".yaml")) {
+      for (const f of listFiles(join(projectDir, "platform"), ".yaml")) {
         errors += validateFile(ajv, f, `${BASE}platform.schema.json`);
       }
       return errors;
@@ -194,9 +192,9 @@ const GROUPS: Record<string, ValidationGroup> = {
 
   locales: {
     label: "Locales",
-    run(ajv) {
+    run(ajv, projectDir) {
       let errors = 0;
-      for (const f of listFiles(join(EXAMPLES_DIR, "locales"), ".json")) {
+      for (const f of listFiles(join(projectDir, "locales"), ".json")) {
         errors += validateFile(ajv, f, `${BASE}locale.schema.json`);
       }
       return errors;
@@ -205,9 +203,9 @@ const GROUPS: Record<string, ValidationGroup> = {
 
   custom_contracts: {
     label: "Custom contracts",
-    run(ajv) {
+    run(ajv, projectDir) {
       let errors = 0;
-      for (const f of listFiles(join(EXAMPLES_DIR, "contracts"), ".yaml")) {
+      for (const f of listFiles(join(projectDir, "contracts"), ".yaml")) {
         if (basename(f).startsWith("x_")) {
           errors += validateFile(
             ajv,
@@ -221,13 +219,36 @@ const GROUPS: Record<string, ValidationGroup> = {
   },
 };
 
+// ── project resolution ───────────────────────────────────────────────
+
+function findProjectDir(cwd: string): string {
+  const candidates = [
+    join(cwd, "openuispec"),
+    cwd,
+  ];
+  for (const dir of candidates) {
+    if (existsSync(join(dir, "openuispec.yaml"))) {
+      return dir;
+    }
+  }
+  // Fallback for running from repo root with examples/
+  const examplesDir = join(cwd, "examples", "taskflow");
+  if (existsSync(join(examplesDir, "openuispec.yaml"))) {
+    return examplesDir;
+  }
+  console.error(
+    "Error: No openuispec.yaml found.\n" +
+      "Run from a directory containing openuispec.yaml or an openuispec/ subdirectory."
+  );
+  process.exit(1);
+}
+
 // ── main ─────────────────────────────────────────────────────────────
 
-function main(): void {
-  const args = process.argv.slice(2);
+export function runValidate(argv: string[]): void {
   const selected =
-    args.length > 0
-      ? args.filter((a) => a in GROUPS)
+    argv.length > 0
+      ? argv.filter((a) => a in GROUPS)
       : Object.keys(GROUPS);
 
   if (selected.length === 0) {
@@ -237,13 +258,14 @@ function main(): void {
     process.exit(2);
   }
 
+  const projectDir = findProjectDir(process.cwd());
   const ajv = buildAjv();
   let totalErrors = 0;
 
   for (const key of selected) {
     const group = GROUPS[key];
     console.log(`\n${group.label}:`);
-    totalErrors += group.run(ajv);
+    totalErrors += group.run(ajv, projectDir);
   }
 
   console.log(`\n${"=".repeat(50)}`);
@@ -255,4 +277,11 @@ function main(): void {
   }
 }
 
-main();
+// Direct execution
+const isDirectRun =
+  process.argv[1]?.endsWith("validate.ts") ||
+  process.argv[1]?.endsWith("validate.js");
+
+if (isDirectRun) {
+  runValidate(process.argv.slice(2));
+}

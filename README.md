@@ -17,45 +17,11 @@ The result: each platform feels native, but every app stays consistent because i
 
 ## How it works
 
-```
-┌─────────────────────────┐
-│   OpenUISpec (YAML)     │  ← Single source of truth
-│   Tokens + Contracts    │
-│   Screens + Flows       │
-└────────┬────────────────┘
-         │
-    AI Generation Layer
-         │
-    ┌────┴─────┬──────────┐
-    ▼          ▼          ▼
- SwiftUI   Compose     React
-  (iOS)   (Android)    (Web)
-```
+![How OpenUISpec works](docs/images/how-it-works.jpg)
 
 ## Workflows
 
-OpenUISpec supports two complementary workflows — one for designing new features, another for day-to-day development.
-
-```
-DESIGN MODE (spec-first)              DEVELOPMENT MODE (platform-first)
-For new features & design changes     For iteration, tweaks & bug fixes
-
-  Spec (YAML)                           Xcode / Android Studio
-      │                                        │
-      ▼                                        ▼
-  AI generates native code              Developer edits native code
-      │                                        │
-      ▼                                        ▼
-  Refine per platform               AI syncs changes back to spec
-                                               │
-                                               ▼
-                                    Other platforms see spec diff
-                                    and update their code
-```
-
-**Design mode** is the starting point: you write (or generate) spec YAML, then AI produces native SwiftUI, Compose, or React code. This is how new screens, flows, and design system changes enter the project.
-
-**Development mode** is where most time is spent: a developer works in their IDE with live preview, iterating on layout, interactions, and fixes. When they're done, AI reads the code changes and updates the spec YAML. Other platform teams see the spec diff in version control and propagate the changes to their codebase. The spec acts as a shared sync layer — a UI changelog that keeps all platforms consistent.
+![OpenUISpec workflows](docs/images/workflows.png)
 
 ## Key concepts
 
