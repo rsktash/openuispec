@@ -8,25 +8,95 @@
 - [GitHub Repository](https://github.com/rsktash/openuispec): Source code, CLI tool, and examples
 - [Specification Document](https://github.com/rsktash/openuispec/blob/main/spec/openuispec-v0.1.md): Full spec in markdown
 
+## File formats at a glance
+
+Every file type has a required root key and a JSON Schema that defines its structure. Read the schema before creating files — do not guess.
+
+### Root manifest (`openuispec.yaml`)
+```yaml
+spec_version: "0.1"
+project:
+  name: "MyApp"
+includes:
+  tokens: "./tokens/"
+  screens: "./screens/"
+  flows: "./flows/"
+```
+
+### Screen (`screens/<name>.yaml`) — root key is the screen id
+```yaml
+home:
+  semantic: "Main task list"
+  data:
+    tasks: { source: "api.tasks.list" }
+  state:
+    filter: { type: enum, default: "all", options: [all, active, done] }
+  sections:
+    - id: task_list
+      contract: collection
+      # ...
+```
+
+### Flow (`flows/<name>.yaml`) — root key is the flow id
+```yaml
+create_task:
+  semantic: "Task creation flow"
+  entry: "task_form"
+  screens:
+    task_form:
+      screen_inline:
+        semantic: "Task form"
+        sections: [...]
+```
+
+### Token file (`tokens/<type>.yaml`) — root key matches the token type
+```yaml
+# tokens/color.yaml
+color:
+  brand:
+    primary:
+      semantic: "Main brand color"
+      reference: "#5B4FE8"
+      range: { hue: [240, 250], saturation: [65, 80], lightness: [50, 60] }
+
+# tokens/spacing.yaml
+spacing:
+  base_unit: 4
+  scale:
+    sm: 8
+    md: { base: 16, range: [12, 16] }
+```
+
+### Platform override (`platform/<target>.yaml`)
+```yaml
+platform:
+  target: ios
+  overrides: [...]
+```
+
 ## Schemas
 
-- [Root Manifest Schema](https://openuispec.rsteam.uz/schema/openuispec.schema.json): JSON Schema for openuispec.yaml
-- [Screen Schema](https://openuispec.rsteam.uz/schema/screen.schema.json): JSON Schema for screen YAML files
-- [Flow Schema](https://openuispec.rsteam.uz/schema/flow.schema.json): JSON Schema for navigation flow files
-- [Platform Schema](https://openuispec.rsteam.uz/schema/platform.schema.json): JSON Schema for platform override files
-- [Locale Schema](https://openuispec.rsteam.uz/schema/locale.schema.json): JSON Schema for i18n locale files
-- [Custom Contract Schema](https://openuispec.rsteam.uz/schema/custom-contract.schema.json): JSON Schema for x_ prefixed custom contracts
+Each schema validates a specific file type. Read the schema before creating or editing the corresponding file.
+
+- [Root Manifest Schema](https://openuispec.rsteam.uz/schema/openuispec.schema.json): validates `openuispec.yaml`
+- [Screen Schema](https://openuispec.rsteam.uz/schema/screen.schema.json): validates `screens/*.yaml`
+- [Flow Schema](https://openuispec.rsteam.uz/schema/flow.schema.json): validates `flows/*.yaml`
+- [Platform Schema](https://openuispec.rsteam.uz/schema/platform.schema.json): validates `platform/*.yaml`
+- [Locale Schema](https://openuispec.rsteam.uz/schema/locale.schema.json): validates `locales/*.json`
+- [Custom Contract Schema](https://openuispec.rsteam.uz/schema/custom-contract.schema.json): validates `contracts/x_*.yaml`
 
 ## Token Schemas
 
-- [Color Schema](https://openuispec.rsteam.uz/schema/tokens/color.schema.json): Color tokens with semantic names, HSL ranges, and contrast requirements
-- [Typography Schema](https://openuispec.rsteam.uz/schema/tokens/typography.schema.json): Font families and 8-step type scale
-- [Spacing Schema](https://openuispec.rsteam.uz/schema/tokens/spacing.schema.json): 4px base unit with 9-step scale
-- [Elevation Schema](https://openuispec.rsteam.uz/schema/tokens/elevation.schema.json): Shadow depth levels
-- [Motion Schema](https://openuispec.rsteam.uz/schema/tokens/motion.schema.json): Durations, easings, and animation patterns
-- [Layout Schema](https://openuispec.rsteam.uz/schema/tokens/layout.schema.json): Size classes and layout primitives
-- [Themes Schema](https://openuispec.rsteam.uz/schema/tokens/themes.schema.json): Light/dark theme variants
-- [Icons Schema](https://openuispec.rsteam.uz/schema/tokens/icons.schema.json): Icon registry with platform mappings
+Every token file requires a root wrapper key matching its type (e.g. `tokens/typography.yaml` must start with `typography:`).
+
+- [Color Schema](https://openuispec.rsteam.uz/schema/tokens/color.schema.json): `tokens/color.yaml` — root key: `color`
+- [Typography Schema](https://openuispec.rsteam.uz/schema/tokens/typography.schema.json): `tokens/typography.yaml` — root key: `typography`
+- [Spacing Schema](https://openuispec.rsteam.uz/schema/tokens/spacing.schema.json): `tokens/spacing.yaml` — root key: `spacing`
+- [Elevation Schema](https://openuispec.rsteam.uz/schema/tokens/elevation.schema.json): `tokens/elevation.yaml` — root key: `elevation`
+- [Motion Schema](https://openuispec.rsteam.uz/schema/tokens/motion.schema.json): `tokens/motion.yaml` — root key: `motion`
+- [Layout Schema](https://openuispec.rsteam.uz/schema/tokens/layout.schema.json): `tokens/layout.yaml` — root key: `layout`
+- [Themes Schema](https://openuispec.rsteam.uz/schema/tokens/themes.schema.json): `tokens/themes.yaml` — root key: `themes`
+- [Icons Schema](https://openuispec.rsteam.uz/schema/tokens/icons.schema.json): `tokens/icons.yaml` — root key: `icons`
 
 ## Shared Definition Schemas
 

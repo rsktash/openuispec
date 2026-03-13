@@ -198,38 +198,30 @@ scale: ...
 
 Root keys: \`color\`, \`typography\`, \`spacing\`, \`elevation\`, \`motion\`, \`layout\`, \`themes\`, \`icons\`.
 
-## JSON Schemas (validation & file structure)
+## File formats and schemas
 
-**IMPORTANT:** Before creating or editing any spec file, read the corresponding JSON Schema to understand the valid structure. Schemas are located in the installed package:
+**IMPORTANT:** Before creating or editing any spec file, read the corresponding JSON Schema to understand the valid structure. Do not guess the file format.
 
-\`\`\`
-node_modules/openuispec/schema/
-├── openuispec.schema.json        ← root manifest (openuispec.yaml)
-├── screen.schema.json            ← screen files (screens/*.yaml)
-├── flow.schema.json              ← flow files (flows/*.yaml)
-├── platform.schema.json          ← platform overrides (platform/*.yaml)
-├── locale.schema.json            ← locale files (locales/*.json)
-├── custom-contract.schema.json   ← custom contracts (contracts/*.yaml)
-├── tokens/
-│   ├── color.schema.json         ← tokens/color.yaml
-│   ├── typography.schema.json    ← tokens/typography.yaml
-│   ├── spacing.schema.json       ← tokens/spacing.yaml
-│   ├── elevation.schema.json     ← tokens/elevation.yaml
-│   ├── motion.schema.json        ← tokens/motion.yaml
-│   ├── layout.schema.json        ← tokens/layout.yaml
-│   ├── themes.schema.json        ← tokens/themes.yaml
-│   └── icons.schema.json         ← tokens/icons.yaml
-└── defs/
-    ├── common.schema.json        ← shared types (icons, badges, etc.)
-    ├── action.schema.json        ← 13 action types (discriminated union)
-    ├── data-binding.schema.json  ← data sources, state, params
-    ├── adaptive.schema.json      ← adaptive override pattern
-    └── validation.schema.json    ← validation rule definitions
-\`\`\`
+| File | Schema | Root key |
+|------|--------|----------|
+| \`openuispec.yaml\` | \`openuispec.schema.json\` | \`spec_version\` |
+| \`screens/*.yaml\` | \`screen.schema.json\` | \`<screen_id>\` |
+| \`flows/*.yaml\` | \`flow.schema.json\` | \`<flow_id>\` |
+| \`platform/*.yaml\` | \`platform.schema.json\` | \`platform\` |
+| \`locales/*.json\` | \`locale.schema.json\` | (object) |
+| \`contracts/x_*.yaml\` | \`custom-contract.schema.json\` | \`contract\` |
+| \`tokens/color.yaml\` | \`tokens/color.schema.json\` | \`color\` |
+| \`tokens/typography.yaml\` | \`tokens/typography.schema.json\` | \`typography\` |
+| \`tokens/spacing.yaml\` | \`tokens/spacing.schema.json\` | \`spacing\` |
+| \`tokens/elevation.yaml\` | \`tokens/elevation.schema.json\` | \`elevation\` |
+| \`tokens/motion.yaml\` | \`tokens/motion.schema.json\` | \`motion\` |
+| \`tokens/layout.yaml\` | \`tokens/layout.schema.json\` | \`layout\` |
+| \`tokens/themes.yaml\` | \`tokens/themes.schema.json\` | \`themes\` |
+| \`tokens/icons.yaml\` | \`tokens/icons.schema.json\` | \`icons\` |
 
-**Workflow:** read the schema → create the YAML file → run \`openuispec validate\` to verify.
+All schemas are in \`node_modules/openuispec/schema/\`. Shared type definitions (actions, data-binding, adaptive, validation, common) are in \`schema/defs/\`.
 
-**Example spec files:** \`node_modules/openuispec/examples/taskflow/\` — a complete app demonstrating all file types. Read these for real-world examples of screens, flows, tokens, and platform overrides.
+**Workflow:** read the schema → read an example from \`node_modules/openuispec/examples/taskflow/\` → create the YAML → run \`openuispec validate\`.
 
 ## Spec format quick reference
 
@@ -337,18 +329,29 @@ Every token file must have a single root key matching the token type. Do NOT put
 - \`tokens/themes.yaml\` → root key: \`themes\`
 - \`tokens/icons.yaml\` → root key: \`icons\`
 
-## JSON Schemas — read before creating spec files
-Before creating or editing any spec file, read the corresponding JSON Schema to understand the valid structure:
-- \`node_modules/openuispec/schema/openuispec.schema.json\` — root manifest
-- \`node_modules/openuispec/schema/screen.schema.json\` — screens
-- \`node_modules/openuispec/schema/flow.schema.json\` — flows
-- \`node_modules/openuispec/schema/platform.schema.json\` — platform overrides
-- \`node_modules/openuispec/schema/locale.schema.json\` — locales
-- \`node_modules/openuispec/schema/custom-contract.schema.json\` — custom contracts
-- \`node_modules/openuispec/schema/tokens/*.schema.json\` — token files (color, typography, spacing, elevation, motion, layout, themes, icons)
-- \`node_modules/openuispec/schema/defs/*.schema.json\` — shared types (actions, data-binding, adaptive, validation, common)
+## File formats and schemas — read before creating spec files
+Before creating or editing any spec file, read the corresponding JSON Schema. Do not guess the file format.
 
-Workflow: read the spec → read the schema → read an example → create the YAML → run \`openuispec validate\`.
+| File | Schema (in \`node_modules/openuispec/schema/\`) | Root key |
+|------|--------|----------|
+| \`openuispec.yaml\` | \`openuispec.schema.json\` | \`spec_version\` |
+| \`screens/*.yaml\` | \`screen.schema.json\` | \`<screen_id>\` |
+| \`flows/*.yaml\` | \`flow.schema.json\` | \`<flow_id>\` |
+| \`platform/*.yaml\` | \`platform.schema.json\` | \`platform\` |
+| \`locales/*.json\` | \`locale.schema.json\` | (object) |
+| \`contracts/x_*.yaml\` | \`custom-contract.schema.json\` | \`contract\` |
+| \`tokens/color.yaml\` | \`tokens/color.schema.json\` | \`color\` |
+| \`tokens/typography.yaml\` | \`tokens/typography.schema.json\` | \`typography\` |
+| \`tokens/spacing.yaml\` | \`tokens/spacing.schema.json\` | \`spacing\` |
+| \`tokens/elevation.yaml\` | \`tokens/elevation.schema.json\` | \`elevation\` |
+| \`tokens/motion.yaml\` | \`tokens/motion.schema.json\` | \`motion\` |
+| \`tokens/layout.yaml\` | \`tokens/layout.schema.json\` | \`layout\` |
+| \`tokens/themes.yaml\` | \`tokens/themes.schema.json\` | \`themes\` |
+| \`tokens/icons.yaml\` | \`tokens/icons.schema.json\` | \`icons\` |
+
+Shared type definitions (actions, data-binding, adaptive, validation, common) are in \`schema/defs/\`.
+
+Workflow: read the schema → read an example from \`node_modules/openuispec/examples/taskflow/\` → create the YAML → run \`openuispec validate\`.
 
 ## Spec format reference
 - 7 contract families: nav_container, surface, action_trigger, input_field, data_display, collection, feedback

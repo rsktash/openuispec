@@ -119,6 +119,42 @@ openuispec/
 └── README.md
 ```
 
+## File formats and schemas
+
+Every file type has a corresponding JSON Schema in `schema/`. **Read the schema before creating or editing a file** — do not guess the structure.
+
+| File | Schema | Root key | Example |
+|------|--------|----------|---------|
+| `openuispec.yaml` | `openuispec.schema.json` | `spec_version` | [openuispec.yaml](./examples/taskflow/openuispec.yaml) |
+| `screens/*.yaml` | `screen.schema.json` | `<screen_id>` | [home.yaml](./examples/taskflow/screens/home.yaml) |
+| `flows/*.yaml` | `flow.schema.json` | `<flow_id>` | [create_task.yaml](./examples/taskflow/flows/create_task.yaml) |
+| `platform/*.yaml` | `platform.schema.json` | `platform` | [ios.yaml](./examples/taskflow/platform/ios.yaml) |
+| `locales/*.json` | `locale.schema.json` | (object) | [en.json](./examples/taskflow/locales/en.json) |
+| `contracts/x_*.yaml` | `custom-contract.schema.json` | `contract` | [x_media_player.yaml](./examples/taskflow/contracts/x_media_player.yaml) |
+| `tokens/color.yaml` | `tokens/color.schema.json` | `color` | [color.yaml](./examples/taskflow/tokens/color.yaml) |
+| `tokens/typography.yaml` | `tokens/typography.schema.json` | `typography` | [typography.yaml](./examples/taskflow/tokens/typography.yaml) |
+| `tokens/spacing.yaml` | `tokens/spacing.schema.json` | `spacing` | [spacing.yaml](./examples/taskflow/tokens/spacing.yaml) |
+| `tokens/elevation.yaml` | `tokens/elevation.schema.json` | `elevation` | [elevation.yaml](./examples/taskflow/tokens/elevation.yaml) |
+| `tokens/motion.yaml` | `tokens/motion.schema.json` | `motion` | [motion.yaml](./examples/taskflow/tokens/motion.yaml) |
+| `tokens/layout.yaml` | `tokens/layout.schema.json` | `layout` | [layout.yaml](./examples/taskflow/tokens/layout.yaml) |
+| `tokens/themes.yaml` | `tokens/themes.schema.json` | `themes` | [themes.yaml](./examples/taskflow/tokens/themes.yaml) |
+| `tokens/icons.yaml` | `tokens/icons.schema.json` | `icons` | [icons.yaml](./examples/taskflow/tokens/icons.yaml) |
+
+Every token file **must** have a single root wrapper key matching its type:
+
+```yaml
+# Correct — tokens/color.yaml
+color:
+  brand:
+    primary: ...
+
+# Wrong — missing root key
+brand:
+  primary: ...
+```
+
+Validate with: `openuispec validate`
+
 ## Spec at a glance
 
 | Section | What it defines |

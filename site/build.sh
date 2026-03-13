@@ -89,6 +89,29 @@ echo "  create llms.txt"
 
 This document contains the complete OpenUISpec v0.1 specification followed by all JSON Schema definitions for validation.
 
+## Quick file format reference
+
+Every file type has a root key and a JSON Schema. Read the schema before creating files.
+
+| File | Schema | Root key |
+|------|--------|----------|
+| \`openuispec.yaml\` | \`openuispec.schema.json\` | \`spec_version\` |
+| \`screens/*.yaml\` | \`screen.schema.json\` | \`<screen_id>\` |
+| \`flows/*.yaml\` | \`flow.schema.json\` | \`<flow_id>\` |
+| \`platform/*.yaml\` | \`platform.schema.json\` | \`platform\` |
+| \`locales/*.json\` | \`locale.schema.json\` | (object) |
+| \`contracts/x_*.yaml\` | \`custom-contract.schema.json\` | \`contract\` |
+| \`tokens/color.yaml\` | \`tokens/color.schema.json\` | \`color\` |
+| \`tokens/typography.yaml\` | \`tokens/typography.schema.json\` | \`typography\` |
+| \`tokens/spacing.yaml\` | \`tokens/spacing.schema.json\` | \`spacing\` |
+| \`tokens/elevation.yaml\` | \`tokens/elevation.schema.json\` | \`elevation\` |
+| \`tokens/motion.yaml\` | \`tokens/motion.schema.json\` | \`motion\` |
+| \`tokens/layout.yaml\` | \`tokens/layout.schema.json\` | \`layout\` |
+| \`tokens/themes.yaml\` | \`tokens/themes.schema.json\` | \`themes\` |
+| \`tokens/icons.yaml\` | \`tokens/icons.schema.json\` | \`icons\` |
+
+**Important:** Every token file requires a root wrapper key matching its type (e.g. \`tokens/color.yaml\` must start with \`color:\`).
+
 ---
 
 PREAMBLE
@@ -101,7 +124,31 @@ PREAMBLE
   echo ""
   echo "## JSON Schemas"
   echo ""
-  echo "The following JSON Schemas define the valid structure of all OpenUISpec files. Use these to validate spec files and understand the expected format."
+  echo "The following JSON Schemas define the valid structure of all OpenUISpec files."
+  echo "Use these to validate spec files and understand the expected format."
+  echo ""
+  echo "### Schema-to-file mapping"
+  echo ""
+  echo "| Schema | Validates | Root key |"
+  echo "|--------|-----------|----------|"
+  echo "| \`openuispec.schema.json\` | \`openuispec.yaml\` (root manifest) | \`name\` |"
+  echo "| \`screen.schema.json\` | \`screens/*.yaml\` | \`screen\` |"
+  echo "| \`flow.schema.json\` | \`flows/*.yaml\` | \`flow\` |"
+  echo "| \`platform.schema.json\` | \`platform/*.yaml\` | \`platform\` |"
+  echo "| \`locale.schema.json\` | \`locales/*.json\` | (object) |"
+  echo "| \`custom-contract.schema.json\` | \`contracts/x_*.yaml\` | \`contract\` |"
+  echo "| \`tokens/color.schema.json\` | \`tokens/color.yaml\` | \`color\` |"
+  echo "| \`tokens/typography.schema.json\` | \`tokens/typography.yaml\` | \`typography\` |"
+  echo "| \`tokens/spacing.schema.json\` | \`tokens/spacing.yaml\` | \`spacing\` |"
+  echo "| \`tokens/elevation.schema.json\` | \`tokens/elevation.yaml\` | \`elevation\` |"
+  echo "| \`tokens/motion.schema.json\` | \`tokens/motion.yaml\` | \`motion\` |"
+  echo "| \`tokens/layout.schema.json\` | \`tokens/layout.yaml\` | \`layout\` |"
+  echo "| \`tokens/themes.schema.json\` | \`tokens/themes.yaml\` | \`themes\` |"
+  echo "| \`tokens/icons.schema.json\` | \`tokens/icons.yaml\` | \`icons\` |"
+  echo ""
+  echo "**Important:** Every token file requires a root wrapper key matching its type."
+  echo "For example, \`tokens/typography.yaml\` must start with \`typography:\` — do NOT"
+  echo "put properties like \`font_family:\` at the top level."
   echo ""
 
   for schema in \

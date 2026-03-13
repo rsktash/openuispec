@@ -71,6 +71,8 @@ function buildAjv(): AjvInstance {
   return ajv;
 }
 
+const BASE = "https://openuispec.org/schema/";
+
 // ── validate one file ────────────────────────────────────────────────
 
 function validateFile(
@@ -94,6 +96,12 @@ function validateFile(
     return 0;
   }
 
+  // Convert schema URL to a local path for display
+  const schemaLocalPath = schemaId.replace(
+    BASE,
+    "node_modules/openuispec/schema/",
+  );
+
   const errors: ErrorObject[] = validate.errors ?? [];
   console.log(`  FAIL  ${name} (${errors.length} error(s))`);
   for (const e of errors.slice(0, 5)) {
@@ -109,12 +117,38 @@ function validateFile(
   if (errors.length > 5) {
     console.log(`        ... and ${errors.length - 5} more`);
   }
+
+  // Show hint when root-level structure is wrong (missing wrapper key)
+  const hasRootRequired = errors.some(
+    (e) => !e.instancePath && e.keyword === "required",
+  );
+  const hasRootAdditional = errors.some(
+    (e) => !e.instancePath && e.keyword === "additionalProperties",
+  );
+  if (hasRootRequired || hasRootAdditional) {
+    const expectedKey = errors.find(
+      (e) => !e.instancePath && e.keyword === "required",
+    )?.params?.missingProperty as string | undefined;
+    if (expectedKey) {
+      console.log(
+        `\n        Hint: "${name}" needs a root "${expectedKey}:" wrapper key.`,
+      );
+      console.log(`        Example:`);
+      console.log(`          ${expectedKey}:`);
+      console.log(`            ...your content here...`);
+    } else {
+      console.log(
+        `\n        Hint: This file has unexpected top-level properties.`,
+      );
+    }
+  }
+
+  console.log(`        Schema: ${schemaLocalPath}`);
+
   return errors.length;
 }
 
 // ── validation groups ────────────────────────────────────────────────
-
-const BASE = "https://openuispec.org/schema/";
 
 interface ValidationGroup {
   label: string;
