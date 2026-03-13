@@ -111,6 +111,15 @@ openuispec/
 │           ├── ios.yaml                 # SwiftUI overrides + behaviors
 │           ├── android.yaml             # Compose overrides + behaviors
 │           └── web.yaml                 # React overrides + responsive rules
+├── generator/                           # Reference code generators
+│   └── ios/                             # spec → SwiftUI generator (TypeScript)
+│       ├── index.ts                     # Entry point (npm run generate:ios)
+│       ├── parse/                       # YAML/JSON parser → SpecProject
+│       ├── ir/                          # Intermediate representation + resolvers
+│       ├── codegen/                     # Swift code emitters
+│       └── write.ts                     # File writer
+├── generated/                           # Generated output (gitignored)
+│   └── ios/TaskFlow/                    # Swift Package (swift build)
 ├── LICENSE
 └── README.md
 ```
@@ -162,7 +171,7 @@ openuispec/
 - [x] Custom contract extension mechanism
 - [x] Icon system definition
 - [x] Form system (validation rules, field dependencies)
-- [ ] Reference AI generator (spec → SwiftUI proof of concept)
+- [x] Reference AI generator (spec → SwiftUI proof of concept)
 - [ ] More example apps (e-commerce, social, dashboard)
 
 ## Contributing
