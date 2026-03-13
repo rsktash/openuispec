@@ -125,49 +125,67 @@ function aiRulesBlock(specDir: string, targets: string[]): string {
 # ================================
 # This project uses OpenUISpec to define UI as a semantic spec.
 # Spec files are the single source of truth for all UI across platforms.
+# Targets: ${targetList}
+
+## What is OpenUISpec
+OpenUISpec is a YAML-based spec format that describes an app's UI semantically — tokens, screens, flows, and platform overrides. AI reads the spec and generates native code (SwiftUI, Compose, React). AI reads native code and updates the spec. The spec is the sync layer between platforms.
 
 ## Spec location
 - Spec root: \`${specDir}/\`
-- Manifest: \`${specDir}/openuispec.yaml\`
-- Always read \`openuispec.yaml\` first to understand the project structure.
+- Manifest: \`${specDir}/openuispec.yaml\` — always read this first.
+- Tokens: \`${specDir}/tokens/\` — colors, typography, spacing, motion, icons, themes
+- Screens: \`${specDir}/screens/\` — one YAML file per screen
+- Flows: \`${specDir}/flows/\` — multi-step navigation journeys
+- Contracts: \`${specDir}/contracts/\` — UI component definitions
+- Platform: \`${specDir}/platform/\` — per-target overrides (iOS, Android, Web)
+- Locales: \`${specDir}/locales/\` — i18n strings (JSON, ICU MessageFormat)
 
-## Before making UI changes
-1. Read the relevant spec files (screens, tokens, flows) before modifying any UI code.
-2. If the change requires a spec update, modify the spec files FIRST, then update generated code.
-3. Never modify generated code directly — change the spec and regenerate.
+## If spec directories are empty (first-time setup)
+This means the project has existing UI code but hasn't been specced yet. Your job:
 
-## After modifying spec files
-1. Run \`openuispec drift --snapshot --target <target>\` for each affected platform.
-2. Targets in this project: ${targetList}.
-3. Run \`openuispec drift\` to verify no untracked drift remains.
+1. **Find existing screens** — scan the codebase for UI screen files (SwiftUI views, Compose screens, React components/pages).
+2. **Create stubs** — for each screen, create \`${specDir}/screens/<name>.yaml\` with:
+   \`\`\`yaml
+   screen_name:
+     semantic: "Brief description of what this screen does"
+     status: stub
+     layout:
+       type: scroll_vertical
+   \`\`\`
+3. **Extract tokens** — scan the codebase for colors, fonts, spacing values and create token files in \`${specDir}/tokens/\`.
+4. **Update the manifest** — fill in \`data_model\` and \`api.endpoints\` in \`${specDir}/openuispec.yaml\` based on the existing code.
+5. **Spec screens on demand** — when the user asks to spec a screen, read the native code, create a full spec, and change \`status: draft\` → \`ready\`.
 
 ## Screen and flow status
-Screens and flows have a \`status\` field that controls drift tracking:
 - \`stub\` — placeholder, not yet specced. Drift detection skips these.
-- \`draft\` — in progress, actively being specced. Tracked by drift.
+- \`draft\` — actively being specced. Tracked by drift.
 - \`ready\` — fully specified (default if omitted). Tracked by drift.
 
-When adopting OpenUISpec in an existing project:
-1. Create spec files for existing screens as \`status: stub\` initially.
-2. When speccing a screen from existing code, change status to \`draft\`.
-3. Once the spec is complete and reviewed, change to \`ready\` (or remove the field).
-4. Only \`draft\` and \`ready\` screens trigger drift failures in CI.
+## Making UI changes
+1. Read the relevant spec files before modifying any UI code.
+2. If the change requires a spec update, modify the spec FIRST, then update code.
+3. Never modify generated code without updating the spec.
+4. When adding a new screen, create the corresponding spec file.
+5. When removing a screen, remove the spec file and update flow references.
 
-## Spec file conventions
-- Tokens (colors, typography, spacing, motion, icons) live in \`${specDir}/tokens/\`.
-- Contracts (UI component definitions) live in \`${specDir}/contracts/\`.
-- Screens live in \`${specDir}/screens/\`. One screen per file.
-- Navigation flows live in \`${specDir}/flows/\`.
-- Platform overrides live in \`${specDir}/platform/\`.
-- Localization strings live in \`${specDir}/locales/\`.
+## After modifying spec files
+1. Run \`openuispec validate\` to check specs against the schema.
+2. Run \`openuispec drift --snapshot --target <target>\` for each affected platform.
+3. Run \`openuispec drift\` to verify no untracked drift remains.
 
-## Key rules
-- The spec uses 7 contract families: nav_container, surface, action_trigger, input_field, data_display, collection, feedback.
-- Custom contracts are prefixed with \`x_\` (e.g., \`x_media_player\`).
-- Data binding uses \`$data:\`, \`$state:\`, \`$param:\`, \`$t:\` prefixes.
-- Actions use typed action objects (navigate, api_call, set_state, confirm, etc.).
-- When adding a new screen, also create the corresponding spec file.
-- When renaming or removing a screen, update the spec and all flow references.
+## Spec format reference
+- 7 contract families: nav_container, surface, action_trigger, input_field, data_display, collection, feedback
+- Custom contracts: prefixed with \`x_\` (e.g., \`x_media_player\`)
+- Data binding: \`$data:\`, \`$state:\`, \`$param:\`, \`$t:\` prefixes
+- Actions: typed objects (navigate, api_call, set_state, confirm, sequence, feedback, etc.)
+- Adaptive layout: size classes (compact, regular, expanded) with per-section overrides
+
+## CLI commands
+- \`openuispec init\` — scaffold a new spec project
+- \`openuispec validate [group...]\` — validate spec files against schemas
+- \`openuispec drift --target <t>\` — check for spec drift
+- \`openuispec drift --snapshot --target <t>\` — snapshot current state
+- \`openuispec drift --all\` — include stubs in drift check
 `;
 }
 
