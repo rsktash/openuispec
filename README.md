@@ -17,11 +17,19 @@ The result: each platform feels native, but every app stays consistent because i
 
 ## How it works
 
-![How OpenUISpec works](https://raw.githubusercontent.com/rsktash/openuispec/main/docs/images/how-it-works.jpg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/rsktash/openuispec/main/docs/images/how-it-works-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/rsktash/openuispec/main/docs/images/how-it-works-light.png">
+  <img alt="How OpenUISpec works" src="https://raw.githubusercontent.com/rsktash/openuispec/main/docs/images/how-it-works-light.png">
+</picture>
 
 ## Workflows
 
-![OpenUISpec workflows](https://raw.githubusercontent.com/rsktash/openuispec/main/docs/images/workflows.png)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/rsktash/openuispec/main/docs/images/workflows-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/rsktash/openuispec/main/docs/images/workflows-light.png">
+  <img alt="OpenUISpec workflows" src="https://raw.githubusercontent.com/rsktash/openuispec/main/docs/images/workflows-light.png">
+</picture>
 
 ## Key concepts
 
