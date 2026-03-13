@@ -1,0 +1,185 @@
+# ============================================================
+# TaskFlow — Home Screen (Task List)
+# ============================================================
+# Exercises: nav_container, collection, data_display,
+#            action_trigger, input_field (search)
+# ============================================================
+
+home:
+  semantic: "Main task list with filtering, search, and quick actions"
+
+  data:
+    tasks:
+      source: "api.tasks.list"
+      params:
+        filter: "state.active_filter"
+        sort: "state.sort_order"
+    projects:
+      source: "api.projects.list"
+    task_counts:
+      source: "api.tasks.counts"
+
+  state:
+    active_filter:
+      type: enum
+      values: [all, today, upcoming, done]
+      default: today
+    sort_order:
+      type: enum
+      values: [due_date, priority, created_at]
+      default: due_date
+    search_query: { type: string, default: "" }
+
+  # --- Navigation shell ---
+  navigation:
+    contract: nav_container
+    variant: tab_bar
+    props:
+      items:
+        - id: "home"
+          label: "Tasks"
+          icon: "checkmark_list"
+          icon_active: "checkmark_list_fill"
+          destination: "screens/home"
+          badge: { count: "task_counts.today", severity: "info" }
+        - id: "projects"
+          label: "Projects"
+          icon: "folder"
+          icon_active: "folder_fill"
+          destination: "screens/projects"
+        - id: "calendar"
+          label: "Calendar"
+          icon: "calendar"
+          icon_active: "calendar_fill"
+          destination: "screens/calendar"
+        - id: "settings"
+          label: "Settings"
+          icon: "gear"
+          icon_active: "gear_fill"
+          destination: "screens/settings"
+      selected: "home"
+
+  # --- Screen content ---
+  layout:
+    type: scroll_vertical
+    safe_area: true
+
+    sections:
+      # ---------- Header ----------
+      - id: header
+        layout: { type: vertical, spacing: "spacing.sm" }
+        padding: "spacing.page_margin"
+        children:
+          - contract: data_display
+            variant: inline
+            props:
+              title: "Good {time_of_day | format:greeting}, {user.first_name}"
+              subtitle: "{task_counts.today} tasks today"
+              emphasis: default
+            tokens_override:
+              title_style: "typography.heading_lg"
+              subtitle_style: "typography.body_sm"
+
+      # ---------- Search bar ----------
+      - id: search
+        padding_h: "spacing.page_margin"
+        contract: input_field
+        input_type: text
+        props:
+          label: "Search tasks"
+          placeholder: "Search by title, tag, or project..."
+          value: "state.search_query"
+          icon: { ref: "search", position: leading }
+          clearable: true
+        tokens_override:
+          background: "color.surface.secondary"
+          border: { width: 0 }
+          radius: "spacing.sm"
+
+      # ---------- Filter chips ----------
+      - id: filters
+        margin_top: "spacing.sm"
+        padding_h: "spacing.page_margin"
+        contract: collection
+        variant: chips
+        props:
+          data:
+            - { id: "all", label: "All", count: "task_counts.all" }
+            - { id: "today", label: "Today", count: "task_counts.today" }
+            - { id: "upcoming", label: "Upcoming", count: "task_counts.upcoming" }
+            - { id: "done", label: "Done", count: "task_counts.done" }
+          item_contract: action_trigger
+          item_variant: ghost
+          item_props_map:
+            label: "{item.label} ({item.count})"
+          selectable: true
+          selection_mode: single
+          selected: "state.active_filter"
+        action:
+          type: set_state
+          target: "state.active_filter"
+          value: "item.id"
+
+      # ---------- Task list ----------
+      - id: task_list
+        margin_top: "spacing.md"
+        contract: collection
+        variant: list
+        props:
+          data: "tasks"
+          item_contract: data_display
+          item_variant: compact
+          item_props_map:
+            title: "item.title"
+            subtitle: "{item.project.name} · {item.due_date | format:date_relative}"
+            leading:
+              contract: input_field
+              input_type: checkbox
+              props:
+                value: "item.status == done"
+                label: "Mark {item.title} complete"
+              action:
+                type: api_call
+                endpoint: "api.tasks.toggleStatus"
+                params: { id: "item.id" }
+            trailing:
+              contract: data_display
+              variant: inline
+              props:
+                badge:
+                  dot: true
+                  severity: "{item.priority | map:priority_to_severity}"
+            metadata:
+              priority: "item.priority"
+              status: "item.status"
+          interactive: true
+          selectable: false
+          pull_to_refresh: true
+          searchable: false               # search is handled by the header
+          
+          empty_state:
+            icon: "checkmark_circle_fill"
+            title: "All caught up!"
+            body: "No tasks match this filter. Tap + to add one."
+
+        action:
+          type: navigate
+          destination: "screens/task_detail"
+          params: { task_id: "item.id" }
+
+      # ---------- Floating action button ----------
+      - id: fab
+        position: "floating-bottom-trailing"
+        contract: action_trigger
+        variant: primary
+        size: lg
+        props:
+          label: "New task"
+          icon: "plus"
+        tokens_override:
+          radius: 28                      # pill shape
+          shadow: "elevation.lg"
+        action:
+          type: navigate
+          destination: "flows/create_task"
+          presentation: "sheet"

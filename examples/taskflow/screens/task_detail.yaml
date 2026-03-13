@@ -1,0 +1,250 @@
+# ============================================================
+# TaskFlow — Task Detail Screen
+# ============================================================
+# Exercises: data_display (hero, stat, compact), action_trigger,
+#            feedback (dialog), surface (sheet), input_field
+# ============================================================
+
+task_detail:
+  semantic: "Displays full task information with edit and delete actions"
+
+  params:
+    task_id: { type: string, required: true }
+
+  data:
+    task:
+      source: "api.tasks.getById"
+      params: { id: "params.task_id" }
+
+  layout:
+    type: scroll_vertical
+    safe_area: true
+
+    sections:
+      # ---------- Status + Priority header ----------
+      - id: header
+        padding: "spacing.page_margin"
+        layout: { type: vertical, spacing: "spacing.md" }
+        children:
+          - contract: data_display
+            variant: hero
+            props:
+              title: "{task.title}"
+              badge:
+                text: "{task.status | format:status_label}"
+                severity: "{task.status | map:status_severity}"
+              metadata:
+                priority: "{task.priority | format:status_label}"
+
+          - layout: { type: horizontal, spacing: "spacing.sm" }
+            children:
+              # Status stat card
+              - contract: data_display
+                variant: stat
+                props:
+                  title: "Status"
+                  body: "{task.status | format:status_label}"
+                  leading:
+                    icon: "circle_fill"
+                    color: "color.status.{task.status}"
+                    size: 10
+
+              # Priority stat card
+              - contract: data_display
+                variant: stat
+                props:
+                  title: "Priority"
+                  body: "{task.priority | format:status_label}"
+                  leading:
+                    icon: "flag_fill"
+                    color: "color.priority.{task.priority}"
+                    size: 14
+
+              # Due date stat card
+              - contract: data_display
+                variant: stat
+                props:
+                  title: "Due"
+                  body: "{task.due_date | format:date_relative}"
+
+      # ---------- Description ----------
+      - id: description
+        padding_h: "spacing.page_margin"
+        margin_top: "spacing.md"
+        condition: "task.description != null"
+        layout: { type: vertical, spacing: "spacing.xs" }
+        children:
+          - contract: data_display
+            variant: inline
+            props:
+              title: "Description"
+            tokens_override:
+              title_style: "typography.overline"
+              title_color: "color.text.tertiary"
+          - contract: data_display
+            variant: inline
+            props:
+              title: "{task.description}"
+            tokens_override:
+              title_style: "typography.body"
+
+      # ---------- Details section ----------
+      - id: details
+        padding_h: "spacing.page_margin"
+        margin_top: "spacing.lg"
+        layout: { type: vertical, spacing: "spacing.none" }
+        children:
+          - contract: data_display
+            variant: inline
+            props:
+              title: "Details"
+            tokens_override:
+              title_style: "typography.overline"
+              title_color: "color.text.tertiary"
+
+          # Project row
+          - contract: data_display
+            variant: compact
+            interactive: true
+            props:
+              title: "Project"
+              trailing: "{task.project.name}"
+              leading: { icon: "folder", color: "color.text.secondary", size: 18 }
+            action:
+              type: navigate
+              destination: "screens/project_detail"
+              params: { project_id: "task.project_id" }
+
+          # Assignee row
+          - contract: data_display
+            variant: compact
+            interactive: true
+            props:
+              title: "Assignee"
+              trailing: "{task.assignee.name | default:'Unassigned'}"
+              leading: { icon: "person", color: "color.text.secondary", size: 18 }
+            action:
+              type: present
+              surface: "assignee_picker"
+
+          # Tags row
+          - contract: data_display
+            variant: compact
+            props:
+              title: "Tags"
+              trailing:
+                contract: collection
+                variant: chips
+                props:
+                  data: "task.tags"
+                  item_contract: data_display
+                  item_variant: inline
+                  item_props_map:
+                    title: "item"
+              leading: { icon: "tag", color: "color.text.secondary", size: 18 }
+
+          # Created row
+          - contract: data_display
+            variant: compact
+            props:
+              title: "Created"
+              trailing: "{task.created_at | format:date}"
+              leading: { icon: "clock", color: "color.text.secondary", size: 18 }
+
+      # ---------- Actions ----------
+      - id: actions
+        padding: "spacing.page_margin"
+        margin_top: "spacing.xl"
+        layout: { type: vertical, spacing: "spacing.sm" }
+        children:
+          - contract: action_trigger
+            variant: primary
+            full_width: true
+            props:
+              label: "Edit task"
+              icon: "pencil"
+            action:
+              type: navigate
+              destination: "flows/edit_task"
+              params: { task_id: "task.id" }
+              presentation: "sheet"
+
+          - contract: action_trigger
+            variant: secondary
+            full_width: true
+            props:
+              label: "{task.status == done ? 'Reopen task' : 'Mark complete'}"
+              icon: "{task.status == done ? 'arrow_uturn_left' : 'checkmark'}"
+            action:
+              type: api_call
+              endpoint: "api.tasks.toggleStatus"
+              params: { id: "task.id" }
+              on_success:
+                feedback:
+                  contract: feedback
+                  variant: toast
+                  props:
+                    message: "Task {task.status == done ? 'reopened' : 'completed'}"
+                    severity: success
+                    duration: 3000
+
+          - contract: action_trigger
+            variant: destructive
+            full_width: true
+            props:
+              label: "Delete task"
+              icon: "trash"
+            action:
+              type: confirm
+              confirmation:
+                contract: feedback
+                variant: dialog
+                props:
+                  title: "Delete task?"
+                  message: "This action cannot be undone. The task \"{task.title}\" will be permanently removed."
+                  actions:
+                    - label: "Cancel"
+                      variant: secondary
+                      action: { type: dismiss }
+                    - label: "Delete"
+                      variant: destructive
+                      action:
+                        type: api_call
+                        endpoint: "api.tasks.delete"
+                        params: { id: "task.id" }
+                        on_success:
+                          navigate: { to: "$back", feedback: { variant: toast, message: "Task deleted", severity: neutral } }
+
+  # ---------- Surfaces (presented modally) ----------
+  surfaces:
+    assignee_picker:
+      contract: surface
+      variant: sheet
+      props:
+        title: "Assign to"
+        detents: [medium]
+        content:
+          - contract: input_field
+            input_type: text
+            props:
+              label: "Search people"
+              placeholder: "Name or email..."
+              icon: { ref: "search", position: leading }
+          - contract: collection
+            variant: list
+            props:
+              data: "api.users.list"
+              item_contract: data_display
+              item_variant: compact
+              item_props_map:
+                title: "item.name"
+                subtitle: "item.email"
+                leading:
+                  media: "item.avatar"
+                  fallback: { initials: "item.name", background: "color.brand.primary" }
+              interactive: true
+            action:
+              type: api_call
+              endpoint: "api.tasks.assignTo"
+              params: { task_id: "task.id", user_id: "item.id" }
+              on_success: { type: dismiss }

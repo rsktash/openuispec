@@ -1,0 +1,134 @@
+# ============================================================
+# TaskFlow — Projects Screen
+# ============================================================
+# Exercises: collection (grid), data_display (card), 
+#            action_trigger, surface (modal for new project)
+# ============================================================
+
+projects:
+  semantic: "Lists all projects as a grid of cards"
+
+  data:
+    projects:
+      source: "api.projects.list"
+
+  layout:
+    type: scroll_vertical
+    safe_area: true
+    padding: "spacing.page_margin"
+
+    sections:
+      - id: header
+        layout: { type: horizontal, justify: "space-between", align: "center" }
+        children:
+          - contract: data_display
+            variant: inline
+            props:
+              title: "Projects"
+            tokens_override:
+              title_style: "typography.heading_lg"
+          - contract: action_trigger
+            variant: tertiary
+            size: sm
+            props:
+              label: "New project"
+              icon: "plus_circle"
+            action:
+              type: present
+              surface: "new_project_dialog"
+
+      - id: project_grid
+        margin_top: "spacing.md"
+        contract: collection
+        variant: grid
+        props:
+          data: "projects"
+          columns: 2
+          item_contract: data_display
+          item_variant: card
+          item_props_map:
+            title: "item.name"
+            subtitle: "{item.task_count} tasks"
+            leading:
+              icon: "item.icon"
+              color: "item.color"
+              size: 24
+              background: "item.color (10% opacity)"
+              radius: "spacing.sm"
+              padding: "spacing.sm"
+          interactive: true
+          
+          empty_state:
+            icon: "folder_fill"
+            title: "No projects yet"
+            body: "Create a project to organize your tasks."
+
+        action:
+          type: navigate
+          destination: "screens/project_detail"
+          params: { project_id: "item.id" }
+
+  surfaces:
+    new_project_dialog:
+      contract: surface
+      variant: modal
+      props:
+        title: "New project"
+        size: sm
+        content:
+          - layout: { type: vertical, spacing: "spacing.md" }
+            children:
+              - contract: input_field
+                input_type: text
+                props:
+                  label: "Project name"
+                  placeholder: "e.g., Product Launch"
+                  required: true
+                data_binding: "form.name"
+
+              - contract: input_field
+                input_type: select
+                props:
+                  label: "Color"
+                  options:
+                    - { value: "#5B4FE8", label: "Indigo" }
+                    - { value: "#E8634F", label: "Coral" }
+                    - { value: "#2D9D5E", label: "Green" }
+                    - { value: "#D4920E", label: "Amber" }
+                    - { value: "#3B82D4", label: "Blue" }
+                    - { value: "#9B59B6", label: "Purple" }
+                data_binding: "form.color"
+
+              - contract: input_field
+                input_type: select
+                props:
+                  label: "Icon"
+                  options:
+                    - { value: "folder", label: "Folder" }
+                    - { value: "briefcase", label: "Briefcase" }
+                    - { value: "rocket", label: "Rocket" }
+                    - { value: "star", label: "Star" }
+                    - { value: "heart", label: "Heart" }
+                    - { value: "lightbulb", label: "Lightbulb" }
+                data_binding: "form.icon"
+
+              - layout: { type: horizontal, spacing: "spacing.sm", justify: "flex-end" }
+                children:
+                  - contract: action_trigger
+                    variant: secondary
+                    size: sm
+                    props: { label: "Cancel" }
+                    action: { type: dismiss }
+                  - contract: action_trigger
+                    variant: primary
+                    size: sm
+                    props: { label: "Create" }
+                    action:
+                      type: api_call
+                      endpoint: "api.projects.create"
+                      body: "form"
+                      on_success:
+                        sequence:
+                          - dismiss: true
+                          - feedback: { variant: toast, message: "Project created", severity: success }
+                          - refresh: "screens/projects.projects"

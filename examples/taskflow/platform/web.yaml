@@ -1,0 +1,41 @@
+# TaskFlow — Web Platform Adaptation
+
+web:
+  framework: react
+  language: typescript
+
+  overrides:
+    nav_container:
+      variant_responsive:
+        phone: "tab_bar"
+        tablet: "rail"
+        desktop: "sidebar"
+    surface:
+      sheet: { falls_back_to: "modal" }
+    feedback:
+      dialog: { uses_native_dialog_element: true }
+    collection:
+      grid:
+        columns_responsive:
+          phone: 1
+          tablet: 2
+          desktop: 3
+
+  behaviors:
+    prefers_color_scheme: true
+    keyboard_navigation: true
+    responsive_breakpoints:
+      phone: { max: 640 }
+      tablet: { min: 641, max: 1024 }
+      desktop: { min: 1025 }
+    keyboard_shortcuts:
+      new_task: { key: "n", modifier: "cmd/ctrl" }
+      search: { key: "k", modifier: "cmd/ctrl" }
+      toggle_sidebar: { key: "b", modifier: "cmd/ctrl" }
+
+  generation:
+    bundler: "vite"
+    css: "tailwind"
+    routing: "react_router"
+    state: "zustand"
+    naming: "React conventions"
