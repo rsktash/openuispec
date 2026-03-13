@@ -155,6 +155,21 @@ brand:
 
 Validate with: `openuispec validate`
 
+## Output directories
+
+By default, drift stores state in `generated/<target>/<project>/`. To point targets to your actual code directories, add `output_dir` to `openuispec.yaml`:
+
+```yaml
+generation:
+  targets: [ios, android, web]
+  output_dir:
+    web: "../web-ui/"
+    android: "../kmp-ui/"
+    ios: "../kmp-ui/iosApp/"
+```
+
+Paths are relative to `openuispec.yaml`. The `.openuispec-state.json` file is stored inside each output directory.
+
 ## Spec at a glance
 
 | Section | What it defines |

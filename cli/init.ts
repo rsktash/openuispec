@@ -106,6 +106,10 @@ i18n:
 
 generation:
   targets: [${targetList}]
+  # output_dir:                          # Optional: map targets to code directories
+  #   ios: "../ios-app/"                  # relative to this file
+  #   android: "../android-app/"
+  #   web: "../web-ui/"
   output_format:
 ${outputLines}
 
@@ -250,9 +254,22 @@ openuispec drift --snapshot --target ${targets[0]}  # Snapshot current state
 openuispec drift --all          # Include stubs in drift check
 \`\`\`
 
-## Targets
+## Targets and output directories
 
 This project generates native code for: **${targetList}**
+
+By default, drift stores state in \`generated/<target>/<project>/\`. To point targets to your actual code directories, add \`output_dir\` to \`openuispec.yaml\`:
+
+\`\`\`yaml
+generation:
+  targets: [ios, android, web]
+  output_dir:
+    web: "../web-ui/"
+    android: "../kmp-ui/"
+    ios: "../kmp-ui/iosApp/"
+\`\`\`
+
+Paths are relative to \`openuispec.yaml\`.
 
 ## Learn more
 
@@ -376,6 +393,18 @@ Workflow: read the schema → read an example from \`examples/taskflow/\` → cr
 - Data binding: \`$data:\`, \`$state:\`, \`$param:\`, \`$t:\` prefixes
 - Actions: typed objects (navigate, api_call, set_state, confirm, sequence, feedback, etc.)
 - Adaptive layout: size classes (compact, regular, expanded) with per-section overrides
+
+## Output directories
+Drift tracks spec changes per target. By default state is stored in \`generated/<target>/<project>/\`.
+To map targets to actual code directories, set \`generation.output_dir\` in \`openuispec.yaml\`:
+\`\`\`yaml
+generation:
+  output_dir:
+    web: "../web-ui/"
+    android: "../kmp-ui/"
+    ios: "../kmp-ui/iosApp/"
+\`\`\`
+Paths are relative to \`openuispec.yaml\`. The \`.openuispec-state.json\` file is stored inside each output directory.
 
 ## CLI commands
 - \`openuispec init\` — scaffold a new spec project

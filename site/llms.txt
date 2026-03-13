@@ -21,6 +21,12 @@ includes:
   tokens: "./tokens/"
   screens: "./screens/"
   flows: "./flows/"
+generation:
+  targets: [ios, android, web]
+  output_dir:                     # optional — map targets to code directories
+    web: "../web-ui/"             # relative to openuispec.yaml
+    android: "../kmp-ui/"
+    ios: "../kmp-ui/iosApp/"
 ```
 
 ### Screen (`screens/<name>.yaml`) — root key is the screen id

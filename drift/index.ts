@@ -159,27 +159,60 @@ function readProjectName(projectDir: string): string {
   return doc.project?.name ?? basename(projectDir);
 }
 
-/** Resolve the generated output directory for a target. */
-function resolveOutputDir(cwd: string, projectName: string, target: string): string {
-  return resolve(cwd, "generated", target, projectName);
-}
-
-function stateFilePath(cwd: string, projectName: string, target: string): string {
-  return join(resolveOutputDir(cwd, projectName, target), STATE_FILE);
-}
-
-function discoverTargets(cwd: string, projectName: string): string[] {
-  const generatedDir = resolve(cwd, "generated");
-  if (!existsSync(generatedDir)) return [];
+/** Read per-target output_dir map from the manifest. */
+function readOutputDirs(projectDir: string): Record<string, string> {
   try {
-    return readdirSync(generatedDir)
-      .filter((entry) =>
-        existsSync(stateFilePath(cwd, projectName, entry))
-      )
-      .sort();
+    const doc = YAML.parse(readFileSync(join(projectDir, "openuispec.yaml"), "utf-8"));
+    return doc.generation?.output_dir ?? {};
   } catch {
-    return [];
+    return {};
   }
+}
+
+/** Resolve the generated output directory for a target. */
+function resolveOutputDir(projectDir: string, projectName: string, target: string): string {
+  const outputDirs = readOutputDirs(projectDir);
+  if (outputDirs[target]) {
+    return resolve(projectDir, outputDirs[target]);
+  }
+  // Default: generated/<target>/<project_name> relative to cwd
+  return resolve(projectDir, "..", "generated", target, projectName);
+}
+
+function stateFilePath(projectDir: string, projectName: string, target: string): string {
+  return join(resolveOutputDir(projectDir, projectName, target), STATE_FILE);
+}
+
+function discoverTargets(projectDir: string, projectName: string): string[] {
+  const outputDirs = readOutputDirs(projectDir);
+  const targets: string[] = [];
+
+  // Check configured output_dir entries
+  for (const [target, dir] of Object.entries(outputDirs)) {
+    const resolved = resolve(projectDir, dir);
+    if (existsSync(join(resolved, STATE_FILE))) {
+      targets.push(target);
+    }
+  }
+
+  // Also check default generated/ directory
+  const generatedDir = resolve(projectDir, "..", "generated");
+  if (existsSync(generatedDir)) {
+    try {
+      for (const entry of readdirSync(generatedDir)) {
+        if (!targets.includes(entry)) {
+          const defaultPath = join(generatedDir, entry, projectName, STATE_FILE);
+          if (existsSync(defaultPath)) {
+            targets.push(entry);
+          }
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  return targets.sort();
 }
 
 /**
@@ -197,7 +230,7 @@ function normalizeEntry(value: string | FileEntry): FileEntry {
 
 function snapshot(cwd: string, projectDir: string, target: string): void {
   const projectName = readProjectName(projectDir);
-  const outDir = resolveOutputDir(cwd, projectName, target);
+  const outDir = resolveOutputDir(projectDir, projectName, target);
   if (!existsSync(outDir)) {
     console.error(
       `Error: Output directory not found: ${relative(cwd, outDir)}\n` +
@@ -226,7 +259,7 @@ function snapshot(cwd: string, projectDir: string, target: string): void {
     files: entries,
   };
 
-  const outPath = stateFilePath(cwd, projectName, target);
+  const outPath = stateFilePath(projectDir, projectName, target);
   writeFileSync(outPath, JSON.stringify(state, null, 2) + "\n");
   console.log(`Snapshot saved: ${relative(cwd, outPath)}`);
   console.log(`  ${Object.keys(entries).length} files hashed`);
@@ -301,7 +334,7 @@ function check(
   includeAll: boolean
 ): void {
   const projectName = readProjectName(projectDir);
-  const statePath = stateFilePath(cwd, projectName, target);
+  const statePath = stateFilePath(projectDir, projectName, target);
   if (!existsSync(statePath)) {
     console.error(
       `No snapshot found for target "${target}".\n` +
@@ -331,7 +364,7 @@ function checkAll(
   includeAll: boolean
 ): void {
   const projectName = readProjectName(projectDir);
-  const targets = discoverTargets(cwd, projectName);
+  const targets = discoverTargets(projectDir, projectName);
   if (targets.length === 0) {
     console.error(
       "No snapshots found. Run: openuispec drift --snapshot --target <target>"
@@ -342,7 +375,7 @@ function checkAll(
   let anyDrift = false;
 
   for (const target of targets) {
-    const statePath = stateFilePath(cwd, projectName, target);
+    const statePath = stateFilePath(projectDir, projectName, target);
     const state: StateFile = JSON.parse(readFileSync(statePath, "utf-8"));
     const result = computeDrift(projectDir, state, includeAll);
 

@@ -104,6 +104,13 @@
             "type": "string"
           }
         },
+        "output_dir": {
+          "type": "object",
+          "description": "Per-target output directory (relative to openuispec.yaml). Defaults to generated/<target>/<project_name> if not set.",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
         "output_format": {
           "type": "object",
           "description": "Per-target generation config",
