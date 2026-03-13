@@ -3,6 +3,10 @@
   "version": "0.1.0",
   "type": "module",
   "description": "A semantic UI specification format for AI-native, platform-native app development",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rsktash/openuispec.git"
+  },
   "files": [
     "cli/",
     "drift/",
