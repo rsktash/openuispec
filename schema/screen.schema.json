@@ -17,6 +17,10 @@
         "semantic": {
           "type": "string"
         },
+        "title": {
+          "type": "string",
+          "description": "Optional screen title for navigation bars and headers. When omitted, inferred from the first data_display title in the layout or the nav item label."
+        },
         "status": {
           "type": "string",
           "enum": [
@@ -181,6 +185,11 @@
         },
         "input_type": {
           "type": "string"
+        },
+        "render_hint": {
+          "type": "string",
+          "enum": ["dropdown", "segmented", "radio_group", "bottom_sheet"],
+          "description": "Optional hint for how an input_field with input_type select should render. When omitted, the platform default is used (e.g., Picker on iOS, ExposedDropdownMenuBox on Android, select on Web)."
         },
         "size": {
           "type": "string"

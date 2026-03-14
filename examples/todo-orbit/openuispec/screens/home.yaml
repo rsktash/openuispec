@@ -1,5 +1,6 @@
 home:
   semantic: "Main todo list with search, filters, completion toggles, and a quick-create action"
+  title: "$t:nav.tasks"
   status: ready
 
   data:

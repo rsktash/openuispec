@@ -1,5 +1,6 @@
 analytics:
   semantic: "Analytics dashboard for productivity trends, weekly completion, and overdue task review"
+  title: "$t:nav.analytics"
   status: ready
 
   data:

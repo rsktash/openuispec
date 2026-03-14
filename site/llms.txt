@@ -33,6 +33,7 @@ generation:
 ```yaml
 home:
   semantic: "Main task list"
+  title: "$t:home.title"           # optional — nav bar / browser tab title
   data:
     tasks: { source: "api.tasks.list" }
   state:

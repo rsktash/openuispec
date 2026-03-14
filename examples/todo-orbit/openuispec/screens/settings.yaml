@@ -1,5 +1,6 @@
 settings:
   semantic: "Preferences screen for application language and theme"
+  title: "$t:nav.settings"
   status: ready
 
   data:

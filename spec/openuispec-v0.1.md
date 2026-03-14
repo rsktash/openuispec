@@ -835,6 +835,12 @@ input_field:
     suffix: { type: string, required: false }
     icon: { type: icon_ref, required: false, position: [leading, trailing] }
     clearable: { type: bool, default: false }
+    render_hint:
+      type: enum
+      values: [dropdown, segmented, radio_group, bottom_sheet]
+      required: false
+      condition: "input_type == select"
+      description: "Overrides the default platform widget for select fields. When omitted, the platform default is used."
 
   states:
     empty:
@@ -909,6 +915,7 @@ input_field:
       text: { widget: "TextField" }
       multiline: { widget: "TextEditor" }
       select: { widget: "Picker" }
+      select[segmented]: { widget: "Picker(style: .segmented)" }
       toggle: { widget: "Toggle" }
       slider: { widget: "Slider" }
       date: { widget: "DatePicker" }
@@ -916,6 +923,7 @@ input_field:
       text: { composable: "OutlinedTextField" }
       multiline: { composable: "OutlinedTextField(singleLine=false)" }
       select: { composable: "ExposedDropdownMenuBox" }
+      select[segmented]: { composable: "SegmentedButton / SingleChoiceSegmentedButtonRow" }
       toggle: { composable: "Switch" }
       slider: { composable: "Slider" }
       date: { composable: "DatePicker" }
@@ -923,6 +931,7 @@ input_field:
       text: { element: "input", type: "text" }
       multiline: { element: "textarea" }
       select: { element: "select" }
+      select[segmented]: { element: "fieldset > input[type=radio]", styled: "segmented control" }
       toggle: { element: "input", type: "checkbox", role: "switch" }
       slider: { element: "input", type: "range" }
       date: { element: "input", type: "date" }
@@ -1484,7 +1493,8 @@ Screens compose contracts into layouts. A screen never references platform widge
 # Example: screens/order_detail.yaml
 order_detail:
   semantic: "Displays detailed information about a single order"
-  
+  title: "$t:order_detail.title"   # Optional — shown in nav bar / browser tab
+
   params:
     order_id: { type: string, required: true }
   
@@ -1561,7 +1571,19 @@ order_detail:
 
 ### 5.1 Screen-level keys
 
-Beyond contract props and layout primitives, screen files use several keys that modify how sections and contract instances behave. These keys are available on any section or contract instance within a screen's `sections:` array.
+Screen definitions support the following top-level keys alongside `semantic`, `layout`, `data`, `state`, `params`, `navigation`, and `surfaces`:
+
+#### `title`
+
+Optional display title for the screen, shown in navigation bars, browser tabs, and back-button labels. When omitted, generators should infer the title from the first `data_display` title in the layout, or from the corresponding `nav_container` item label.
+
+```yaml
+settings:
+  semantic: "Preferences screen for language and theme"
+  title: "$t:settings.title"   # "Preferences"
+```
+
+Beyond these, screen files use several keys that modify how sections and contract instances behave. These keys are available on any section or contract instance within a screen's `sections:` array.
 
 #### `tokens_override`
 
@@ -2648,8 +2670,9 @@ Format expressions transform values for display. They appear inside `{}` delimit
 ```
 interpolation  := '{' (piped_expr | computed_expr) '}'
 piped_expr     := data_path ('|' pipe)*
-pipe           := operation ':' argument
+pipe           := operation ':' argument ('.' option)?
 operation      := 'format' | 'map' | 'default'
+option         := identifier   # e.g., abbreviated, narrow
 computed_expr  := data_path comparator value '?' literal ':' literal
 comparator     := '==' | '!=' | '>' | '<' | '>=' | '<='
 locale_ref     := '$t:' locale_key
@@ -2705,18 +2728,18 @@ subtitle: "{item.quantity} × {item.unit_price | format:currency}"
 
 **Built-in formatters:**
 
-| Formatter | Input | Output | Locale-aware |
-|-----------|-------|--------|-------------|
-| `currency` | number | "$1,234.56" | Yes |
-| `date` | date/datetime | "Mar 13, 2026" | Yes |
-| `date_relative` | date/datetime | "2 hours ago", "yesterday" | Yes |
-| `date_short` | date/datetime | "Mar 13" | Yes |
-| `time` | datetime | "3:45 PM" | Yes |
-| `number` | number | "1,234" | Yes |
-| `percentage` | number (0-1) | "45%" | No |
-| `status_label` | enum string | "In Progress" (title case) | No |
-| `pluralize` | number | "1 task" / "3 tasks" | Yes |
-| `file_size` | number (bytes) | "2.4 MB" | No |
+| Formatter | Input | Output | Locale-aware | Options |
+|-----------|-------|--------|-------------|---------|
+| `currency` | number | "$1,234.56" | Yes | — |
+| `date` | date/datetime | "Mar 13, 2026" | Yes | — |
+| `date_relative` | date/datetime | "2 hours ago", "yesterday" | Yes | `style`: full (default), abbreviated, narrow |
+| `date_short` | date/datetime | "Mar 13" | Yes | — |
+| `time` | datetime | "3:45 PM" | Yes | — |
+| `number` | number | "1,234" | Yes | — |
+| `percentage` | number (0-1) | "45%" | No | — |
+| `status_label` | enum string | "In Progress" (title case) | No | — |
+| `pluralize` | number | "1 task" / "3 tasks" | Yes | — |
+| `file_size` | number (bytes) | "2.4 MB" | No | — |
 
 **Built-in mappers:**
 
@@ -2725,6 +2748,21 @@ subtitle: "{item.quantity} × {item.unit_price | format:currency}"
 | `status_severity` | status enum → severity enum (e.g., "done" → "success") |
 | `priority_to_severity` | priority enum → severity enum (e.g., "urgent" → "error") |
 | `bool_to_label` | true/false → "Yes"/"No" (or custom mapping) |
+
+**Formatter options** — some built-in formatters accept an `options` parameter, passed with a dot suffix:
+
+```yaml
+# Default style (full): "in 2 days", "3 hours ago"
+subtitle: "{task.due_date | format:date_relative}"
+
+# Abbreviated: "in 2d", "3h ago"
+subtitle: "{task.due_date | format:date_relative.abbreviated}"
+
+# Narrow: "2d", "3h"
+subtitle: "{task.due_date | format:date_relative.narrow}"
+```
+
+When no option is provided, the default style is used. Generators must respect the option across all platforms to ensure consistent output.
 
 **Custom formatters and mappers** can be defined in the project manifest:
 
