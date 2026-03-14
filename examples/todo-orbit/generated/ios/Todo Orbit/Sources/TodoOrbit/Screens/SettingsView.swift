@@ -9,10 +9,6 @@ struct SettingsView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("screens/settings")
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(.secondary)
-                        .textCase(.uppercase)
                     Text(model.string("settings.title"))
                         .font(.largeTitle.weight(.bold))
                     Text(model.string("settings.subtitle"))

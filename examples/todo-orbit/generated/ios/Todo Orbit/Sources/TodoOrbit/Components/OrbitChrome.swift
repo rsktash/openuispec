@@ -16,32 +16,68 @@ struct CutCornerShape: Shape {
     }
 }
 
-struct OrbitCardModifier: ViewModifier {
+struct OrbitSurfaceModifier: ViewModifier {
+    let cut: CGFloat
     let fill: Color
     let stroke: Color
     let lineWidth: CGFloat
+    let contentPadding: CGFloat
 
     func body(content: Content) -> some View {
         content
-            .padding(20)
+            .padding(contentPadding)
             .background(
-                CutCornerShape(cut: 16)
+                CutCornerShape(cut: cut)
                     .fill(fill)
             )
             .overlay(
-                CutCornerShape(cut: 16)
+                CutCornerShape(cut: cut)
                     .stroke(stroke, lineWidth: lineWidth)
             )
     }
 }
 
 extension View {
+    func orbitSurface(
+        cut: CGFloat = 16,
+        fill: Color = Color(uiColor: .secondarySystemBackground),
+        stroke: Color = Color.teal.opacity(0.24),
+        lineWidth: CGFloat = 1,
+        contentPadding: CGFloat = 20
+    ) -> some View {
+        modifier(
+            OrbitSurfaceModifier(
+                cut: cut,
+                fill: fill,
+                stroke: stroke,
+                lineWidth: lineWidth,
+                contentPadding: contentPadding
+            )
+        )
+    }
+
     func orbitCard(
         fill: Color = Color(uiColor: .secondarySystemBackground),
         stroke: Color = Color.teal.opacity(0.24),
         lineWidth: CGFloat = 1
     ) -> some View {
-        modifier(OrbitCardModifier(fill: fill, stroke: stroke, lineWidth: lineWidth))
+        orbitSurface(fill: fill, stroke: stroke, lineWidth: lineWidth)
+    }
+
+    func orbitInputShell(
+        cut: CGFloat = 14,
+        fill: Color = Color(uiColor: .secondarySystemBackground),
+        stroke: Color = Color.teal.opacity(0.22),
+        lineWidth: CGFloat = 1.5,
+        contentPadding: CGFloat = 14
+    ) -> some View {
+        orbitSurface(
+            cut: cut,
+            fill: fill,
+            stroke: stroke,
+            lineWidth: lineWidth,
+            contentPadding: contentPadding
+        )
     }
 }
 
@@ -82,6 +118,52 @@ struct OrbitGhostButtonStyle: ButtonStyle {
                     .stroke(Color.teal.opacity(configuration.isPressed ? 0.34 : 0.18), lineWidth: 1.5)
             )
             .scaleEffect(configuration.isPressed ? 0.99 : 1)
+    }
+}
+
+struct OrbitChipButtonStyle: ButtonStyle {
+    let selected: Bool
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.subheadline.weight(.semibold))
+            .foregroundStyle(selected ? Color.teal : Color.primary)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
+            .background(
+                CutCornerShape(cut: 12)
+                    .fill(selected ? Color.teal.opacity(0.12) : Color(uiColor: .secondarySystemBackground))
+            )
+            .overlay(
+                CutCornerShape(cut: 12)
+                    .stroke(
+                        selected ? Color.teal.opacity(0.34) : Color(uiColor: .separator).opacity(0.45),
+                        lineWidth: selected ? 1.5 : 1
+                    )
+            )
+            .scaleEffect(configuration.isPressed ? 0.98 : 1)
+    }
+}
+
+struct OrbitFloatingActionButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.headline.weight(.semibold))
+            .foregroundStyle(.white)
+            .padding(.horizontal, 18)
+            .padding(.vertical, 14)
+            .background(
+                CutCornerShape(cut: 16)
+                    .fill(
+                        LinearGradient(
+                            colors: [Color.teal, Color(red: 0.07, green: 0.52, blue: 0.48)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+            )
+            .shadow(color: .black.opacity(configuration.isPressed ? 0.12 : 0.18), radius: 18, y: 8)
+            .scaleEffect(configuration.isPressed ? 0.98 : 1)
     }
 }
 

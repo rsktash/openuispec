@@ -3,12 +3,15 @@ import SwiftUI
 
 struct TrendChartView: View {
     let title: String
+    let subtitle: String
     let emptyMessage: String
+    let legendCompleted: String
+    let legendCreated: String
     let points: [TrendPoint]
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("x_task_trend_chart.detail")
+            Text(subtitle)
                 .font(.caption.weight(.bold))
                 .foregroundStyle(.secondary)
                 .textCase(.uppercase)
@@ -25,29 +28,29 @@ struct TrendChartView: View {
                 Chart(points) { point in
                     LineMark(
                         x: .value("Label", point.label),
-                        y: .value("Created", point.created)
+                        y: .value(legendCreated, point.created)
                     )
                     .foregroundStyle(.orange)
                     .interpolationMethod(.catmullRom)
 
                     LineMark(
                         x: .value("Label", point.label),
-                        y: .value("Completed", point.completed)
+                        y: .value(legendCompleted, point.completed)
                     )
                     .foregroundStyle(.teal)
                     .interpolationMethod(.catmullRom)
 
                     AreaMark(
                         x: .value("Label", point.label),
-                        y: .value("Completed", point.completed)
+                        y: .value(legendCompleted, point.completed)
                     )
                     .foregroundStyle(.teal.opacity(0.08))
                 }
                 .frame(height: 280)
 
                 HStack(spacing: 18) {
-                    legend(.teal, title: "Completed")
-                    legend(.orange, title: "Created")
+                    legend(.teal, title: legendCompleted)
+                    legend(.orange, title: legendCreated)
                 }
                 .font(.footnote)
                 .foregroundStyle(.secondary)

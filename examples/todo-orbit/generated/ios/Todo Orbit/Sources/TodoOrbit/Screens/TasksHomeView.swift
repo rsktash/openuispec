@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct TasksHomeView: View {
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @ObservedObject var model: AppModel
     @State private var searchQuery = ""
     @State private var filter: TaskFilter = .all
@@ -9,78 +10,11 @@ struct TasksHomeView: View {
     @State private var showMetaSheet = false
 
     var body: some View {
-        NavigationSplitView {
-            List {
-                Section {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text(model.string("home.title"))
-                            .font(.largeTitle.weight(.bold))
-                        Text(model.homeSummary())
-                            .foregroundStyle(.secondary)
-                    }
-                    .listRowInsets(EdgeInsets(top: 12, leading: 0, bottom: 12, trailing: 0))
-
-                    Picker("Filter", selection: $filter) {
-                        ForEach(TaskFilter.allCases) { item in
-                            Text("\(model.string("home.filter_\(item.rawValue)")) (\(model.taskCount(for: item)))")
-                                .tag(item)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    .listRowInsets(EdgeInsets(top: 6, leading: 0, bottom: 12, trailing: 0))
-                }
-
-                ForEach(model.filteredTasks(filter: filter, search: searchQuery)) { task in
-                    Button {
-                        model.selectedTaskID = task.id
-                    } label: {
-                        HStack(spacing: 12) {
-                            Button {
-                                model.toggleTaskStatus(task.id)
-                            } label: {
-                                Image(systemName: task.status == .done ? "checkmark.circle.fill" : "circle")
-                                    .foregroundStyle(task.status == .done ? Color.green : Color.secondary)
-                            }
-                            .buttonStyle(.plain)
-
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(task.title)
-                                    .font(.headline)
-                                    .foregroundStyle(.primary)
-                                Text(model.formatRelativeDueDate(task.dueDate))
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
-                            }
-
-                            Spacer()
-                            PriorityDot(priority: task.priority)
-                        }
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-            .searchable(text: $searchQuery, prompt: model.string("home.search_placeholder"))
-            .navigationTitle(model.string("nav.tasks"))
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        taskSheetMode = .create
-                    } label: {
-                        Label(model.string("home.new_task"), systemImage: "plus")
-                    }
-                }
-            }
-        } detail: {
-            if let task = model.task(id: model.selectedTaskID) {
-                TaskDetailPanel(
-                    model: model,
-                    task: task,
-                    onEdit: { taskSheetMode = .edit(task.id) },
-                    onMeta: { showMetaSheet = true },
-                    onDelete: { showDeleteDialog = true }
-                )
+        Group {
+            if horizontalSizeClass == .compact {
+                compactLayout
             } else {
-                ContentUnavailableView(model.string("home.empty_title"), systemImage: "checkmark.circle")
+                splitLayout
             }
         }
         .sheet(item: $taskSheetMode) { mode in
@@ -110,6 +44,207 @@ struct TasksHomeView: View {
         } message: {
             Text(model.string("task_detail.delete_message"))
         }
+    }
+
+    private var splitLayout: some View {
+        NavigationSplitView {
+            tasksCanvas(selectionMode: .split)
+                .navigationTitle(model.string("nav.tasks"))
+        } detail: {
+            if let task = model.task(id: model.selectedTaskID) {
+                TaskDetailPanel(
+                    model: model,
+                    task: task,
+                    onEdit: { taskSheetMode = .edit(task.id) },
+                    onMeta: { showMetaSheet = true },
+                    onDelete: { showDeleteDialog = true }
+                )
+            } else {
+                ContentUnavailableView(model.string("home.empty_title"), systemImage: "checkmark.circle")
+            }
+        }
+    }
+
+    private var compactLayout: some View {
+        tasksCanvas(selectionMode: .compact)
+            .navigationTitle(model.string("nav.tasks"))
+    }
+
+    private enum SelectionMode {
+        case compact
+        case split
+    }
+
+    private func tasksCanvas(selectionMode: SelectionMode) -> some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 18) {
+                taskHeader
+                searchField
+                filterChips
+                taskListContent(selectionMode: selectionMode)
+            }
+            .padding(.horizontal, horizontalSizeClass == .compact ? 16 : 20)
+            .padding(.top, 12)
+            .padding(.bottom, 104)
+        }
+        .background(Color(uiColor: .systemGroupedBackground).ignoresSafeArea())
+        .overlay(alignment: .bottomTrailing) {
+            createButton
+                .padding(.trailing, horizontalSizeClass == .compact ? 18 : 24)
+                .padding(.bottom, horizontalSizeClass == .compact ? 20 : 24)
+        }
+    }
+
+    private var taskHeader: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(model.string("home.title"))
+                .font(.largeTitle.weight(.bold))
+            Text(model.homeSummary())
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    private var searchField: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "magnifyingglass")
+                .foregroundStyle(.secondary)
+
+            TextField(model.string("home.search_placeholder"), text: $searchQuery)
+                .textFieldStyle(.plain)
+
+            if !searchQuery.isEmpty {
+                Button {
+                    searchQuery = ""
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .orbitInputShell(
+            fill: Color(uiColor: .systemBackground),
+            stroke: Color.teal.opacity(0.3),
+            lineWidth: 1.5
+        )
+    }
+
+    private var filterChips: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 10) {
+                ForEach(TaskFilter.allCases) { item in
+                    Button {
+                        filter = item
+                    } label: {
+                        Text("\(model.string("home.filter_\(item.rawValue)")) (\(model.taskCount(for: item)))")
+                    }
+                    .buttonStyle(OrbitChipButtonStyle(selected: filter == item))
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func taskListContent(selectionMode: SelectionMode) -> some View {
+        let filtered = model.filteredTasks(filter: filter, search: searchQuery)
+
+        if filtered.isEmpty {
+            ContentUnavailableView(
+                model.string("home.empty_title"),
+                systemImage: "checkmark.circle"
+            )
+            .frame(maxWidth: .infinity, minHeight: 220)
+        } else {
+            LazyVStack(spacing: 12) {
+                ForEach(filtered) { task in
+                    taskRowCard(task, selectionMode: selectionMode)
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func taskRowCard(_ task: Task, selectionMode: SelectionMode) -> some View {
+        let selected = selectionMode == .split && model.selectedTaskID == task.id
+        let card = taskRow(task, selected: selected)
+
+        switch selectionMode {
+        case .compact:
+            NavigationLink {
+                TaskDetailPanel(
+                    model: model,
+                    task: task,
+                    onEdit: { taskSheetMode = .edit(task.id) },
+                    onMeta: {
+                        model.selectedTaskID = task.id
+                        showMetaSheet = true
+                    },
+                    onDelete: {
+                        model.selectedTaskID = task.id
+                        showDeleteDialog = true
+                    }
+                )
+            } label: {
+                card
+            }
+            .buttonStyle(.plain)
+        case .split:
+            Button {
+                model.selectedTaskID = task.id
+            } label: {
+                card
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
+    private func taskRow(_ task: Task, selected: Bool) -> some View {
+        HStack(spacing: 12) {
+            Button {
+                model.toggleTaskStatus(task.id)
+            } label: {
+                Image(systemName: task.status == .done ? "checkmark.circle.fill" : "circle")
+                    .font(.title3)
+                    .foregroundStyle(task.status == .done ? Color.green : Color.secondary)
+            }
+            .buttonStyle(.plain)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(task.title)
+                    .font(.headline)
+                    .foregroundStyle(.primary)
+                    .multilineTextAlignment(.leading)
+                Text(model.formatRelativeDueDate(task.dueDate))
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+
+            Spacer(minLength: 12)
+            PriorityDot(priority: task.priority)
+
+            if horizontalSizeClass == .compact {
+                Image(systemName: "chevron.right")
+                    .font(.footnote.weight(.bold))
+                    .foregroundStyle(.tertiary)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .orbitSurface(
+            cut: 14,
+            fill: selected ? Color.teal.opacity(0.12) : Color(uiColor: .systemBackground),
+            stroke: selected ? Color.teal.opacity(0.34) : Color(uiColor: .separator).opacity(0.28),
+            lineWidth: selected ? 1.5 : 1,
+            contentPadding: 16
+        )
+    }
+
+    private var createButton: some View {
+        Button {
+            taskSheetMode = .create
+        } label: {
+            Label(model.string("home.new_task"), systemImage: "plus")
+        }
+        .buttonStyle(OrbitFloatingActionButtonStyle())
     }
 }
 

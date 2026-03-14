@@ -43,7 +43,7 @@ Usage:
   openuispec drift --snapshot --target <t>  Snapshot current state
   openuispec validate [group...]            Validate spec files
 
-Validate groups: manifest, tokens, screens, flows, platform, locales, custom_contracts
+Validate groups: manifest, tokens, screens, flows, platform, locales, contracts
 
 Docs: https://openuispec.rsteam.uz
 `);

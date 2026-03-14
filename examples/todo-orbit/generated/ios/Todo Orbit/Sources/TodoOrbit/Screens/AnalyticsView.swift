@@ -17,10 +17,6 @@ struct AnalyticsView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("screens/analytics")
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(.secondary)
-                        .textCase(.uppercase)
                     Text(model.string("analytics.title"))
                         .font(.largeTitle.weight(.bold))
                     Text(model.string("analytics.subtitle"))
@@ -43,7 +39,10 @@ struct AnalyticsView: View {
 
                 TrendChartView(
                     title: model.string("analytics.title"),
+                    subtitle: model.string("analytics.trend_subtitle"),
                     emptyMessage: model.string("analytics.empty_trend"),
+                    legendCompleted: model.string("analytics.legend_completed"),
+                    legendCreated: model.string("analytics.legend_created"),
                     points: points
                 )
 

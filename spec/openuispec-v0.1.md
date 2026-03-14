@@ -13,6 +13,8 @@
 
 OpenUISpec is not a cross-platform framework. It is a **semantic design language specification** from which AI generates native platform code. The spec describes *what* UI does and *how it should feel* — never *which widget to use*.
 
+OpenUISpec is a shared UI sync language for native products, optimized for solo developers but also intended for teams that need a durable synchronization layer between product intent and platform code. It is not a pixel-perfect design description and it does not aim to erase platform differences. Its goal is semantic consistency with bounded native variation.
+
 ### Core principles
 
 1. **Semantic over visual.** The spec defines behavioral intent, not pixel layouts. A "primary action trigger" maps to `Button` in SwiftUI, `Button` in Compose, and `<button>` in HTML — the spec never says "button."
@@ -1720,6 +1722,8 @@ Layout primitives are the building blocks for arranging content. They replace th
 | `split_view` | Side-by-side master-detail | `NavigationSplitView` | `ListDetailPaneScaffold` | CSS Grid |
 | `adaptive` | Changes layout per size class | — | — | — |
 
+Layout primitives must remain usable across the size classes they are generated for. Multi-pane or master-detail patterns require an explicit compact fallback rather than assuming large-screen behavior will degrade correctly.
+
 Each primitive has typed props:
 
 ```yaml
@@ -2022,17 +2026,21 @@ This section defines the rules any AI code generator must follow when producing 
 Every AI generator, regardless of platform target, MUST:
 
 1. Produce **compilable code** that builds without errors on the target platform.
-2. Map every `contract` reference to the correct native widget per `platform_mapping`.
-3. Apply all `tokens` values within their declared `range` constraints.
-4. Implement every `state` declared in each used contract, including transitions.
-5. Set correct `a11y.role` and `a11y.label` for every component instance. For contextual containers such as `collection`, derive the label from the visible heading/header via `aria-labelledby` or the platform equivalent when possible instead of requiring a dedicated prop.
-6. Respect `themes` by generating light/dark mode support.
-7. Handle `empty`, `loading`, and `error` states for `collection` contracts.
-8. Wire all `action.navigate` declarations to the platform's navigation system.
-9. Apply `motion.reduced_motion` preferences globally.
-10. Implement all three size classes (`compact`, `regular`, `expanded`) and apply `adaptive` overrides from screen files.
-11. Validate all `props` types and report spec errors before generating code.
-12. Generate platform-native localization resources from JSON locale files when `i18n` config is present (see Section 11).
+2. Refresh its knowledge of the current target platform implementation model before generation when the output depends on toolchain-specific conventions, project formats, packaging rules, resource wiring, or fast-moving framework APIs.
+3. Map every `contract` reference to the correct native widget per `platform_mapping`.
+4. Apply all `tokens` values within their declared `range` constraints.
+5. Implement every `state` declared in each used contract, including transitions.
+6. Set correct `a11y.role` and `a11y.label` for every component instance. For contextual containers such as `collection`, derive the label from the visible heading/header via `aria-labelledby` or the platform equivalent when possible instead of requiring a dedicated prop.
+7. Respect `themes` by generating light/dark mode support.
+8. Handle `empty`, `loading`, and `error` states for `collection` contracts.
+9. Wire all `action.navigate` declarations to the platform's navigation system.
+10. Apply `motion.reduced_motion` preferences globally.
+11. Implement all three size classes (`compact`, `regular`, `expanded`) and apply `adaptive` overrides from screen files.
+12. Validate all `props` types and report spec errors before generating code.
+13. Generate platform-native localization resources from JSON locale files when `i18n` config is present (see Section 11).
+14. Emit a valid native project or target configuration that bundles every generated runtime resource, including localization files, assets, and generated metadata. A generated resource file that is not connected to the runnable target is non-compliant.
+15. Adapt navigation and container patterns for every supported size class and form factor. A generator may not assume that a large-screen or multi-pane layout will remain usable on compact layouts without an explicit fallback.
+16. Preserve required contract semantics when mapping to native widgets. A platform-native substitution may change the implementation primitive, but it may not drop required token-driven shapes, borders, visual states, or interaction semantics declared by the contract.
 
 ### 8.3 Validation
 
@@ -2975,7 +2983,7 @@ Generators produce platform-native localization resources from the JSON source:
 
 | Platform | Output format | Plurals | Notes |
 |----------|--------------|---------|-------|
-| **iOS** | `.xcstrings` (Xcode 15+) | Built-in plural rules | ICU plurals map to `.stringsdict` entries within `.xcstrings` |
+| **iOS** | `.xcstrings` (Xcode 15+) or correctly bundled `.strings` resources | Built-in plural rules | ICU plurals map to `.stringsdict` entries within `.xcstrings`; generated locale resources must be attached to the runnable target and resolvable at runtime |
 | **Android** | `res/values-{locale}/strings.xml` + `plurals.xml` | `<plurals>` element | ICU selects map to conditional logic in generated code |
 | **Web** | JSON bundles per locale | `react-intl` / `i18next` ICU plugin | Direct ICU MessageFormat — no conversion needed |
 
@@ -2993,6 +3001,7 @@ i18n:
 **MUST:**
 - Resolve every `$t:key` reference to the corresponding locale string
 - Generate platform-native locale files from JSON sources for each supported locale
+- Ensure generated locale files are actually bundled by the runnable platform target and available at runtime
 - Pass `t_params` data paths to ICU placeholders at runtime
 - Apply `$direction` from the active locale to layout direction
 - Use the `fallback_strategy` for missing keys (default: fall back to `default_locale`)
@@ -3200,6 +3209,61 @@ ios:
 - Implement items listed in `generation.may_handle`
 - Generate test code based on `test_cases`
 - Add platform-specific enhancements beyond what the contract specifies
+
+### 12.8 Extending standard contracts
+
+The 7 built-in contract families (Section 4) can be extended per-project using `contracts/<name>.yaml` files. Extensions add project-specific **variants**, **token overrides**, **platform mapping**, and **generation hints** without redefining the base contract. The base definition (props, states, a11y) remains authoritative from the spec.
+
+```yaml
+# contracts/input_field.yaml
+input_field:
+  variants:
+    cut_corner:
+      semantic: "Angled corner input for branded forms"
+      tokens:
+        cut_size: "spacing.sm"
+        border: { color: "color.semantic.border", width: 1 }
+      platform_mapping:
+        ios: { shape: "CutCornerShape", clip: true }
+        android: { shape: "CutCornerShape" }
+        web: { style: "clip-path" }
+      generation:
+        must_handle:
+          - "Cut top-right and bottom-left corners by cut_size"
+          - "Maintain focus ring that follows the cut shape"
+        should_handle:
+          - "Animate corner cut on focus"
+```
+
+**Root key:** The contract family name (e.g. `input_field`, `action_trigger`). Not `x_` prefixed — that is reserved for fully custom contracts.
+
+**Available extension fields** (all optional):
+
+| Field | Purpose |
+|-------|---------|
+| `variants` | Named style/behavior presets with their own tokens, platform_mapping, and generation hints |
+| `additional_props` | Props beyond what the spec defines for this contract |
+| `tokens` | Contract-level token overrides |
+| `platform_mapping` | Per-platform implementation hints |
+| `generation` | AI generation hints (must_handle, should_handle, may_handle) |
+| `test_cases` | Behavioral verification scenarios |
+
+**Usage in screens:** Reference a variant by name in the `variant` field of a contract instance:
+
+```yaml
+- contract: input_field
+  variant: cut_corner
+  props:
+    label: "Email"
+    input_type: email
+```
+
+**Key differences from custom contracts (Section 12.1–12.7):**
+
+- Standard extensions do **not** redefine `semantic`, `props`, `states`, or `a11y` — these come from the spec
+- Required props from the base contract still apply (e.g. `input_field` always requires `props.label`)
+- An empty extension (`input_field: {}`) is valid and means "use the spec definition as-is"
+- Validated against `contract.schema.json`, not `custom-contract.schema.json`
 
 ---
 

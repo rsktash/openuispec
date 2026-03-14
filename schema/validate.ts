@@ -407,8 +407,6 @@ function validateFile(
   return errors.length;
 }
 
-// ── validation groups ────────────────────────────────────────────────
-
 // ── includes resolution ──────────────────────────────────────────────
 
 interface Includes {

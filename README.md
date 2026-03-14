@@ -4,6 +4,8 @@
 
 OpenUISpec is a **semantic UI specification format** that replaces cross-platform frameworks with a declarative design language. Instead of sharing runtime code across platforms, you share the *spec* — and AI generates native SwiftUI, Jetpack Compose, and React code from it.
 
+OpenUISpec is a shared UI sync language for native products, optimized for solo developers but equally usable by teams. It is not a pixel-perfect design format like Figma and it is not a shared runtime like Flutter or React Native. Its job is to keep product intent, interaction contracts, flows, tokens, and platform outputs aligned while still allowing bounded native variation on iOS, Android, and web.
+
 ## Why
 
 Cross-platform frameworks (Flutter, React Native, KMP/CMP) solve code duplication by sharing a runtime. OpenUISpec solves it by sharing **intent**:
@@ -13,7 +15,7 @@ Cross-platform frameworks (Flutter, React Native, KMP/CMP) solve code duplicatio
 | Cross-platform framework | Runtime code | Abstraction layer |
 | **OpenUISpec** | **Semantic spec** | **Native per platform** |
 
-The result: each platform feels native, but every app stays consistent because it's generated from the same source of truth.
+The result: each platform feels native, but every app stays semantically consistent because it's generated from the same source of truth.
 
 ## How it works
 
@@ -55,6 +57,14 @@ This scaffolds a spec directory, starter tokens, and adds rules to `CLAUDE.md` /
 Then hand your spec to any AI code generator:
 
 > Generate a native iOS app from this OpenUISpec. Follow all contract state machines, apply token ranges for iOS, and implement navigation flows as defined. Use `platform/ios.yaml` for SwiftUI-specific overrides.
+
+Before platform code generation, the AI should refresh its understanding of the current target toolchain and platform conventions instead of relying on stale memory. This matters most for project formats, resource wiring, navigation APIs, packaging rules, and other implementation details that change across toolchain versions.
+
+For platform generation, treat these as hard output constraints:
+
+- Generate a valid native project or target that actually bundles every required runtime resource. Converting spec inputs into platform-native resource files is insufficient unless those files are attached to the final app target and resolve at runtime.
+- Do not ship unresolved resource identifiers in the UI. Raw localization keys, token references, asset names, or placeholder paths mean the generated output is incomplete.
+- Do not use a container or navigation primitive without defining its behavior for every supported size class and form factor. Master-detail patterns must provide a non-empty compact fallback instead of assuming large-screen behavior.
 
 See the examples for concrete reference projects:
 

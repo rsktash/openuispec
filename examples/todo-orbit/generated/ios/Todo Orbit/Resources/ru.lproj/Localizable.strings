@@ -19,6 +19,9 @@
 "analytics.open_tasks" = "Открытые задачи";
 "analytics.overdue_tasks" = "Просрочено";
 "analytics.completion_rate" = "Процент выполнения";
+"analytics.trend_subtitle" = "Динамика выполнения";
+"analytics.legend_completed" = "Выполнено";
+"analytics.legend_created" = "Создано";
 "analytics.empty_trend" = "Данные тренда пока отсутствуют.";
 "analytics.overdue_section" = "Просроченные задачи";
 "analytics.overdue_subtitle" = "Задачи, которым нужно уделить внимание в первую очередь.";

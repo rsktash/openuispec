@@ -20,18 +20,12 @@ final class AppModel: ObservableObject {
 
     var locale: Locale { Locale(identifier: preferences.locale.rawValue) }
 
-    var activeBundle: Bundle {
-        guard
-            let path = Bundle.main.path(forResource: preferences.locale.rawValue, ofType: "lproj"),
-            let bundle = Bundle(path: path)
-        else {
-            return .main
-        }
-        return bundle
-    }
-
     func string(_ key: String) -> String {
-        activeBundle.localizedString(forKey: key, value: key, table: nil)
+        let bundle = Bundle.main.path(
+            forResource: preferences.locale.rawValue,
+            ofType: "lproj"
+        ).flatMap { Bundle(path: $0) } ?? .main
+        return bundle.localizedString(forKey: key, value: key, table: nil)
     }
 
     func format(_ key: String, _ arguments: CVarArg...) -> String {
@@ -326,4 +320,5 @@ final class AppModel: ObservableObject {
             }
         }
     }
+
 }

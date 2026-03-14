@@ -19,6 +19,9 @@
 "analytics.open_tasks" = "Open tasks";
 "analytics.overdue_tasks" = "Overdue";
 "analytics.completion_rate" = "Completion rate";
+"analytics.trend_subtitle" = "Completion trend";
+"analytics.legend_completed" = "Completed";
+"analytics.legend_created" = "Created";
 "analytics.empty_trend" = "No trend data yet.";
 "analytics.overdue_section" = "Overdue review";
 "analytics.overdue_subtitle" = "Tasks that need attention first.";
