@@ -89,7 +89,8 @@ Each schema validates a specific file type. Read the schema before creating or e
 - [Flow Schema](https://openuispec.rsteam.uz/schema/flow.schema.json): validates `flows/*.yaml`
 - [Platform Schema](https://openuispec.rsteam.uz/schema/platform.schema.json): validates `platform/*.yaml`
 - [Locale Schema](https://openuispec.rsteam.uz/schema/locale.schema.json): validates `locales/*.json`
-- [Custom Contract Schema](https://openuispec.rsteam.uz/schema/custom-contract.schema.json): validates `contracts/x_*.yaml`
+- [Contract Extension Schema](https://openuispec.rsteam.uz/schema/contract.schema.json): validates `contracts/<name>.yaml` (standard contract extensions with variants, token overrides, generation hints)
+- [Custom Contract Schema](https://openuispec.rsteam.uz/schema/custom-contract.schema.json): validates `contracts/x_*.yaml` (fully custom contracts)
 
 ## Token Schemas
 

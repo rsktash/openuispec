@@ -275,18 +275,17 @@ const GROUPS: Record<string, ValidationGroup> = {
     },
   },
 
-  custom_contracts: {
-    label: "Custom contracts",
+  contracts: {
+    label: "Contracts",
     run(ajv, projectDir, includes) {
       let errors = 0;
       const dir = resolveInclude(projectDir, includes.contracts);
       for (const f of listFiles(dir, ".yaml")) {
-        if (basename(f).startsWith("x_")) {
-          errors += validateFile(
-            ajv,
-            f,
-            `${BASE}custom-contract.schema.json`,
-          );
+        const name = basename(f);
+        if (name.startsWith("x_")) {
+          errors += validateFile(ajv, f, `${BASE}custom-contract.schema.json`);
+        } else {
+          errors += validateFile(ajv, f, `${BASE}contract.schema.json`);
         }
       }
       return errors;

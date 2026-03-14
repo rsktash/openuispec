@@ -1,7 +1,4 @@
-# feedback contract — see spec Section 4 for full definition
-# This file serves as a machine-readable reference for AI generators.
-# The canonical definition lives in spec/openuispec-v0.1.md.
+# feedback contract extension
+# Base definition: spec Section 4.5
 
-contract: feedback
-spec_section: "4"
-source: "spec/openuispec-v0.1.md"
+feedback: {}

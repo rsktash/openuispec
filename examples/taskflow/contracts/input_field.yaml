@@ -1,7 +1,23 @@
-# input_field contract — see spec Section 4 for full definition
-# This file serves as a machine-readable reference for AI generators.
-# The canonical definition lives in spec/openuispec-v0.1.md.
+# input_field contract extension
+# Base definition: spec Section 4.3
+# Add project-specific variants, token overrides, and generation hints.
 
-contract: input_field
-spec_section: "4"
-source: "spec/openuispec-v0.1.md"
+input_field:
+  variants:
+    cut_corner:
+      semantic: "Angled corner input for branded forms"
+      tokens:
+        cut_size: "spacing.sm"
+        border: { color: "color.semantic.border", width: 1 }
+        background: "color.semantic.surface"
+      platform_mapping:
+        ios: { shape: "CutCornerShape", clip: true }
+        android: { shape: "CutCornerShape" }
+        web: { style: "clip-path" }
+      generation:
+        must_handle:
+          - "Cut top-right and bottom-left corners by cut_size"
+          - "Maintain focus ring that follows the cut shape"
+          - "Placeholder text must remain readable against background"
+        should_handle:
+          - "Animate corner cut on focus"

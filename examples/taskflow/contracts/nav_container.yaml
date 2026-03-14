@@ -1,7 +1,4 @@
-# nav_container contract — see spec Section 4 for full definition
-# This file serves as a machine-readable reference for AI generators.
-# The canonical definition lives in spec/openuispec-v0.1.md.
+# nav_container contract extension
+# Base definition: spec Section 4.4
 
-contract: nav_container
-spec_section: "4"
-source: "spec/openuispec-v0.1.md"
+nav_container: {}

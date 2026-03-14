@@ -70,7 +70,8 @@ openuispec/
 │   ├── flow.schema.json                # Navigation flow schema
 │   ├── platform.schema.json            # Platform adaptation schema
 │   ├── locale.schema.json              # Locale file schema
-│   ├── custom-contract.schema.json    # Custom contract extension schema
+│   ├── contract.schema.json            # Standard contract extension schema
+│   ├── custom-contract.schema.json    # Custom contract extension schema (x_ prefixed)
 │   ├── tokens/
 │   │   ├── color.schema.json           # Color token schema
 │   │   ├── typography.schema.json      # Typography token schema
@@ -99,7 +100,8 @@ openuispec/
 │       │   ├── layout.yaml              # Size classes, primitives, reflow rules
 │       │   ├── themes.yaml              # Light, dark, warm variants
 │       │   └── icons.yaml              # Icon registry with platform mappings
-│       ├── contracts/                   # 7 contract family stubs + custom contracts
+│       ├── contracts/                   # Standard contract extensions + custom contracts
+│       │   ├── input_field.yaml       # Standard contract with cut_corner variant
 │       │   └── x_media_player.yaml    # Custom media player contract (Section 12)
 │       ├── screens/
 │       │   ├── home.yaml                # Task list with search, filters, FAB, adaptive nav
@@ -138,7 +140,8 @@ Every file type has a corresponding JSON Schema in `schema/`. **Read the schema 
 | `flows/*.yaml` | `flow.schema.json` | `<flow_id>` | [create_task.yaml](./examples/taskflow/flows/create_task.yaml) |
 | `platform/*.yaml` | `platform.schema.json` | `platform` | [ios.yaml](./examples/taskflow/platform/ios.yaml) |
 | `locales/*.json` | `locale.schema.json` | (object) | [en.json](./examples/taskflow/locales/en.json) |
-| `contracts/x_*.yaml` | `custom-contract.schema.json` | `contract` | [x_media_player.yaml](./examples/taskflow/contracts/x_media_player.yaml) |
+| `contracts/<name>.yaml` | `contract.schema.json` | `<contract_name>` | [input_field.yaml](./examples/taskflow/contracts/input_field.yaml) |
+| `contracts/x_*.yaml` | `custom-contract.schema.json` | `<x_name>` | [x_media_player.yaml](./examples/taskflow/contracts/x_media_player.yaml) |
 | `tokens/color.yaml` | `tokens/color.schema.json` | `color` | [color.yaml](./examples/taskflow/tokens/color.yaml) |
 | `tokens/typography.yaml` | `tokens/typography.schema.json` | `typography` | [typography.yaml](./examples/taskflow/tokens/typography.yaml) |
 | `tokens/spacing.yaml` | `tokens/spacing.schema.json` | `spacing` | [spacing.yaml](./examples/taskflow/tokens/spacing.yaml) |

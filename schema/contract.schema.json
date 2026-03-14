@@ -1,0 +1,129 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openuispec.org/schema/contract.schema.json",
+  "title": "OpenUISpec Standard Contract Extension",
+  "description": "Extension file for a standard contract — add variants, override tokens, platform mapping, and generation hints",
+  "type": "object",
+  "minProperties": 1,
+  "maxProperties": 1,
+  "propertyNames": {
+    "enum": [
+      "action_trigger",
+      "data_display",
+      "input_field",
+      "nav_container",
+      "feedback",
+      "surface",
+      "collection"
+    ]
+  },
+  "additionalProperties": {
+    "$ref": "#/$defs/contract_extension"
+  },
+  "$defs": {
+    "contract_extension": {
+      "type": "object",
+      "description": "Extension definition — all fields are optional, they add to or override the spec-defined contract",
+      "properties": {
+        "variants": {
+          "type": "object",
+          "description": "Named style/behavior variants (e.g. cut_corner, branded, minimal)",
+          "additionalProperties": {
+            "$ref": "#/$defs/variant_def"
+          }
+        },
+        "additional_props": {
+          "type": "object",
+          "description": "Additional props beyond the spec definition",
+          "additionalProperties": {
+            "$ref": "https://openuispec.org/schema/custom-contract.schema.json#/$defs/prop_def"
+          }
+        },
+        "tokens": {
+          "type": "object",
+          "description": "Token overrides at the contract level",
+          "additionalProperties": true
+        },
+        "platform_mapping": {
+          "type": "object",
+          "description": "Platform mapping overrides",
+          "properties": {
+            "ios": { "type": "object", "additionalProperties": true },
+            "android": { "type": "object", "additionalProperties": true },
+            "web": { "type": "object", "additionalProperties": true }
+          },
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "generation": {
+          "type": "object",
+          "description": "AI generation compliance hints (merged with spec defaults)",
+          "properties": {
+            "must_handle": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "should_handle": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "may_handle": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          },
+          "additionalProperties": false
+        },
+        "test_cases": {
+          "type": "array",
+          "description": "Additional behavioral test cases",
+          "items": {
+            "$ref": "https://openuispec.org/schema/custom-contract.schema.json#/$defs/test_case"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "variant_def": {
+      "type": "object",
+      "description": "A named variant with semantic description, tokens, platform mapping, and generation hints",
+      "properties": {
+        "semantic": {
+          "type": "string",
+          "description": "Human-readable description of this variant"
+        },
+        "tokens": {
+          "type": "object",
+          "description": "Visual token bindings for this variant",
+          "additionalProperties": true
+        },
+        "platform_mapping": {
+          "type": "object",
+          "description": "Per-platform implementation hints for this variant",
+          "properties": {
+            "ios": { "type": "object", "additionalProperties": true },
+            "android": { "type": "object", "additionalProperties": true },
+            "web": { "type": "object", "additionalProperties": true }
+          },
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "generation": {
+          "type": "object",
+          "description": "Generation hints specific to this variant",
+          "properties": {
+            "must_handle": { "type": "array", "items": { "type": "string" } },
+            "should_handle": { "type": "array", "items": { "type": "string" } },
+            "may_handle": { "type": "array", "items": { "type": "string" } }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

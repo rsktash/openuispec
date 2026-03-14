@@ -100,7 +100,8 @@ Every file type has a root key and a JSON Schema. Read the schema before creatin
 | \`flows/*.yaml\` | \`flow.schema.json\` | \`<flow_id>\` |
 | \`platform/*.yaml\` | \`platform.schema.json\` | \`platform\` |
 | \`locales/*.json\` | \`locale.schema.json\` | (object) |
-| \`contracts/x_*.yaml\` | \`custom-contract.schema.json\` | \`contract\` |
+| \`contracts/<name>.yaml\` | \`contract.schema.json\` | \`<contract_name>\` |
+| \`contracts/x_*.yaml\` | \`custom-contract.schema.json\` | \`<x_name>\` |
 | \`tokens/color.yaml\` | \`tokens/color.schema.json\` | \`color\` |
 | \`tokens/typography.yaml\` | \`tokens/typography.schema.json\` | \`typography\` |
 | \`tokens/spacing.yaml\` | \`tokens/spacing.schema.json\` | \`spacing\` |
@@ -136,7 +137,8 @@ PREAMBLE
   echo "| \`flow.schema.json\` | \`flows/*.yaml\` | \`flow\` |"
   echo "| \`platform.schema.json\` | \`platform/*.yaml\` | \`platform\` |"
   echo "| \`locale.schema.json\` | \`locales/*.json\` | (object) |"
-  echo "| \`custom-contract.schema.json\` | \`contracts/x_*.yaml\` | \`contract\` |"
+  echo "| \`contract.schema.json\` | \`contracts/<name>.yaml\` | \`<contract_name>\` |"
+  echo "| \`custom-contract.schema.json\` | \`contracts/x_*.yaml\` | \`<x_name>\` |"
   echo "| \`tokens/color.schema.json\` | \`tokens/color.yaml\` | \`color\` |"
   echo "| \`tokens/typography.schema.json\` | \`tokens/typography.yaml\` | \`typography\` |"
   echo "| \`tokens/spacing.schema.json\` | \`tokens/spacing.yaml\` | \`spacing\` |"
@@ -157,6 +159,7 @@ PREAMBLE
     schema/flow.schema.json \
     schema/platform.schema.json \
     schema/locale.schema.json \
+    schema/contract.schema.json \
     schema/custom-contract.schema.json \
     schema/tokens/color.schema.json \
     schema/tokens/typography.schema.json \
