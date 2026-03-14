@@ -1,0 +1,24 @@
+name: TodoOrbit
+options:
+  bundleIdPrefix: uz.rsteam.generated
+settings:
+  base:
+    SWIFT_VERSION: 5.10
+targets:
+  TodoOrbit:
+    type: application
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: Sources/TodoOrbit
+    resources:
+      - path: Resources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: uz.rsteam.generated.todoorbit
+        INFOPLIST_KEY_CFBundleDisplayName: Todo Orbit
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        DEVELOPMENT_ASSET_PATHS: "\"Sources/TodoOrbit/Preview Content\""
+    dependencies:
+      - sdk: Charts.framework

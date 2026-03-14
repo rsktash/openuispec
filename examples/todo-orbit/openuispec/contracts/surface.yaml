@@ -1,0 +1,28 @@
+surface:
+  tokens:
+    sheet:
+      background: "color.surface.primary"
+      border: { width: 2, color: "color.brand.primary" }
+      cut_size: "spacing.md"
+      shadow: "elevation.lg"
+    modal:
+      background: "color.surface.primary"
+      border: { width: 2, color: "color.brand.primary" }
+      cut_size: "spacing.md"
+      shadow: "elevation.lg"
+  platform_mapping:
+    ios:
+      sheet: { shape: "CutCornerShape", clip: true }
+      modal: { shape: "CutCornerShape", clip: true }
+    android:
+      sheet: { shape: "CutCornerShape" }
+      modal: { shape: "CutCornerShape" }
+    web:
+      sheet: { style: "clip-path" }
+      modal: { style: "clip-path" }
+  generation:
+    must_handle:
+      - "Apply the cut-corner silhouette to sheet and modal surfaces"
+      - "Maintain shadows and overlays without square corners bleeding through"
+    should_handle:
+      - "Preserve drag indicators and detents for sheets with the custom shape"

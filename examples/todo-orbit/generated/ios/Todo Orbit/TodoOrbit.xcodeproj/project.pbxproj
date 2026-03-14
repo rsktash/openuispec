@@ -1,0 +1,387 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A00000010000000000000000 /* TodoOrbitApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000010000000000000000 /* TodoOrbitApp.swift */; };
+		A00000020000000000000000 /* OrbitChrome.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000020000000000000000 /* OrbitChrome.swift */; };
+		A00000030000000000000000 /* SchedulePreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000030000000000000000 /* SchedulePreviewView.swift */; };
+		A00000040000000000000000 /* TrendChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000040000000000000000 /* TrendChartView.swift */; };
+		A00000050000000000000000 /* RecurringRuleSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000050000000000000000 /* RecurringRuleSheet.swift */; };
+		A00000060000000000000000 /* TaskEditorSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000060000000000000000 /* TaskEditorSheet.swift */; };
+		A00000070000000000000000 /* DomainModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000070000000000000000 /* DomainModels.swift */; };
+		A00000080000000000000000 /* AnalyticsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000080000000000000000 /* AnalyticsView.swift */; };
+		A00000090000000000000000 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000090000000000000000 /* SettingsView.swift */; };
+		A000000A0000000000000000 /* TasksHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B000000A0000000000000000 /* TasksHomeView.swift */; };
+		A000000B0000000000000000 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B000000B0000000000000000 /* AppModel.swift */; };
+		A000000C0000000000000000 /* Resources in Resources */ = {isa = PBXBuildFile; fileRef = B000000C0000000000000000 /* Resources */; };
+		A000000D0000000000000000 /* Charts.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B000000D0000000000000000 /* Charts.framework */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		B00000010000000000000000 /* TodoOrbitApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodoOrbitApp.swift; sourceTree = "<group>"; };
+		B00000020000000000000000 /* OrbitChrome.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrbitChrome.swift; sourceTree = "<group>"; };
+		B00000030000000000000000 /* SchedulePreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SchedulePreviewView.swift; sourceTree = "<group>"; };
+		B00000040000000000000000 /* TrendChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrendChartView.swift; sourceTree = "<group>"; };
+		B00000050000000000000000 /* RecurringRuleSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecurringRuleSheet.swift; sourceTree = "<group>"; };
+		B00000060000000000000000 /* TaskEditorSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskEditorSheet.swift; sourceTree = "<group>"; };
+		B00000070000000000000000 /* DomainModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DomainModels.swift; sourceTree = "<group>"; };
+		B00000080000000000000000 /* AnalyticsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalyticsView.swift; sourceTree = "<group>"; };
+		B00000090000000000000000 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		B000000A0000000000000000 /* TasksHomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TasksHomeView.swift; sourceTree = "<group>"; };
+		B000000B0000000000000000 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
+		B000000C0000000000000000 /* Resources */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Resources; sourceTree = SOURCE_ROOT; };
+		B000000D0000000000000000 /* Charts.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Charts.framework; path = System/Library/Frameworks/Charts.framework; sourceTree = SDKROOT; };
+		B000000E0000000000000000 /* TodoOrbit.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TodoOrbit.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		C00000010000000000000000 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A000000D0000000000000000 /* Charts.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		D00000000000000000000000 = {
+			isa = PBXGroup;
+			children = (
+				D00000010000000000000000 /* Sources/TodoOrbit */,
+				B000000C0000000000000000 /* Resources */,
+				D00000070000000000000000 /* Frameworks */,
+				D00000080000000000000000 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		D00000010000000000000000 /* Sources/TodoOrbit */ = {
+			isa = PBXGroup;
+			children = (
+				D00000020000000000000000 /* App */,
+				D00000030000000000000000 /* Components */,
+				D00000040000000000000000 /* Flows */,
+				D00000050000000000000000 /* Models */,
+				D00000060000000000000000 /* Screens */,
+				D00000090000000000000000 /* Support */,
+			);
+			path = Sources/TodoOrbit;
+			sourceTree = SOURCE_ROOT;
+		};
+		D00000020000000000000000 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				B00000010000000000000000 /* TodoOrbitApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		D00000030000000000000000 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				B00000020000000000000000 /* OrbitChrome.swift */,
+				B00000030000000000000000 /* SchedulePreviewView.swift */,
+				B00000040000000000000000 /* TrendChartView.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+		D00000040000000000000000 /* Flows */ = {
+			isa = PBXGroup;
+			children = (
+				B00000050000000000000000 /* RecurringRuleSheet.swift */,
+				B00000060000000000000000 /* TaskEditorSheet.swift */,
+			);
+			path = Flows;
+			sourceTree = "<group>";
+		};
+		D00000050000000000000000 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				B00000070000000000000000 /* DomainModels.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		D00000060000000000000000 /* Screens */ = {
+			isa = PBXGroup;
+			children = (
+				B00000080000000000000000 /* AnalyticsView.swift */,
+				B00000090000000000000000 /* SettingsView.swift */,
+				B000000A0000000000000000 /* TasksHomeView.swift */,
+			);
+			path = Screens;
+			sourceTree = "<group>";
+		};
+		D00000070000000000000000 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				B000000D0000000000000000 /* Charts.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		D00000080000000000000000 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				B000000E0000000000000000 /* TodoOrbit.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		D00000090000000000000000 /* Support */ = {
+			isa = PBXGroup;
+			children = (
+				B000000B0000000000000000 /* AppModel.swift */,
+			);
+			path = Support;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		E00000010000000000000000 /* TodoOrbit */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F00000010000000000000000 /* Build configuration list for PBXNativeTarget "TodoOrbit" */;
+			buildPhases = (
+				C00000020000000000000000 /* Sources */,
+				C00000010000000000000000 /* Frameworks */,
+				C00000030000000000000000 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = TodoOrbit;
+			productName = TodoOrbit;
+			productReference = B000000E0000000000000000 /* TodoOrbit.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		E00000020000000000000000 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2600;
+				LastUpgradeCheck = 2600;
+				TargetAttributes = {
+					E00000010000000000000000 = {
+						CreatedOnToolsVersion = 26.3;
+					};
+				};
+			};
+			buildConfigurationList = F00000020000000000000000 /* Build configuration list for PBXProject "TodoOrbit" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				ru,
+				Base,
+			);
+			mainGroup = D00000000000000000000000;
+			productRefGroup = D00000080000000000000000 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				E00000010000000000000000 /* TodoOrbit */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		C00000030000000000000000 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A000000C0000000000000000 /* Resources in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		C00000020000000000000000 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A00000010000000000000000 /* TodoOrbitApp.swift in Sources */,
+				A00000020000000000000000 /* OrbitChrome.swift in Sources */,
+				A00000030000000000000000 /* SchedulePreviewView.swift in Sources */,
+				A00000040000000000000000 /* TrendChartView.swift in Sources */,
+				A00000050000000000000000 /* RecurringRuleSheet.swift in Sources */,
+				A00000060000000000000000 /* TaskEditorSheet.swift in Sources */,
+				A00000070000000000000000 /* DomainModels.swift in Sources */,
+				A00000080000000000000000 /* AnalyticsView.swift in Sources */,
+				A00000090000000000000000 /* SettingsView.swift in Sources */,
+				A000000A0000000000000000 /* TasksHomeView.swift in Sources */,
+				A000000B0000000000000000 /* AppModel.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		F00000030000000000000000 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = NO;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.10;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		F00000040000000000000000 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = NO;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.10;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		F00000050000000000000000 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "";
+				DEVELOPMENT_TEAM = 4G772RT2KF;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Todo Orbit";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = NO;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = uz.rsteam.generated.todoorbit;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.10;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		F00000060000000000000000 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "";
+				DEVELOPMENT_TEAM = 4G772RT2KF;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Todo Orbit";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = NO;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = uz.rsteam.generated.todoorbit;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.10;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		F00000010000000000000000 /* Build configuration list for PBXNativeTarget "TodoOrbit" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F00000050000000000000000 /* Debug */,
+				F00000060000000000000000 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		F00000020000000000000000 /* Build configuration list for PBXProject "TodoOrbit" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F00000030000000000000000 /* Debug */,
+				F00000040000000000000000 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = E00000020000000000000000 /* Project object */;
+}

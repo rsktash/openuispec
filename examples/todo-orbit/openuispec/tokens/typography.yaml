@@ -1,0 +1,52 @@
+typography:
+  font_family:
+    primary:
+      semantic: "Main UI typeface for the todo app"
+      value: "Manrope"
+      fallback_strategy: "modern-sans"
+      platform:
+        ios: { system_alternative: "SF Pro" }
+        android: { system_alternative: "Google Sans" }
+        web: { load_strategy: "swap", source: "google_fonts" }
+
+  scale:
+    display:
+      semantic: "Large empty-state and hero copy"
+      size: { base: 30, range: [28, 34] }
+      weight: 700
+      tracking: -0.02
+      line_height: 1.15
+    heading_lg:
+      semantic: "Primary screen titles"
+      size: { base: 24, range: [22, 28] }
+      weight: 700
+      tracking: -0.02
+      line_height: 1.2
+    heading:
+      semantic: "Section headings and modal titles"
+      size: { base: 18, range: [17, 20] }
+      weight: 600
+      tracking: -0.01
+      line_height: 1.3
+    heading_sm:
+      semantic: "Compact emphasized labels"
+      size: { base: 15, range: [14, 17] }
+      weight: 600
+      line_height: 1.35
+    body:
+      semantic: "Primary body copy"
+      size: { base: 16, range: [15, 17] }
+      weight: 400
+      line_height: 1.5
+    body_sm:
+      semantic: "Supporting text and subtitles"
+      size: { base: 14, range: [13, 15] }
+      weight: 400
+      tracking: 0.004
+      line_height: 1.45
+    caption:
+      semantic: "Tiny labels and metadata"
+      size: { base: 12, range: [11, 13] }
+      weight: 500
+      tracking: 0.015
+      line_height: 1.35

@@ -1,0 +1,107 @@
+layout:
+  size_classes:
+    compact:
+      semantic: "Phone-first single-column layouts"
+      width: { max: 640 }
+      columns: 4
+      margin: "spacing.md"
+      content_max_width: null
+      examples: "Phones in portrait, narrow browser windows"
+    regular:
+      semantic: "Tablet portrait and large phone landscape layouts"
+      width: { min: 641, max: 1024 }
+      columns: 8
+      margin: "spacing.lg"
+      content_max_width: 860
+      examples: "Tablets in portrait, wide phones in landscape"
+    expanded:
+      semantic: "Desktop and large-tablet multi-column layouts"
+      width: { min: 1025 }
+      columns: 12
+      margin: "spacing.xl"
+      content_max_width: 1240
+      examples: "Desktop browsers, tablets in landscape"
+
+  platform_mapping:
+    ios:
+      uses: "UIUserInterfaceSizeClass"
+      compact: ".compact horizontal"
+      regular: ".regular horizontal"
+      expanded: ".regular horizontal + width > 1024"
+    android:
+      uses: "WindowSizeClass"
+      compact: "WindowWidthSizeClass.Compact"
+      regular: "WindowWidthSizeClass.Medium"
+      expanded: "WindowWidthSizeClass.Expanded"
+    web:
+      uses: "media queries"
+      compact: "@media (max-width: 640px)"
+      regular: "@media (min-width: 641px) and (max-width: 1024px)"
+      expanded: "@media (min-width: 1025px)"
+
+  primitives:
+    stack:
+      semantic: "Vertical content flow"
+      props:
+        spacing: { type: token_ref, default: "spacing.md" }
+        align: { type: enum, values: [leading, center, trailing, stretch], default: stretch }
+        padding: { type: token_ref, required: false }
+      platform_mapping:
+        ios: "VStack"
+        android: "Column"
+        web: "flex-direction: column"
+    row:
+      semantic: "Horizontal content flow"
+      props:
+        spacing: { type: token_ref, default: "spacing.sm" }
+        align: { type: enum, values: [top, center, bottom, baseline, stretch], default: center }
+        justify: { type: enum, values: [start, center, end, space-between, space-around], default: start }
+        wrap: { type: bool, default: false }
+      platform_mapping:
+        ios: "HStack"
+        android: "Row"
+        web: "flex-direction: row"
+    grid:
+      semantic: "Responsive 2D arrangement"
+      props:
+        columns: { type: "int or adaptive_map", default: 2 }
+        gap: { type: token_ref, default: "spacing.md" }
+      platform_mapping:
+        ios: "LazyVGrid"
+        android: "LazyVerticalGrid"
+        web: "display: grid"
+    scroll_vertical:
+      semantic: "Scrollable vertical canvas"
+      props:
+        safe_area: { type: bool, default: true }
+        padding: { type: token_ref, required: false }
+      platform_mapping:
+        ios: "ScrollView(.vertical)"
+        android: "LazyColumn or verticalScroll"
+        web: "overflow-y: auto"
+    split_view:
+      semantic: "Master-detail two-pane layout"
+      props:
+        primary_width: { type: "fraction or token_ref", default: 0.36 }
+        divider: { type: bool, default: true }
+        collapse_at: { type: size_class, default: "compact" }
+      platform_mapping:
+        ios: "NavigationSplitView"
+        android: "ListDetailPaneScaffold"
+        web: "CSS Grid with two columns"
+
+  reflow_rules:
+    action_trigger:
+      compact: { full_width: true }
+      regular: { full_width: false }
+    nav_container:
+      compact: { variant: "tab_bar" }
+      regular: { variant: "rail" }
+      expanded: { variant: "sidebar" }
+    task_actions:
+      compact: { layout: stack }
+      regular: { layout: row }
+    stat_group:
+      compact: { layout: grid, columns: 2 }
+      regular: { layout: row }
+      expanded: { layout: row }

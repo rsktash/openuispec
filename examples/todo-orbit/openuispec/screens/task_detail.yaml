@@ -1,0 +1,223 @@
+task_detail:
+  semantic: "Displays full task information with edit, status, and destructive actions"
+  status: ready
+
+  params:
+    task_id: { type: string, required: true }
+
+  data:
+    task:
+      source: "api.tasks.getById"
+      params: { id: "params.task_id" }
+
+  layout:
+    type: scroll_vertical
+    safe_area: true
+    sections:
+      - id: header
+        padding: "spacing.page_margin"
+        layout: { type: stack, spacing: "spacing.md" }
+        children:
+          - contract: data_display
+            variant: hero
+            props:
+              title: "{task.title}"
+              subtitle: "{task.due_date | default:$t:task_detail.no_due_date}"
+              badge:
+                text: "{task.status | format:status_label}"
+                severity: "{task.status | map:task_status_severity}"
+              metadata:
+                priority: "{task.priority | format:priority_label}"
+
+          - id: stat_group
+            layout:
+              adaptive:
+                compact:
+                  type: grid
+                  columns: 2
+                  gap: "spacing.sm"
+                regular:
+                  type: row
+                  spacing: "spacing.sm"
+            children:
+              - contract: data_display
+                variant: stat
+                props:
+                  title: "$t:task_detail.status"
+                  body: "{task.status | format:status_label}"
+              - contract: data_display
+                variant: stat
+                props:
+                  title: "$t:task_detail.priority"
+                  body: "{task.priority | format:priority_label}"
+              - contract: data_display
+                variant: stat
+                props:
+                  title: "$t:task_detail.created"
+                  body: "{task.created_at | format:date}"
+              - contract: data_display
+                variant: stat
+                props:
+                  title: "$t:task_detail.updated"
+                  body: "{task.updated_at | format:date}"
+
+      - id: notes
+        padding_h: "spacing.page_margin"
+        margin_top: "spacing.md"
+        condition: "task.notes != null"
+        layout: { type: stack, spacing: "spacing.xs" }
+        adaptive:
+          expanded:
+            max_width: 720
+        children:
+          - contract: data_display
+            variant: inline
+            props:
+              title: "$t:task_detail.notes"
+            tokens_override:
+              title_style: "typography.heading_sm"
+          - contract: data_display
+            variant: inline
+            props:
+              title: "{task.notes}"
+            tokens_override:
+              title_style: "typography.body"
+
+      - id: details
+        padding_h: "spacing.page_margin"
+        margin_top: "spacing.lg"
+        layout: { type: stack, spacing: "spacing.none" }
+        adaptive:
+          expanded:
+            max_width: 720
+        children:
+          - contract: data_display
+            variant: compact
+            props:
+              title: "$t:task_detail.due_date"
+              trailing: "{task.due_date | default:$t:task_detail.no_due_date}"
+          - contract: data_display
+            variant: compact
+            props:
+              title: "$t:task_detail.created"
+              trailing: "{task.created_at | format:date}"
+          - contract: data_display
+            variant: compact
+            props:
+              title: "$t:task_detail.updated"
+              trailing: "{task.updated_at | format:date}"
+
+      - id: actions
+        padding: "spacing.page_margin"
+        margin_top: "spacing.xl"
+        layout:
+          adaptive:
+            compact:
+              type: stack
+              spacing: "spacing.sm"
+            regular:
+              type: row
+              spacing: "spacing.sm"
+              wrap: true
+        children:
+          - contract: action_trigger
+            variant: primary
+            props:
+              label: "$t:task_detail.edit"
+              icon: "pencil"
+            action:
+              type: navigate
+              destination: "flows/edit_task"
+              params: { task_id: "task.id" }
+              presentation: "sheet"
+
+          - contract: action_trigger
+            variant: ghost
+            props:
+              label: "$t:task_detail.toggle_status"
+              icon: "checkmark"
+            action:
+              type: api_call
+              endpoint: "api.tasks.toggleStatus"
+              params: { id: "task.id" }
+              optimistic:
+                target: "task.status"
+                value: "{task.status == done ? open : done}"
+                revert_on_error: true
+              on_success:
+                type: feedback
+                variant: toast
+                message: "$t:task_detail.updated_feedback"
+                severity: success
+                duration: 2500
+              on_error:
+                type: feedback
+                variant: toast
+                message: "$t:task_detail.update_error"
+                severity: error
+
+          - contract: action_trigger
+            variant: ghost
+            props:
+              label: "$t:task_detail.more_info"
+            action:
+              type: present
+              surface: "task_meta"
+
+          - contract: action_trigger
+            variant: destructive
+            props:
+              label: "$t:task_detail.delete"
+              icon: "trash"
+            action:
+              type: confirm
+              confirmation:
+                contract: feedback
+                variant: dialog
+                props:
+                  title: "$t:task_detail.delete_title"
+                  message: "$t:task_detail.delete_message"
+                  severity: error
+                  actions:
+                    - label: "$t:common.cancel"
+                      variant: secondary
+                      action: { type: dismiss }
+                    - label: "$t:common.delete"
+                      variant: destructive
+                      action:
+                        type: sequence
+                        actions:
+                          - type: api_call
+                            endpoint: "api.tasks.delete"
+                            params: { id: "task.id" }
+                          - { type: feedback, variant: toast, message: "$t:task_detail.deleted_feedback", severity: success, duration: 2500 }
+                          - { type: navigate, destination: "screens/home" }
+
+  surfaces:
+    task_meta:
+      contract: surface
+      variant: sheet
+      props:
+        title: "$t:task_detail.more_info"
+        size: md
+        content:
+          - contract: data_display
+            variant: compact
+            props:
+              title: "$t:task_detail.status"
+              trailing: "{task.status | format:status_label}"
+          - contract: data_display
+            variant: compact
+            props:
+              title: "$t:task_detail.priority"
+              trailing: "{task.priority | format:priority_label}"
+          - contract: data_display
+            variant: compact
+            props:
+              title: "$t:task_detail.created"
+              trailing: "{task.created_at | format:date}"
+          - contract: data_display
+            variant: compact
+            props:
+              title: "$t:task_detail.updated"
+              trailing: "{task.updated_at | format:date}"

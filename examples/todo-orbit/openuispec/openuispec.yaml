@@ -1,0 +1,122 @@
+# openuispec-sample — OpenUISpec v0.1
+spec_version: "0.1"
+
+project:
+  name: "Todo Orbit"
+  description: "A bilingual todo app spec for testing OpenUISpec generation and drift"
+  icon: "checkmark_list"
+
+includes:
+  tokens: "./tokens/"
+  contracts: "./contracts/"
+  screens: "./screens/"
+  flows: "./flows/"
+  platform: "./platform/"
+  locales: "./locales/"
+
+custom_contracts:
+  - "./contracts/x_task_trend_chart.yaml"
+  - "./contracts/x_schedule_preview.yaml"
+
+i18n:
+  default_locale: "en"
+  supported_locales: [en, ru]
+  fallback_strategy: "default"
+
+generation:
+  targets: [ios, android, web]
+  # output_dir:                          # Optional: map targets to code directories
+  #   ios: "../ios-app/"                  # relative to this file
+  #   android: "../android-app/"
+  #   web: "../web-ui/"
+  output_format:
+    ios: { language: swift, framework: swiftui, min_version: "17.0" }
+    android: { language: kotlin, framework: compose, min_sdk: 26 }
+    web: { language: typescript, framework: react, bundler: vite }
+
+formatters:
+  priority_label:
+    input: enum
+    output: string
+    mapping:
+      low: "$t:priority.low"
+      medium: "$t:priority.medium"
+      high: "$t:priority.high"
+  status_label:
+    input: enum
+    output: string
+    mapping:
+      open: "$t:status.open"
+      done: "$t:status.done"
+
+mappers:
+  task_status_severity:
+    open: info
+    done: success
+  priority_to_severity:
+    low: neutral
+    medium: info
+    high: warning
+
+data_model:
+  task:
+    id: { type: string, format: uuid }
+    title: { type: string, max_length: 160 }
+    notes: { type: string, required: false }
+    status: { type: enum, values: [open, done] }
+    priority: { type: enum, values: [low, medium, high] }
+    due_date: { type: date, required: false }
+    created_at: { type: datetime }
+    updated_at: { type: datetime }
+
+  preferences:
+    locale: { type: enum, values: [en, ru] }
+    theme: { type: enum, values: [light, dark] }
+    reminders_enabled: { type: bool }
+    daily_summary_enabled: { type: bool }
+
+  analytics_snapshot:
+    completed_today: { type: int }
+    open_tasks: { type: int }
+    overdue_tasks: { type: int }
+    completion_rate: { type: float }
+
+  trend_point:
+    label: { type: string }
+    completed: { type: int }
+    created: { type: int }
+
+  recurring_rule:
+    id: { type: string, format: uuid }
+    name: { type: string, max_length: 80 }
+    cadence: { type: enum, values: [daily, weekly, monthly] }
+    interval: { type: int }
+    weekday: { type: enum, values: [mon, tue, wed, thu, fri, sat, sun], required: false }
+    month_day: { type: int, required: false }
+    start_date: { type: date }
+    end_date: { type: date, required: false }
+    remind_at: { type: string, required: false }
+    summary_channel: { type: enum, values: [push, email], required: false }
+
+api:
+  base_url: "/api/v1"
+  auth: "bearer_token"
+  endpoints:
+    tasks:
+      list: { method: GET, path: "/tasks", params: [filter, search] }
+      getById: { method: GET, path: "/tasks/:id" }
+      create: { method: POST, path: "/tasks", body: "task" }
+      update: { method: PATCH, path: "/tasks/:id", body: "task" }
+      toggleStatus: { method: PATCH, path: "/tasks/:id/status" }
+      delete: { method: DELETE, path: "/tasks/:id" }
+      counts: { method: GET, path: "/tasks/counts" }
+    preferences:
+      get: { method: GET, path: "/preferences" }
+      update: { method: PATCH, path: "/preferences", body: "preferences" }
+    analytics:
+      overview: { method: GET, path: "/analytics/overview", params: [period] }
+      trend: { method: GET, path: "/analytics/trend", params: [period] }
+      overdue: { method: GET, path: "/analytics/overdue", params: [limit] }
+    recurring:
+      create: { method: POST, path: "/recurring-rules", body: "recurring_rule" }
+      checkName: { method: GET, path: "/recurring-rules/check-name", params: [value] }

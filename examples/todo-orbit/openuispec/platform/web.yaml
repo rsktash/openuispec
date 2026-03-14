@@ -1,0 +1,22 @@
+web:
+  framework: react
+  language: typescript
+
+  overrides:
+    x_task_trend_chart:
+      compact: { implementation: "svg", responsive: true }
+      detail: { implementation: "svg", responsive: true, supports_tooltip: true }
+    x_schedule_preview:
+      compact: { implementation: "semantic_list", responsive: true }
+      detail: { implementation: "semantic_list", responsive: true, supports_staggered_updates: true }
+
+  behaviors:
+    prefers_color_scheme: true
+    keyboard_navigation: true
+
+  generation:
+    bundler: "vite"
+    css: "custom_css"
+    routing: "react_router"
+    state: "zustand"
+    naming: "React conventions"

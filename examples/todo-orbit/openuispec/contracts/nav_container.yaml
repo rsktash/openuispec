@@ -1,0 +1,47 @@
+nav_container:
+  tokens:
+    tab_bar:
+      height: 56
+      background: "color.surface.primary"
+      border_top: { width: 1, color: "color.border.default" }
+      icon_size: 22
+      label_style: "typography.caption"
+      active_color: "color.brand.primary"
+      inactive_color: "color.text.tertiary"
+    rail:
+      width: 76
+      background: "color.surface.secondary"
+      icon_size: 22
+      label_style: "typography.caption"
+      active_color: "color.brand.primary"
+    sidebar:
+      width: { collapsed: 72, expanded: 240 }
+      background: "color.surface.secondary"
+      item_height: 48
+      item_radius: "spacing.sm"
+      item_padding_h: "spacing.md"
+      active_background: "color.brand.primary"
+      active_text: "color.brand.primary.on_color"
+      icon_size: 20
+      label_style: "typography.body_sm"
+  platform_mapping:
+    ios:
+      tab_bar: { widget: "TabView" }
+      rail: { widget: "NavigationSplitView sidebar (compact rail)" }
+      sidebar: { widget: "NavigationSplitView sidebar" }
+    android:
+      tab_bar: { composable: "NavigationBar" }
+      rail: { composable: "NavigationRail" }
+      sidebar: { composable: "PermanentNavigationDrawer" }
+    web:
+      tab_bar: { element: "nav", pattern: "bottom fixed bar" }
+      rail: { element: "aside", pattern: "icon rail" }
+      sidebar: { element: "aside", pattern: "collapsible sidebar" }
+  generation:
+    must_handle:
+      - "Switch between tab_bar, rail, and sidebar according to adaptive screen config"
+      - "Keep the selected item visually distinct with active icon/text treatment"
+      - "Preserve keyboard navigation and accessible navigation landmarks"
+    should_handle:
+      - "Animate rail/sidebar transitions without layout jump"
+      - "Respect safe-area insets for bottom navigation on mobile targets"

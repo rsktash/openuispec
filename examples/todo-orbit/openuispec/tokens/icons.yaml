@@ -1,0 +1,92 @@
+icons:
+  sizes:
+    sm:
+      semantic: "Small inline icon size"
+      value: 16
+    md:
+      semantic: "Default icon size for actions and list items"
+      value: 20
+    lg:
+      semantic: "Prominent icon size for empty states and hero elements"
+      value: 24
+
+  variants:
+    default: "outline"
+    suffixes:
+      _fill: "Filled variant for active or completed states"
+
+  fallback:
+    strategy: "name_passthrough"
+    missing_icon: "questionmark_circle"
+
+  registry:
+    actions:
+      plus:
+        semantic: "Create a new task or item"
+        platform:
+          ios: "plus"
+          android: "add"
+          web: "plus"
+      search:
+        semantic: "Search tasks"
+        platform:
+          ios: "magnifyingglass"
+          android: "search"
+          web: "search"
+      trash:
+        semantic: "Delete a task"
+        platform:
+          ios: "trash"
+          android: "delete"
+          web: "trash-2"
+      checkmark:
+        semantic: "Confirm completion"
+        variants: ["circle", "circle_fill", "list"]
+        platform:
+          ios: "checkmark"
+          android: "check"
+          web: "check"
+
+    objects:
+      calendar:
+        semantic: "Date and scheduling"
+        platform:
+          ios: "calendar"
+          android: "calendar_today"
+          web: "calendar"
+      gear:
+        semantic: "Settings and preferences"
+        variants: ["fill"]
+        platform:
+          ios: "gear"
+          android: "settings"
+          web: "settings"
+      globe:
+        semantic: "Language and locale selection"
+        platform:
+          ios: "globe"
+          android: "language"
+          web: "languages"
+      flag:
+        semantic: "Priority marker"
+        variants: ["fill"]
+        platform:
+          ios: "flag"
+          android: "flag"
+          web: "flag"
+
+  custom:
+    todo_orbit:
+      checkmark_list:
+        semantic: "Todo list navigation icon"
+        platform:
+          ios: "checklist"
+          android: "checklist"
+          web: "list-checks"
+      chart_line:
+        semantic: "Analytics and trend visualization icon"
+        variants: ["fill"]
+        platform:
+          ios: "chart.line.uptrend.xyaxis"
+          android: "insert_chart"
+          web: "chart-line"

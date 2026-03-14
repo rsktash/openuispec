@@ -1,0 +1,139 @@
+x_task_trend_chart:
+  semantic: "Visualizes task creation and completion trends over time for productivity analysis"
+
+  props:
+    series: { type: "list<trend_point>", required: true, description: "Ordered trend points for the selected period" }
+    metric:
+      type: enum
+      values: [completed, created, completion_rate]
+      required: true
+      description: "Primary metric emphasized in the chart"
+    period:
+      type: enum
+      values: [week, month, quarter]
+      required: true
+      description: "Time range represented by the chart"
+    variant:
+      type: enum
+      values: [compact, detail]
+      default: compact
+      description: "Chart presentation density"
+    highlighted_index: { type: int, required: false, description: "Optional highlighted datapoint" }
+    show_legend: { type: bool, default: true, description: "Whether to render a legend for created/completed series" }
+    empty_message: { type: string, required: false, description: "Message to show when series is empty" }
+
+  states:
+    idle:
+      semantic: "Chart has not loaded data yet"
+      transitions_to: [loading]
+      visual: "Reserved chart frame with no plotted data"
+    loading:
+      semantic: "Trend data is loading"
+      transitions_to: [ready, empty, error]
+      feedback: "Skeleton chart and loading copy shown"
+      visual: "Placeholder bars or line skeleton"
+    ready:
+      semantic: "Trend data is available and rendered"
+      transitions_to: [highlighted, loading, error]
+      behavior: "Chart axes, series, and legend are visible"
+    highlighted:
+      semantic: "One datapoint is emphasized"
+      transitions_to: [ready]
+      behavior: "Highlighted datapoint shows stronger color and tooltip/callout"
+    empty:
+      semantic: "No trend points available"
+      transitions_to: [loading]
+      feedback: "Empty analytics message displayed"
+      visual: "Empty state in chart container"
+    error:
+      semantic: "Trend data failed to load"
+      transitions_to: [loading]
+      feedback: "Inline error with retry affordance"
+      visual: "Error indicator in chart container"
+
+  a11y:
+    role: "img"
+    label: "Analytics trend chart"
+    traits:
+      loading: { announces: "Loading analytics chart" }
+      empty: { announces: "No analytics data available" }
+      error: { announces: "Analytics chart failed to load" }
+    focus:
+      keyboard:
+        next_point: "ArrowRight"
+        previous_point: "ArrowLeft"
+        details: "Enter"
+
+  tokens:
+    compact:
+      min_height: 220
+      padding: "spacing.md"
+      background: "color.surface.secondary"
+      border: { width: 1, color: "color.border.default" }
+      radius: "spacing.sm"
+      axis_color: "color.text.tertiary"
+      completed_color: "color.brand.primary"
+      created_color: "color.brand.secondary"
+      grid_color: "color.border.default"
+      label_style: "typography.caption"
+    detail:
+      min_height: 320
+      padding: "spacing.lg"
+      background: "color.surface.primary"
+      border: { width: 1, color: "color.border.default" }
+      radius: "spacing.sm"
+      axis_color: "color.text.tertiary"
+      completed_color: "color.brand.primary"
+      created_color: "color.brand.secondary"
+      grid_color: "color.border.default"
+      label_style: "typography.body_sm"
+
+  platform_mapping:
+    ios:
+      compact: { component: "Chart", framework: "Swift Charts" }
+      detail: { component: "Chart", framework: "Swift Charts" }
+    android:
+      compact: { component: "Canvas chart composable", library: "custom compose drawing" }
+      detail: { component: "Canvas chart composable", library: "custom compose drawing" }
+    web:
+      compact: { component: "SVG chart component" }
+      detail: { component: "SVG chart component" }
+
+  dependencies:
+    ios:
+      frameworks: ["Charts"]
+    android:
+      libraries: []
+    web:
+      packages: []
+
+  generation:
+    must_handle:
+      - "Render completed and created series for the supplied period"
+      - "Respect compact and detail variants with different density"
+      - "Provide accessible summary text for the focused datapoint"
+      - "Handle loading, empty, and error states in the chart container"
+    should_handle:
+      - "Animate transitions when highlighted_index changes"
+      - "Render a legend when show_legend is true"
+      - "Support touch and pointer hover highlighting"
+    may_handle:
+      - "Tooltips for datapoints"
+      - "Trend delta badges and annotations"
+
+  test_cases:
+    - id: ready_state_renders_series
+      description: "Chart renders series lines or bars when data is present"
+      given: "Chart receives 7 trend points for period week"
+      when: "The component enters ready state"
+      then: "Both created and completed series are visible with labels and axes"
+    - id: empty_state_message
+      description: "Chart shows an empty message when no data exists"
+      given: "Chart receives an empty series"
+      when: "The component enters empty state"
+      then: "The empty_message or default empty copy is rendered in the chart frame"
+    - id: highlighted_point
+      description: "Highlighted point receives emphasis"
+      given: "Chart is in ready state with highlighted_index set"
+      when: "The highlighted datapoint is rendered"
+      then: "That datapoint is visually emphasized and exposed to accessibility"

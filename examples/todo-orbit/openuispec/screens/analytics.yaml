@@ -1,0 +1,139 @@
+analytics:
+  semantic: "Analytics dashboard for productivity trends, weekly completion, and overdue task review"
+  status: ready
+
+  data:
+    overview:
+      source: "api.analytics.overview"
+      params: { period: "state.period" }
+    trend:
+      source: "api.analytics.trend"
+      params: { period: "state.period" }
+    overdue:
+      source: "api.analytics.overdue"
+      params: { limit: 10 }
+
+  state:
+    period:
+      type: enum
+      values: [week, month, quarter]
+      default: week
+
+  navigation:
+    contract: nav_container
+    props:
+      items:
+        - id: "tasks"
+          label: "$t:nav.tasks"
+          icon: "checkmark_list"
+          icon_active: "checkmark_list_fill"
+          destination: "screens/home"
+        - id: "analytics"
+          label: "$t:nav.analytics"
+          icon: "chart_line"
+          icon_active: "chart_line_fill"
+          destination: "screens/analytics"
+        - id: "settings"
+          label: "$t:nav.settings"
+          icon: "gear"
+          icon_active: "gear_fill"
+          destination: "screens/settings"
+      selected: "analytics"
+    adaptive:
+      compact: { variant: tab_bar }
+      regular: { variant: rail }
+      expanded: { variant: sidebar, collapsed: false }
+
+  layout:
+    type: scroll_vertical
+    safe_area: true
+    padding: "spacing.page_margin"
+    sections:
+      - id: header
+        layout: { type: stack, spacing: "spacing.sm" }
+        children:
+          - contract: data_display
+            variant: inline
+            props:
+              title: "$t:analytics.title"
+              subtitle: "$t:analytics.subtitle"
+            tokens_override:
+              title_style: "typography.heading_lg"
+              subtitle_style: "typography.body_sm"
+
+      - id: period_filter
+        margin_top: "spacing.md"
+        contract: collection
+        variant: chips
+        props:
+          data:
+            - { id: "week", label: "$t:analytics.period_week" }
+            - { id: "month", label: "$t:analytics.period_month" }
+            - { id: "quarter", label: "$t:analytics.period_quarter" }
+          item_contract: action_trigger
+          item_variant: ghost
+          item_props_map:
+            label: "item.label"
+          selectable: true
+          selection_mode: single
+          selected: "state.period"
+        action:
+          type: set_state
+          target: "state.period"
+          value: "item.id"
+
+      - id: stats
+        margin_top: "spacing.lg"
+        contract: collection
+        variant: grid
+        props:
+          data:
+            - { id: "completed", title: "$t:analytics.completed_today", value: "overview.completed_today" }
+            - { id: "open", title: "$t:analytics.open_tasks", value: "overview.open_tasks" }
+            - { id: "overdue", title: "$t:analytics.overdue_tasks", value: "overview.overdue_tasks" }
+            - { id: "rate", title: "$t:analytics.completion_rate", value: "overview.completion_rate" }
+          item_contract: data_display
+          item_variant: stat
+          item_props_map:
+            title: "item.title"
+            body: "item.value"
+          columns: 2
+
+      - id: trend_chart
+        margin_top: "spacing.lg"
+        contract: x_task_trend_chart
+        variant: detail
+        props:
+          series: "trend"
+          metric: completed
+          period: "state.period"
+          show_legend: true
+          empty_message: "$t:analytics.empty_trend"
+
+      - id: overdue_header
+        margin_top: "spacing.xl"
+        contract: data_display
+        variant: inline
+        props:
+          title: "$t:analytics.overdue_section"
+          subtitle: "$t:analytics.overdue_subtitle"
+        tokens_override:
+          title_style: "typography.heading"
+          subtitle_style: "typography.body_sm"
+
+      - id: overdue_table
+        margin_top: "spacing.sm"
+        contract: collection
+        variant: table
+        props:
+          data: "overdue"
+          item_contract: data_display
+          item_variant: compact
+          item_props_map:
+            title: "item.title"
+            subtitle: "{item.priority | format:priority_label}"
+            trailing: "item.due_date"
+          empty_state:
+            icon: "checkmark_circle_fill"
+            title: "$t:analytics.empty_overdue"
+            body: "$t:analytics.empty_overdue_body"

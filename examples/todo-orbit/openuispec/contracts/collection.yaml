@@ -1,0 +1,32 @@
+collection:
+  tokens:
+    list:
+      item_min_height: 52
+      separator_color: "color.border.default"
+      separator_inset: "spacing.md"
+      content_padding: "spacing.none"
+    chips:
+      gap: "spacing.sm"
+      item_height: 36
+      item_padding_h: "spacing.md"
+      item_radius: 0
+      item_background: "color.surface.secondary"
+      item_background_selected: "color.brand.primary"
+  platform_mapping:
+    ios:
+      list: { widget: "List or LazyVStack", style: ".plain" }
+      chips: { widget: "ScrollView(.horizontal) + HStack" }
+    android:
+      list: { composable: "LazyColumn" }
+      chips: { composable: "LazyRow" }
+    web:
+      list: { element: "ul", class: "todo-list" }
+      chips: { element: "div", class: "chip-row" }
+  generation:
+    must_handle:
+      - "Preserve empty_state and pull_to_refresh behavior for task lists"
+      - "Render chips as single-select filters bound to state.active_filter"
+      - "Keep list item leading/trailing slots aligned across long task titles"
+    should_handle:
+      - "Use horizontal scrolling for chips on compact screens"
+      - "Apply selected chip styling with strong contrast against brand color"

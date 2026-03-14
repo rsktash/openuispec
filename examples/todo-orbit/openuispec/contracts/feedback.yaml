@@ -1,0 +1,32 @@
+feedback:
+  tokens:
+    toast:
+      background: "color.surface.primary"
+      border: { width: 1, color: "color.border.default" }
+      radius: "spacing.sm"
+      padding: "spacing.md"
+      shadow: "elevation.md"
+      message_style: "typography.body_sm"
+    banner:
+      padding_v: "spacing.sm"
+      padding_h: "spacing.md"
+      border_leading: { width: 3, color_from: "severity" }
+      message_style: "typography.body_sm"
+  platform_mapping:
+    ios:
+      toast: { pattern: "custom overlay", position: "top" }
+      banner: { pattern: "inline error banner" }
+    android:
+      toast: { pattern: "custom composable", position: "top" }
+      banner: { pattern: "inline error banner" }
+    web:
+      toast: { pattern: "toast container", position: "top-right" }
+      banner: { element: "div", role: "alert", position: "inline-top" }
+  generation:
+    must_handle:
+      - "Map success and error feedback to distinct visuals and live-region behavior"
+      - "Auto-dismiss toast feedback after the declared duration"
+      - "Render banner feedback inline without shifting focus unexpectedly"
+    should_handle:
+      - "Stack multiple toasts without overlap"
+      - "Keep destructive/error banners visually anchored near the active form"

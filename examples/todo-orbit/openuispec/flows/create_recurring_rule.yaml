@@ -1,0 +1,253 @@
+create_recurring_rule:
+  semantic: "Validation-heavy flow for creating recurring task rules"
+  status: ready
+
+  entry: "rule_form"
+
+  screens:
+    rule_form:
+      screen_inline:
+        semantic: "Recurring rule form with field dependencies, async validation, and cross-field checks"
+
+        data:
+          preferences:
+            source: "api.preferences.get"
+
+        state:
+          is_submitting: { type: bool, default: false }
+
+        layout:
+          type: scroll_vertical
+          safe_area: true
+          padding: "spacing.page_margin"
+          sections:
+            - id: header
+              layout: { type: row, justify: "space-between", align: "center" }
+              children:
+                - contract: action_trigger
+                  variant: ghost
+                  size: sm
+                  props: { label: "$t:common.cancel" }
+                  action: { type: dismiss }
+
+                - contract: data_display
+                  variant: inline
+                  props:
+                    title: "$t:recurring_rule.title"
+                    subtitle: "$t:recurring_rule.subtitle"
+                  tokens_override:
+                    title_style: "typography.heading_sm"
+                    subtitle_style: "typography.body_sm"
+
+                - contract: action_trigger
+                  variant: primary
+                  size: sm
+                  props:
+                    label: "$t:recurring_rule.save"
+                    loading_label: "$t:recurring_rule.saving"
+                  state_binding:
+                    loading: "state.is_submitting"
+                  action:
+                    type: submit_form
+                    form_id: "recurring_rule_form"
+                    on_validation_error:
+                      type: feedback
+                      variant: toast
+                      message: "$t:validation.fix_errors"
+                      severity: warning
+                      duration: 2800
+
+            - id: form
+              form_id: "recurring_rule_form"
+              margin_top: "spacing.lg"
+              layout: { type: stack, spacing: "spacing.md" }
+              children:
+                - contract: input_field
+                  input_type: text
+                  props:
+                    label: "$t:recurring_rule.field_name"
+                    placeholder: "$t:recurring_rule.field_name_placeholder"
+                    required: true
+                    max_length: 80
+                  validate:
+                    min_length: { value: 4, message: "$t:validation.rule_name_min_length" }
+                    custom:
+                      expression: "$value != 'Default'"
+                      message: "$t:validation.rule_name_reserved"
+                    async:
+                      endpoint: "api.recurring.checkName"
+                      debounce: 450
+                      message: "$t:validation.rule_name_taken"
+                  validate_trigger: on_change
+                  data_binding: "form.name"
+
+                - contract: input_field
+                  input_type: text
+                  props:
+                    label: "$t:recurring_rule.field_confirm_name"
+                    placeholder: "$t:recurring_rule.field_confirm_name_placeholder"
+                    required: true
+                  validate:
+                    match_field:
+                      field: "form.name"
+                      message: "$t:validation.match_field"
+                  validate_trigger: on_blur
+                  data_binding: "form.confirm_name"
+
+                - contract: input_field
+                  input_type: select
+                  props:
+                    label: "$t:recurring_rule.field_cadence"
+                    required: true
+                    options:
+                      - { value: "daily", label: "$t:recurring_rule.cadence_daily" }
+                      - { value: "weekly", label: "$t:recurring_rule.cadence_weekly" }
+                      - { value: "monthly", label: "$t:recurring_rule.cadence_monthly" }
+                  data_binding: "form.cadence"
+
+                - contract: input_field
+                  input_type: number
+                  props:
+                    label: "$t:recurring_rule.field_interval"
+                    helper_text: "$t:recurring_rule.field_interval_helper"
+                    required: true
+                  validate:
+                    min: { value: 1, message: "$t:validation.min_value" }
+                    max: { value: 30, message: "$t:validation.max_value" }
+                  data_binding: "form.interval"
+
+                - contract: input_field
+                  input_type: select
+                  props:
+                    label: "$t:recurring_rule.field_weekday"
+                    options:
+                      - { value: "mon", label: "$t:weekday.mon" }
+                      - { value: "tue", label: "$t:weekday.tue" }
+                      - { value: "wed", label: "$t:weekday.wed" }
+                      - { value: "thu", label: "$t:weekday.thu" }
+                      - { value: "fri", label: "$t:weekday.fri" }
+                      - { value: "sat", label: "$t:weekday.sat" }
+                      - { value: "sun", label: "$t:weekday.sun" }
+                  condition: "form.cadence == 'weekly'"
+                  required_when: "form.cadence == 'weekly'"
+                  enabled_when: "form.cadence == 'weekly'"
+                  data_binding: "form.weekday"
+
+                - contract: input_field
+                  input_type: number
+                  props:
+                    label: "$t:recurring_rule.field_month_day"
+                    helper_text: "$t:recurring_rule.field_month_day_helper"
+                  condition: "form.cadence == 'monthly'"
+                  required_when: "form.cadence == 'monthly'"
+                  enabled_when: "form.cadence == 'monthly'"
+                  validate:
+                    min: { value: 1, message: "$t:validation.min_value" }
+                    max: { value: 28, message: "$t:validation.month_day_max" }
+                  data_binding: "form.month_day"
+
+                - contract: input_field
+                  input_type: date
+                  props:
+                    label: "$t:recurring_rule.field_start_date"
+                    required: true
+                  data_binding: "form.start_date"
+
+                - contract: input_field
+                  input_type: toggle
+                  props:
+                    label: "$t:recurring_rule.field_has_end_date"
+                    helper_text: "$t:recurring_rule.field_has_end_date_helper"
+                    value: false
+                  data_binding: "form.has_end_date"
+
+                - contract: input_field
+                  input_type: date
+                  props:
+                    label: "$t:recurring_rule.field_end_date"
+                  required_when: "form.has_end_date == true"
+                  enabled_when: "form.has_end_date == true"
+                  validate:
+                    custom:
+                      expression: "$value >= form.start_date"
+                      message: "$t:validation.end_date_after_start"
+                  data_binding: "form.end_date"
+
+                - contract: input_field
+                  input_type: text
+                  props:
+                    label: "$t:recurring_rule.field_remind_at"
+                    placeholder: "$t:recurring_rule.field_remind_at_placeholder"
+                    helper_text: "$t:recurring_rule.field_remind_at_helper"
+                  condition: "preferences.reminders_enabled == true"
+                  required_when: "preferences.reminders_enabled == true"
+                  enabled_when: "preferences.reminders_enabled == true"
+                  validate:
+                    pattern:
+                      regex: "^([01]\\d|2[0-3]):[0-5]\\d$"
+                      message: "$t:validation.time_format"
+                  validate_trigger: on_submit
+                  data_binding: "form.remind_at"
+
+                - contract: input_field
+                  input_type: toggle
+                  props:
+                    label: "$t:recurring_rule.field_enable_summary"
+                    helper_text: "$t:recurring_rule.field_enable_summary_helper"
+                    value: false
+                  data_binding: "form.enable_summary"
+
+                - contract: input_field
+                  input_type: select
+                  props:
+                    label: "$t:recurring_rule.field_summary_channel"
+                    options:
+                      - { value: "push", label: "$t:recurring_rule.summary_push" }
+                      - { value: "email", label: "$t:recurring_rule.summary_email" }
+                  condition: "form.enable_summary == true"
+                  required_when: "form.enable_summary == true"
+                  enabled_when: "form.enable_summary == true"
+                  data_binding: "form.summary_channel"
+
+            - id: preview
+              margin_top: "spacing.xl"
+              contract: x_schedule_preview
+              variant: detail
+              condition: "form.cadence != ''"
+              props:
+                title: "$t:recurring_preview.title"
+                cadence: "form.cadence"
+                interval: "form.interval"
+                weekday: "form.weekday"
+                month_day: "form.month_day"
+                start_date: "form.start_date"
+                end_date: "form.end_date"
+                preview_count: 4
+                empty_message: "$t:recurring_preview.empty"
+                invalid_message: "$t:recurring_preview.invalid"
+
+          on_submit:
+            type: sequence
+            actions:
+              - { type: set_state, target: "state.is_submitting", value: true }
+              - type: api_call
+                endpoint: "api.recurring.create"
+                body: "form"
+                on_success:
+                  type: sequence
+                  actions:
+                    - { type: set_state, target: "state.is_submitting", value: false }
+                    - { type: feedback, variant: toast, message: "$t:recurring_rule.success", severity: success, duration: 2500 }
+                    - { type: dismiss }
+                on_error:
+                  type: sequence
+                  actions:
+                    - { type: set_state, target: "state.is_submitting", value: false }
+                    - { type: feedback, variant: banner, title: "$t:recurring_rule.error_title", message: "{error.message}", severity: error }
+
+      transitions: {}
+
+  platform_hints:
+    ios: { presentation: "sheet", detents: [large] }
+    android: { presentation: "bottom_sheet", fullscreen: true }
+    web: { presentation: "modal", size: "lg" }

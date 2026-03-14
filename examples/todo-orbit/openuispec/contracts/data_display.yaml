@@ -1,0 +1,38 @@
+data_display:
+  tokens:
+    inline:
+      title_style: "typography.heading_lg"
+      subtitle_style: "typography.body_sm"
+      padding: "spacing.xs"
+    compact:
+      min_height: 52
+      padding_v: "spacing.sm"
+      padding_h: "spacing.md"
+      title_style: "typography.body"
+      subtitle_style: "typography.caption"
+      separator: { color: "color.border.default", inset_leading: "spacing.md" }
+    card:
+      background: "color.surface.secondary"
+      border: { width: 1, color: "color.border.default" }
+      radius: "spacing.sm"
+      padding: "spacing.md"
+      title_style: "typography.heading_sm"
+      subtitle_style: "typography.body_sm"
+  platform_mapping:
+    ios:
+      compact: { container: "HStack inside List row", emphasis: "rounded grouped inset" }
+      inline: { container: "VStack(alignment: .leading)" }
+    android:
+      compact: { composable: "ListItem", style: "supportingContent" }
+      inline: { composable: "Column" }
+    web:
+      compact: { element: "li", class: "todo-row" }
+      inline: { element: "div", class: "section-heading" }
+  generation:
+    must_handle:
+      - "Render compact task rows with clear title/subtitle hierarchy"
+      - "Support inline title/subtitle blocks for section headers"
+      - "Place leading and trailing subcomponents without collapsing text layout"
+    should_handle:
+      - "Use truncation for long titles while preserving priority/status indicators"
+      - "Keep compact rows visually aligned with checkbox leading controls"

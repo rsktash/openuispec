@@ -1,0 +1,19 @@
+android:
+  framework: compose
+  language: kotlin
+  min_sdk: 26
+
+  overrides:
+    x_task_trend_chart:
+      compact: { uses_canvas_rendering: true }
+      detail: { uses_canvas_rendering: true, supports_pointer_highlight: true }
+    x_schedule_preview:
+      compact: { uses_lazy_column: true }
+      detail: { uses_lazy_column: true, supports_animated_content: true }
+
+  behaviors:
+    dynamic_type: true
+
+  generation:
+    architecture: "MVVM"
+    naming: "Kotlin conventions"

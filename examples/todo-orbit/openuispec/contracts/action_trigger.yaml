@@ -1,0 +1,28 @@
+action_trigger:
+  tokens:
+    primary:
+      background: "color.brand.primary"
+      text: "color.brand.primary.on_color"
+      border: { width: 2, color: "color.brand.primary" }
+      cut_size: "spacing.sm"
+    ghost:
+      background: "color.surface.secondary"
+      text: "color.text.primary"
+      border: { width: 2, color: "color.brand.primary" }
+      cut_size: "spacing.sm"
+  platform_mapping:
+    ios:
+      primary: { shape: "CutCornerShape", clip: true, style: ".plain" }
+      ghost: { shape: "CutCornerShape", clip: true, style: ".plain" }
+    android:
+      primary: { shape: "CutCornerShape" }
+      ghost: { shape: "CutCornerShape" }
+    web:
+      primary: { style: "clip-path" }
+      ghost: { style: "clip-path" }
+  generation:
+    must_handle:
+      - "Cut top-left and bottom-right corners by cut_size for primary and ghost"
+      - "Preserve button hit area and loading state inside the cut shape"
+    should_handle:
+      - "Animate press/focus feedback without breaking the cut outline"

@@ -1,0 +1,23 @@
+themes:
+  default: "light"
+
+  variants:
+    light:
+      surface.primary: { lightness: [97, 100] }
+      surface.secondary: { lightness: [93, 97] }
+      surface.tertiary: { lightness: [89, 94] }
+      text.primary: { lightness: [8, 14] }
+      text.secondary: { lightness: [36, 46] }
+      border.default: { opacity: 0.22 }
+    dark:
+      surface.primary: { lightness: [10, 14] }
+      surface.secondary: { lightness: [14, 18] }
+      surface.tertiary: { lightness: [18, 24] }
+      text.primary: { lightness: [90, 95] }
+      text.secondary: { lightness: [62, 70] }
+      border.default: { opacity: 0.18 }
+
+  platform:
+    ios: { supports_dynamic: true }
+    android: { dynamic_color: true }
+    web: { prefers_color_scheme: true, css_custom_properties: true }

@@ -1,0 +1,126 @@
+edit_task:
+  semantic: "Single-screen flow for editing an existing task"
+  status: ready
+
+  params:
+    task_id: { type: string, required: true }
+
+  entry: "task_form"
+
+  screens:
+    task_form:
+      screen_inline:
+        semantic: "Task edit form pre-populated with existing task data"
+
+        data:
+          task:
+            source: "api.tasks.getById"
+            params: { id: "params.task_id" }
+
+        state:
+          is_submitting: { type: bool, default: false }
+
+        layout:
+          type: scroll_vertical
+          safe_area: true
+          padding: "spacing.page_margin"
+          sections:
+            - id: header
+              layout: { type: row, justify: "space-between", align: "center" }
+              children:
+                - contract: action_trigger
+                  variant: ghost
+                  size: sm
+                  props: { label: "$t:common.cancel" }
+                  action: { type: dismiss }
+
+                - contract: data_display
+                  variant: inline
+                  props:
+                    title: "$t:edit_task.title"
+                  tokens_override:
+                    title_style: "typography.heading"
+
+                - contract: action_trigger
+                  variant: primary
+                  size: sm
+                  props:
+                    label: "$t:edit_task.save"
+                    loading_label: "$t:edit_task.saving"
+                  state_binding:
+                    loading: "state.is_submitting"
+                  action:
+                    type: submit_form
+                    form_id: "edit_task_form"
+
+            - id: form
+              form_id: "edit_task_form"
+              margin_top: "spacing.lg"
+              layout: { type: stack, spacing: "spacing.md" }
+              children:
+                - contract: input_field
+                  input_type: text
+                  props:
+                    label: "$t:edit_task.field_title"
+                    value: "task.title"
+                    required: true
+                    max_length: 160
+                  validate:
+                    min_length: { value: 2, message: "$t:validation.min_length" }
+                  data_binding: "form.title"
+
+                - contract: input_field
+                  input_type: multiline
+                  props:
+                    label: "$t:edit_task.field_notes"
+                    value: "task.notes"
+                  data_binding: "form.notes"
+                  tokens_override:
+                    min_height: 96
+
+                - contract: input_field
+                  input_type: select
+                  props:
+                    label: "$t:edit_task.field_priority"
+                    value: "task.priority"
+                    options:
+                      - { value: "low", label: "$t:priority.low", icon: "flag" }
+                      - { value: "medium", label: "$t:priority.medium", icon: "flag_fill" }
+                      - { value: "high", label: "$t:priority.high", icon: "flag_fill" }
+                    required: true
+                  data_binding: "form.priority"
+
+                - contract: input_field
+                  input_type: date
+                  props:
+                    label: "$t:edit_task.field_due_date"
+                    value: "task.due_date"
+                  data_binding: "form.due_date"
+
+          on_submit:
+            type: sequence
+            actions:
+              - { type: set_state, target: "state.is_submitting", value: true }
+              - type: api_call
+                endpoint: "api.tasks.update"
+                params: { id: "params.task_id" }
+                body: "form"
+                on_success:
+                  type: sequence
+                  actions:
+                    - { type: set_state, target: "state.is_submitting", value: false }
+                    - { type: feedback, variant: toast, message: "$t:edit_task.success", severity: success, duration: 2500 }
+                    - { type: dismiss }
+                    - { type: refresh, target: "screens/task_detail.task" }
+                on_error:
+                  type: sequence
+                  actions:
+                    - { type: set_state, target: "state.is_submitting", value: false }
+                    - { type: feedback, variant: banner, title: "$t:edit_task.error_title", message: "{error.message}", severity: error }
+
+      transitions: {}
+
+  platform_hints:
+    ios: { presentation: "sheet", detents: [large] }
+    android: { presentation: "bottom_sheet", fullscreen: false }
+    web: { presentation: "modal", size: "md" }

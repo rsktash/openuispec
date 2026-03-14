@@ -1,0 +1,148 @@
+settings:
+  semantic: "Preferences screen for application language and theme"
+  status: ready
+
+  data:
+    preferences:
+      source: "api.preferences.get"
+
+  state:
+    is_saving:
+      type: bool
+      default: false
+
+  navigation:
+    contract: nav_container
+    props:
+      items:
+        - id: "tasks"
+          label: "$t:nav.tasks"
+          icon: "checkmark_list"
+          icon_active: "checkmark_list_fill"
+          destination: "screens/home"
+        - id: "analytics"
+          label: "$t:nav.analytics"
+          icon: "chart_line"
+          icon_active: "chart_line_fill"
+          destination: "screens/analytics"
+        - id: "settings"
+          label: "$t:nav.settings"
+          icon: "gear"
+          icon_active: "gear_fill"
+          destination: "screens/settings"
+      selected: "settings"
+    adaptive:
+      compact: { variant: tab_bar }
+      regular: { variant: rail }
+      expanded: { variant: sidebar, collapsed: false }
+
+  layout:
+    type: scroll_vertical
+    safe_area: true
+    padding: "spacing.page_margin"
+    sections:
+      - id: header
+        layout: { type: stack, spacing: "spacing.sm" }
+        children:
+          - contract: data_display
+            variant: inline
+            props:
+              title: "$t:settings.title"
+              subtitle: "$t:settings.subtitle"
+            tokens_override:
+              title_style: "typography.heading_lg"
+              subtitle_style: "typography.body_sm"
+
+      - id: form
+        form_id: "settings_form"
+        margin_top: "spacing.lg"
+        layout: { type: stack, spacing: "spacing.md" }
+        children:
+          - contract: input_field
+            input_type: select
+            props:
+              label: "$t:settings.language"
+              icon: { ref: "globe", position: leading }
+              options:
+                - { value: "en", label: "$t:settings.language_en" }
+                - { value: "ru", label: "$t:settings.language_ru" }
+            data_binding: "form.locale"
+
+          - contract: input_field
+            input_type: select
+            props:
+              label: "$t:settings.theme"
+              options:
+                - { value: "light", label: "$t:settings.theme_light" }
+                - { value: "dark", label: "$t:settings.theme_dark" }
+            data_binding: "form.theme"
+
+          - contract: input_field
+            input_type: toggle
+            props:
+              label: "$t:settings.reminders"
+              helper_text: "$t:settings.reminders_helper"
+              value: "preferences.reminders_enabled"
+            data_binding: "form.reminders_enabled"
+
+          - contract: input_field
+            input_type: toggle
+            props:
+              label: "$t:settings.daily_summary"
+              helper_text: "$t:settings.daily_summary_helper"
+              value: "preferences.daily_summary_enabled"
+            data_binding: "form.daily_summary_enabled"
+
+          - contract: action_trigger
+            variant: primary
+            full_width: true
+            props:
+              label: "$t:settings.save"
+              loading_label: "$t:settings.saving"
+            state_binding:
+              loading: "state.is_saving"
+            action:
+              type: submit_form
+              form_id: "settings_form"
+
+      - id: automation
+        margin_top: "spacing.xl"
+        layout: { type: stack, spacing: "spacing.sm" }
+        children:
+          - contract: data_display
+            variant: inline
+            props:
+              title: "$t:settings.automation_title"
+              subtitle: "$t:settings.automation_subtitle"
+            tokens_override:
+              title_style: "typography.heading_sm"
+              subtitle_style: "typography.body_sm"
+
+          - contract: action_trigger
+            variant: primary
+            full_width: true
+            props:
+              label: "$t:settings.automation_create_rule"
+              icon: "calendar"
+            action:
+              type: navigate
+              destination: "flows/create_recurring_rule"
+
+    on_submit:
+      type: sequence
+      actions:
+        - { type: set_state, target: "state.is_saving", value: true }
+        - type: api_call
+          endpoint: "api.preferences.update"
+          body: "form"
+          on_success:
+            type: sequence
+            actions:
+              - { type: set_state, target: "state.is_saving", value: false }
+              - { type: feedback, variant: toast, message: "$t:settings.saved", severity: success, duration: 2500 }
+              - { type: refresh, target: "screens/settings.preferences" }
+          on_error:
+            type: sequence
+            actions:
+              - { type: set_state, target: "state.is_saving", value: false }
+              - { type: feedback, variant: banner, title: "$t:settings.error_title", message: "{error.message}", severity: error }

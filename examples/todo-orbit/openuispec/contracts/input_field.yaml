@@ -1,0 +1,52 @@
+input_field:
+  tokens:
+    text:
+      background: "color.surface.secondary"
+      border: { width: 2, color: "color.brand.primary" }
+      border_focused: { width: 2, color: "color.brand.primary" }
+      cut_size: "spacing.sm"
+    multiline:
+      background: "color.surface.secondary"
+      border: { width: 2, color: "color.brand.primary" }
+      border_focused: { width: 2, color: "color.brand.primary" }
+      cut_size: "spacing.sm"
+    select:
+      background: "color.surface.secondary"
+      border: { width: 2, color: "color.brand.primary" }
+      border_focused: { width: 2, color: "color.brand.primary" }
+      cut_size: "spacing.sm"
+    date:
+      background: "color.surface.secondary"
+      border: { width: 2, color: "color.brand.primary" }
+      border_focused: { width: 2, color: "color.brand.primary" }
+      cut_size: "spacing.sm"
+    number:
+      background: "color.surface.secondary"
+      border: { width: 2, color: "color.brand.primary" }
+      border_focused: { width: 2, color: "color.brand.primary" }
+      cut_size: "spacing.sm"
+  platform_mapping:
+    ios:
+      text: { shape: "CutCornerShape", clip: true }
+      multiline: { shape: "CutCornerShape", clip: true }
+      select: { shape: "CutCornerShape", clip: true }
+      date: { shape: "CutCornerShape", clip: true }
+      number: { shape: "CutCornerShape", clip: true }
+    android:
+      text: { shape: "CutCornerShape" }
+      multiline: { shape: "CutCornerShape" }
+      select: { shape: "CutCornerShape" }
+      date: { shape: "CutCornerShape" }
+      number: { shape: "CutCornerShape" }
+    web:
+      text: { style: "clip-path" }
+      multiline: { style: "clip-path" }
+      select: { style: "clip-path" }
+      date: { style: "clip-path" }
+      number: { style: "clip-path" }
+  generation:
+    must_handle:
+      - "Cut top-left and bottom-right corners by cut_size for text-like inputs"
+      - "Keep focus, error, and disabled borders aligned with the cut shape"
+    should_handle:
+      - "Animate the emphasized border on focus without clipping content"

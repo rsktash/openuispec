@@ -1,0 +1,134 @@
+x_schedule_preview:
+  semantic: "Previews upcoming occurrences for a recurring schedule based on the current form values"
+
+  props:
+    title: { type: string, required: false, description: "Optional title shown above the preview list" }
+    cadence:
+      type: enum
+      values: [daily, weekly, monthly]
+      required: true
+      description: "Schedule cadence used to compute upcoming dates"
+    interval: { type: int, required: true, description: "Gap between occurrences in cadence units" }
+    weekday:
+      type: enum
+      values: [mon, tue, wed, thu, fri, sat, sun]
+      required: false
+      description: "Weekday used for weekly schedules"
+    month_day: { type: int, required: false, description: "Day of month used for monthly schedules" }
+    start_date: { type: date, required: true, description: "Date from which occurrences begin" }
+    end_date: { type: date, required: false, description: "Optional date after which no occurrences are shown" }
+    preview_count: { type: int, default: 4, description: "Maximum number of upcoming occurrences to render" }
+    empty_message: { type: string, required: false, description: "Message shown when no occurrences can be produced" }
+    invalid_message: { type: string, required: false, description: "Message shown when the schedule is incomplete or invalid" }
+
+  states:
+    idle:
+      semantic: "Preview has not received enough input to compute occurrences"
+      transitions_to: [loading, invalid, ready]
+      visual: "Muted placeholder frame with instructional copy"
+    loading:
+      semantic: "Preview is recomputing the next occurrences"
+      transitions_to: [ready, invalid, empty]
+      duration: "motion.fast"
+      feedback: "Skeleton dates shown while the schedule is being recomputed"
+      visual: "Placeholder rows in the preview panel"
+    ready:
+      semantic: "Upcoming occurrences are available"
+      transitions_to: [loading, invalid, empty]
+      behavior: "Renders an ordered list of upcoming dates derived from the current props"
+      visual: "Date chips or list rows with the next occurrences"
+    invalid:
+      semantic: "The schedule is incomplete or contradictory"
+      transitions_to: [loading, ready]
+      feedback: "Inline guidance explains which fields must be completed"
+      visual: "Notice style with invalid_message copy"
+    empty:
+      semantic: "The schedule is technically valid but yields no future occurrences"
+      transitions_to: [loading, ready]
+      feedback: "Empty schedule message displayed"
+      visual: "Neutral empty state inside the preview panel"
+
+  a11y:
+    role: "group"
+    label: "props.title"
+    traits:
+      loading: { announces: "Refreshing recurring schedule preview" }
+      invalid: { announces: "Recurring schedule preview needs more information" }
+      empty: { announces: "No upcoming occurrences available" }
+    focus:
+      keyboard:
+        next_item: "ArrowDown"
+        previous_item: "ArrowUp"
+
+  tokens:
+    compact:
+      min_height: 132
+      padding: "spacing.md"
+      background: "color.surface.secondary"
+      border: { width: 1, color: "color.border.default" }
+      radius: "spacing.sm"
+      title_style: "typography.caption"
+      item_style: "typography.body_sm"
+      item_background: "color.surface.primary"
+      item_border: { width: 1, color: "color.border.default" }
+    detail:
+      min_height: 184
+      padding: "spacing.lg"
+      background: "color.surface.primary"
+      border: { width: 1, color: "color.brand.secondary" }
+      radius: "spacing.sm"
+      title_style: "typography.heading_sm"
+      item_style: "typography.body"
+      item_background: "color.surface.secondary"
+      item_border: { width: 1, color: "color.border.default" }
+
+  platform_mapping:
+    ios:
+      compact: { component: "SchedulePreviewCard", framework: "SwiftUI" }
+      detail: { component: "SchedulePreviewPanel", framework: "SwiftUI" }
+    android:
+      compact: { component: "SchedulePreviewCard", library: "compose foundation" }
+      detail: { component: "SchedulePreviewPanel", library: "compose foundation" }
+    web:
+      compact: { component: "SchedulePreviewCard", implementation: "react component" }
+      detail: { component: "SchedulePreviewPanel", implementation: "react component" }
+
+  dependencies:
+    ios:
+      frameworks: ["SwiftUI", "Foundation"]
+    android:
+      libraries: []
+    web:
+      packages: []
+
+  generation:
+    must_handle:
+      - "Derive the next preview_count schedule occurrences from cadence, interval, and start_date"
+      - "Respect weekday for weekly schedules and month_day for monthly schedules"
+      - "Transition to invalid when required inputs are missing or end_date is earlier than start_date"
+      - "Update the preview reactively as props change"
+      - "Render loading, ready, invalid, and empty states inside the same container"
+    should_handle:
+      - "Format preview dates using the active locale"
+      - "Highlight the nearest upcoming occurrence"
+      - "Animate list updates when the schedule changes"
+    may_handle:
+      - "Relative labels such as Today or Tomorrow when locale rules allow it"
+      - "Secondary captions describing the cadence in natural language"
+
+  test_cases:
+    - id: weekly_preview_generation
+      description: "Weekly schedules produce future dates on the selected weekday"
+      given: "cadence=weekly, interval=1, weekday=mon, start_date=2026-03-16"
+      when: "The preview enters ready state"
+      then: "The next preview_count Mondays from the start date are rendered in order"
+    - id: monthly_preview_generation
+      description: "Monthly schedules use the selected day of month"
+      given: "cadence=monthly, interval=1, month_day=15, start_date=2026-03-01"
+      when: "The preview enters ready state"
+      then: "The 15th of upcoming months is rendered until preview_count is reached"
+    - id: invalid_when_end_before_start
+      description: "Contradictory date ranges show invalid state"
+      given: "start_date is after end_date"
+      when: "The preview recomputes"
+      then: "The component enters invalid state and shows invalid_message"

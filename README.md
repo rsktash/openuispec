@@ -56,7 +56,10 @@ Then hand your spec to any AI code generator:
 
 > Generate a native iOS app from this OpenUISpec. Follow all contract state machines, apply token ranges for iOS, and implement navigation flows as defined. Use `platform/ios.yaml` for SwiftUI-specific overrides.
 
-See the [TaskFlow example](./examples/taskflow/) for a complete spec covering all 7 contract families.
+See the examples for concrete reference projects:
+
+- [TaskFlow](./examples/taskflow/) for a compact spec covering all 7 contract families
+- [Todo Orbit](./examples/todo-orbit/openuispec/) for a bilingual task app with generated iOS, Android, and web targets under `examples/todo-orbit/generated/`
 
 ## Repository structure
 
@@ -89,37 +92,41 @@ openuispec/
 │   │   └── validation.schema.json     # Validation rule definitions
 │   └── validate.ts                     # Validation script (npm run validate)
 ├── examples/
-│   └── taskflow/                        # Complete example app
-│       ├── openuispec.yaml              # Root manifest + data model + API endpoints
-│       ├── tokens/
-│       │   ├── color.yaml               # Brand + semantic + status colors
-│       │   ├── typography.yaml          # Font family + 8-step type scale
-│       │   ├── spacing.yaml             # 4px base unit, 9-step scale
-│       │   ├── elevation.yaml           # 4-level elevation (none/sm/md/lg)
-│       │   ├── motion.yaml              # Durations, easings, patterns
-│       │   ├── layout.yaml              # Size classes, primitives, reflow rules
-│       │   ├── themes.yaml              # Light, dark, warm variants
-│       │   └── icons.yaml              # Icon registry with platform mappings
-│       ├── contracts/                   # Standard contract extensions + custom contracts
-│       │   ├── input_field.yaml       # Standard contract with cut_corner variant
-│       │   └── x_media_player.yaml    # Custom media player contract (Section 12)
-│       ├── screens/
-│       │   ├── home.yaml                # Task list with search, filters, FAB, adaptive nav
-│       │   ├── task_detail.yaml         # Full task view with actions + assignee sheet
-│       │   ├── projects.yaml            # Project grid + new project dialog
-│       │   ├── project_detail.yaml      # Single project with task list (stub)
-│       │   ├── settings.yaml            # Preferences, toggles, account management
-│       │   ├── profile_edit.yaml        # Edit profile form (stub)
-│       │   └── calendar.yaml            # Calendar view (stub)
-│       ├── flows/
-│       │   ├── create_task.yaml         # Task creation form (sheet presentation)
-│       │   └── edit_task.yaml           # Task editing flow
-│       ├── locales/
-│       │   └── en.json                  # English locale (ICU MessageFormat)
-│       └── platform/
-│           ├── ios.yaml                 # SwiftUI overrides + behaviors
-│           ├── android.yaml             # Compose overrides + behaviors
-│           └── web.yaml                 # React overrides + responsive rules
+│   ├── taskflow/                        # Compact reference spec
+│   │   ├── openuispec.yaml              # Root manifest + data model + API endpoints
+│   │   ├── tokens/
+│   │   │   ├── color.yaml               # Brand + semantic + status colors
+│   │   │   ├── typography.yaml          # Font family + 8-step type scale
+│   │   │   ├── spacing.yaml             # 4px base unit, 9-step scale
+│   │   │   ├── elevation.yaml           # 4-level elevation (none/sm/md/lg)
+│   │   │   ├── motion.yaml              # Durations, easings, patterns
+│   │   │   ├── layout.yaml              # Size classes, primitives, reflow rules
+│   │   │   ├── themes.yaml              # Light, dark, warm variants
+│   │   │   └── icons.yaml               # Icon registry with platform mappings
+│   │   ├── contracts/                   # Standard contract extensions + custom contracts
+│   │   │   ├── input_field.yaml         # Standard contract with cut_corner variant
+│   │   │   └── x_media_player.yaml      # Custom media player contract (Section 12)
+│   │   ├── screens/
+│   │   │   ├── home.yaml                # Task list with search, filters, FAB, adaptive nav
+│   │   │   ├── task_detail.yaml         # Full task view with actions + assignee sheet
+│   │   │   ├── projects.yaml            # Project grid + new project dialog
+│   │   │   ├── project_detail.yaml      # Single project with task list (stub)
+│   │   │   ├── settings.yaml            # Preferences, toggles, account management
+│   │   │   ├── profile_edit.yaml        # Edit profile form (stub)
+│   │   │   └── calendar.yaml            # Calendar view (stub)
+│   │   ├── flows/
+│   │   │   ├── create_task.yaml         # Task creation form (sheet presentation)
+│   │   │   └── edit_task.yaml           # Task editing flow
+│   │   ├── locales/
+│   │   │   └── en.json                  # English locale (ICU MessageFormat)
+│   │   └── platform/
+│   │       ├── ios.yaml                 # SwiftUI overrides + behaviors
+│   │       ├── android.yaml             # Compose overrides + behaviors
+│   │       └── web.yaml                 # React overrides + responsive rules
+│   └── todo-orbit/                      # Full showcase app with generated targets
+│       ├── openuispec/                  # Source OpenUISpec project
+│       ├── generated/                   # Generated iOS, Android, and web apps
+│       └── artifacts/                   # Screenshots and supporting outputs
 ├── cli/                                 # CLI tool (openuispec init, drift, validate)
 │   ├── index.ts                        # Entry point
 │   └── init.ts                         # Project scaffolding + AI rules
@@ -214,7 +221,7 @@ Paths are relative to `openuispec.yaml`. The `.openuispec-state.json` file is st
 
 ## Status
 
-**v0.1 — Draft**. The spec covers all foundational layers. One complete example app (TaskFlow) demonstrates full coverage.
+**v0.1 — Draft**. The spec covers all foundational layers. TaskFlow provides a compact reference app, and Todo Orbit extends coverage with localization, recurring-rule flows, custom contracts, and generated native/web targets.
 
 ### Roadmap
 
@@ -231,6 +238,7 @@ Paths are relative to `openuispec.yaml`. The `.openuispec-state.json` file is st
 - [x] Form system (validation rules, field dependencies)
 - [x] Drift detection (spec change tracking per platform)
 - [x] CLI tool (`openuispec init` for project scaffolding + AI rules)
+- [x] Multi-platform showcase app (`examples/todo-orbit/`)
 - [ ] More example apps (e-commerce, social, dashboard)
 
 ## Contributing

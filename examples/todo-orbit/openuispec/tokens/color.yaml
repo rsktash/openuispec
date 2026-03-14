@@ -1,0 +1,93 @@
+color:
+  brand:
+    primary:
+      semantic: "Primary accent for create actions, selected states, and focused UI"
+      reference: "#0F766E"
+      range:
+        hue: [172, 182]
+        saturation: [65, 82]
+        lightness: [30, 42]
+      on_color:
+        reference: "#FFFFFF"
+        contrast_min: 4.5
+    secondary:
+      semantic: "Warm accent for highlights and due-date emphasis"
+      reference: "#F59E0B"
+      range:
+        hue: [34, 42]
+        saturation: [85, 96]
+        lightness: [46, 58]
+      on_color:
+        reference: "#111827"
+        contrast_min: 4.5
+
+  surface:
+    primary:
+      semantic: "Main app background"
+      reference: "#FCFCF9"
+    secondary:
+      semantic: "Cards, grouped controls, and search surfaces"
+      reference: "#F3F4EE"
+    tertiary:
+      semantic: "Canvas tint behind elevated content"
+      reference: "#E7EBE4"
+
+  text:
+    primary:
+      semantic: "Primary text and screen titles"
+      reference: "#172026"
+      contrast_min: 7.0
+    secondary:
+      semantic: "Supportive metadata and helper copy"
+      reference: "#52606D"
+      contrast_min: 4.5
+    tertiary:
+      semantic: "Hints, placeholders, and quiet metadata"
+      reference: "#7B8794"
+      contrast_min: 3.0
+    disabled:
+      semantic: "Disabled text and inactive controls"
+      reference: "#B0B8C1"
+
+  semantic:
+    success:
+      semantic: "Completed tasks and successful actions"
+      reference: "#15803D"
+      range: { hue: [126, 136], saturation: [62, 78], lightness: [28, 40] }
+      on_color: { reference: "#FFFFFF", contrast_min: 4.5 }
+    warning:
+      semantic: "High-priority tasks and caution states"
+      reference: "#D97706"
+      range: { hue: [30, 38], saturation: [86, 96], lightness: [42, 54] }
+      on_color: { reference: "#FFFFFF", contrast_min: 4.5 }
+    danger:
+      semantic: "Destructive actions and irreversible warnings"
+      reference: "#DC2626"
+      range: { hue: [0, 8], saturation: [72, 88], lightness: [46, 56] }
+      on_color: { reference: "#FFFFFF", contrast_min: 4.5 }
+    info:
+      semantic: "Active task states and informational badges"
+      reference: "#2563EB"
+      range: { hue: [214, 224], saturation: [74, 90], lightness: [48, 58] }
+      on_color: { reference: "#FFFFFF", contrast_min: 4.5 }
+
+  border:
+    default:
+      semantic: "Default separators and field borders"
+      reference: "#CBD2D9"
+      opacity: 0.28
+    emphasis:
+      semantic: "Focused and selected outlines"
+      reference: "#0F766E"
+      opacity: 0.4
+
+  priority:
+    low:
+      semantic: "Low-priority task marker"
+      reference: "#94A3B8"
+    medium:
+      semantic: "Medium-priority task marker"
+      reference: "#2563EB"
+    high:
+      semantic: "High-priority task marker"
+      reference: "#D97706"

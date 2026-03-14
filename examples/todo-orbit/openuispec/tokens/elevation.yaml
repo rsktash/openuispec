@@ -1,0 +1,25 @@
+elevation:
+  none:
+    semantic: "Flat surfaces with no elevation"
+    value: "none"
+
+  sm:
+    semantic: "Subtle lift for fields and pressed states"
+    platform:
+      ios: { shadow: { color: "black", opacity: 0.05, radius: 4, y: 1 } }
+      android: { elevation: 1 }
+      web: { box_shadow: "0 1px 3px rgba(0,0,0,0.05)" }
+
+  md:
+    semantic: "Cards and popovers"
+    platform:
+      ios: { shadow: { color: "black", opacity: 0.08, radius: 10, y: 3 } }
+      android: { elevation: 3 }
+      web: { box_shadow: "0 6px 18px rgba(23,32,38,0.08)" }
+
+  lg:
+    semantic: "Floating action buttons and modal surfaces"
+    platform:
+      ios: { shadow: { color: "black", opacity: 0.12, radius: 18, y: 6 } }
+      android: { elevation: 6 }
+      web: { box_shadow: "0 12px 28px rgba(23,32,38,0.14)" }
