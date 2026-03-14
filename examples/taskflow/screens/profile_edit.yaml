@@ -23,6 +23,8 @@ profile_edit:
           - contract: data_display
             variant: inline
             props:
+              title: "user.name"
+              subtitle: "user.email"
               leading:
                 media: "user.avatar"
                 fallback: { initials: "user.name", background: "color.brand.primary" }

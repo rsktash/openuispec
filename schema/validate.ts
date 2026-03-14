@@ -23,6 +23,18 @@ const __dirname = fileURLToPath(new URL(".", import.meta.url));
 const SCHEMA_DIR = resolve(__dirname);
 
 type AjvInstance = InstanceType<typeof Ajv2020>;
+type UnknownRecord = Record<string, unknown>;
+
+interface UsageLint {
+  path: string;
+  message: string;
+}
+
+interface StandardContractRule {
+  requiredProps?: string[];
+  nonEmptyStringProps?: string[];
+  validate?: (node: UnknownRecord, props: UnknownRecord, path: string) => UsageLint[];
+}
 
 // ── helpers ──────────────────────────────────────────────────────────
 
@@ -47,6 +59,255 @@ function listFiles(dir: string, ext: string): string[] {
   } catch {
     return [];
   }
+}
+
+function isRecord(value: unknown): value is UnknownRecord {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+function getSingleRootValue(data: unknown): unknown {
+  if (!isRecord(data)) return undefined;
+  const values = Object.values(data);
+  return values.length === 1 ? values[0] : undefined;
+}
+
+const STANDARD_CONTRACT_RULES: Record<string, StandardContractRule> = {
+  action_trigger: {
+    requiredProps: ["label"],
+    nonEmptyStringProps: ["label"],
+  },
+  data_display: {
+    requiredProps: ["title"],
+    nonEmptyStringProps: ["title"],
+  },
+  input_field: {
+    requiredProps: ["label"],
+    nonEmptyStringProps: ["label"],
+    validate(node, props, path) {
+      const inputType = node.input_type;
+      if (inputType === "select" || inputType === "radio") {
+        return hasOwnProp(props, "options")
+          ? []
+          : [{
+              path,
+              message: `contract "input_field" with input_type="${String(inputType)}" requires props.options`,
+            }];
+      }
+      if (inputType === "slider") {
+        return hasOwnProp(props, "range")
+          ? []
+          : [{
+              path,
+              message: 'contract "input_field" with input_type="slider" requires props.range',
+            }];
+      }
+      return [];
+    },
+  },
+  nav_container: {
+    requiredProps: ["items"],
+    validate(_node, props, path) {
+      const items = props.items;
+      if (!Array.isArray(items)) {
+        return [];
+      }
+      const errors: UsageLint[] = [];
+      for (const [index, item] of items.entries()) {
+        const itemPath = `${path}/props/items/${index}`;
+        if (!isRecord(item)) {
+          errors.push({
+            path: itemPath,
+            message: "nav_container items must be objects",
+          });
+          continue;
+        }
+        for (const key of ["id", "label", "icon", "destination"]) {
+          if (!hasOwnProp(item, key)) {
+            errors.push({
+              path: itemPath,
+              message: `nav_container item requires "${key}"`,
+            });
+          }
+        }
+        if (hasOwnProp(item, "label") && !isNonEmptyString(item.label)) {
+          errors.push({
+            path: `${itemPath}/label`,
+            message: 'nav_container item "label" must be a non-empty string',
+          });
+        }
+      }
+      return errors;
+    },
+  },
+  feedback: {
+    requiredProps: ["message"],
+    nonEmptyStringProps: ["message"],
+  },
+  surface: {
+    requiredProps: ["content"],
+  },
+  collection: {
+    requiredProps: ["data", "item_contract", "item_props_map"],
+  },
+};
+
+function hasOwnProp(obj: UnknownRecord, key: string): boolean {
+  return Object.prototype.hasOwnProperty.call(obj, key);
+}
+
+function validateStandardContractUsage(
+  node: UnknownRecord,
+  path: string,
+): UsageLint[] {
+  const contract = node.contract;
+  if (typeof contract !== "string") return [];
+
+  const rule = STANDARD_CONTRACT_RULES[contract];
+  if (!rule) return [];
+
+  const props = isRecord(node.props) ? node.props : {};
+  const errors: UsageLint[] = [];
+
+  for (const prop of rule.requiredProps ?? []) {
+    if (!hasOwnProp(props, prop)) {
+      errors.push({
+        path,
+        message: `contract "${contract}" requires props.${prop}`,
+      });
+    }
+  }
+
+  for (const prop of rule.nonEmptyStringProps ?? []) {
+    if (hasOwnProp(props, prop) && !isNonEmptyString(props[prop])) {
+      errors.push({
+        path: `${path}/props/${prop}`,
+        message: `props.${prop} for contract "${contract}" must be a non-empty string`,
+      });
+    }
+  }
+
+  errors.push(...(rule.validate?.(node, props, path) ?? []));
+  return errors;
+}
+
+function lintSectionItems(items: unknown, path: string): UsageLint[] {
+  if (!Array.isArray(items)) return [];
+  const errors: UsageLint[] = [];
+
+  for (const [index, item] of items.entries()) {
+    const itemPath = `${path}/${index}`;
+    if (!isRecord(item)) {
+      continue;
+    }
+
+    errors.push(...validateStandardContractUsage(item, itemPath));
+
+    if (Array.isArray(item.children)) {
+      errors.push(...lintSectionItems(item.children, `${itemPath}/children`));
+    }
+  }
+
+  return errors;
+}
+
+function lintScreenLikeDefinition(screenDef: unknown, path: string): UsageLint[] {
+  if (!isRecord(screenDef)) return [];
+  const errors: UsageLint[] = [];
+
+  if (isRecord(screenDef.layout)) {
+    errors.push(
+      ...lintSectionItems(screenDef.layout.sections, `${path}/layout/sections`),
+    );
+  }
+
+  if (isRecord(screenDef.navigation)) {
+    errors.push(
+      ...validateStandardContractUsage(
+        screenDef.navigation,
+        `${path}/navigation`,
+      ),
+    );
+  }
+
+  if (isRecord(screenDef.surfaces)) {
+    for (const [surfaceId, surfaceDef] of Object.entries(screenDef.surfaces)) {
+      const surfacePath = `${path}/surfaces/${surfaceId}`;
+      if (!isRecord(surfaceDef)) {
+        continue;
+      }
+
+      errors.push(...validateStandardContractUsage(surfaceDef, surfacePath));
+
+      const props = isRecord(surfaceDef.props) ? surfaceDef.props : {};
+      if (Array.isArray(props.content)) {
+        errors.push(
+          ...lintSectionItems(props.content, `${surfacePath}/props/content`),
+        );
+      }
+    }
+  }
+
+  return errors;
+}
+
+function lintScreenFile(dataPath: string): number {
+  const root = getSingleRootValue(loadData(dataPath));
+  const errors = lintScreenLikeDefinition(root, basename(dataPath));
+  if (errors.length === 0) {
+    return 0;
+  }
+
+  console.log(`  FAIL  ${basename(dataPath)} (${errors.length} contract usage error(s))`);
+  for (const error of errors.slice(0, 5)) {
+    console.log(`        [${error.path}] ${error.message}`);
+  }
+  if (errors.length > 5) {
+    console.log(`        ... and ${errors.length - 5} more`);
+  }
+  console.log(
+    "        Hint: built-in contract instances inherit required props from the spec even when contracts/<name>.yaml does not restate them.",
+  );
+  return errors.length;
+}
+
+function lintFlowFile(dataPath: string): number {
+  const root = getSingleRootValue(loadData(dataPath));
+  if (!isRecord(root) || !isRecord(root.screens)) {
+    return 0;
+  }
+
+  const errors: UsageLint[] = [];
+  for (const [screenId, screenEntry] of Object.entries(root.screens)) {
+    if (!isRecord(screenEntry) || !isRecord(screenEntry.screen_inline)) {
+      continue;
+    }
+    errors.push(
+      ...lintScreenLikeDefinition(
+        screenEntry.screen_inline,
+        `${basename(dataPath)}/screens/${screenId}/screen_inline`,
+      ),
+    );
+  }
+
+  if (errors.length === 0) {
+    return 0;
+  }
+
+  console.log(`  FAIL  ${basename(dataPath)} (${errors.length} contract usage error(s))`);
+  for (const error of errors.slice(0, 5)) {
+    console.log(`        [${error.path}] ${error.message}`);
+  }
+  if (errors.length > 5) {
+    console.log(`        ... and ${errors.length - 5} more`);
+  }
+  console.log(
+    "        Hint: flow screen_inline sections follow the same built-in contract requirements as screens/*.yaml.",
+  );
+  return errors.length;
 }
 
 // ── build Ajv instance with all schemas ──────────────────────────────
@@ -233,7 +494,11 @@ const GROUPS: Record<string, ValidationGroup> = {
       let errors = 0;
       const dir = resolveInclude(projectDir, includes.screens);
       for (const f of listFiles(dir, ".yaml")) {
-        errors += validateFile(ajv, f, `${BASE}screen.schema.json`);
+        const schemaErrors = validateFile(ajv, f, `${BASE}screen.schema.json`);
+        errors += schemaErrors;
+        if (schemaErrors === 0) {
+          errors += lintScreenFile(f);
+        }
       }
       return errors;
     },
@@ -245,7 +510,11 @@ const GROUPS: Record<string, ValidationGroup> = {
       let errors = 0;
       const dir = resolveInclude(projectDir, includes.flows);
       for (const f of listFiles(dir, ".yaml")) {
-        errors += validateFile(ajv, f, `${BASE}flow.schema.json`);
+        const schemaErrors = validateFile(ajv, f, `${BASE}flow.schema.json`);
+        errors += schemaErrors;
+        if (schemaErrors === 0) {
+          errors += lintFlowFile(f);
+        }
       }
       return errors;
     },

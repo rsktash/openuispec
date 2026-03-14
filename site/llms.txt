@@ -92,6 +92,34 @@ Each schema validates a specific file type. Read the schema before creating or e
 - [Contract Extension Schema](https://openuispec.rsteam.uz/schema/contract.schema.json): validates `contracts/<name>.yaml` (standard contract extensions with variants, token overrides, generation hints)
 - [Custom Contract Schema](https://openuispec.rsteam.uz/schema/custom-contract.schema.json): validates `contracts/x_*.yaml` (fully custom contracts)
 
+## Standard Contract Usage
+
+Do not treat `contracts/<name>.yaml` as the full built-in contract definition. Those files only extend or override the standard contract family. Required built-in props still come from the spec and must be satisfied when composing instances in `screens/*.yaml` and `flows/*.yaml`.
+
+When composing built-in contract instances, always provide these required props:
+
+- `action_trigger`: `props.label`
+- `data_display`: `props.title`
+- `input_field`: `props.label`
+- `feedback`: `props.message`
+- `surface`: `props.content`
+- `collection`: `props.data`, `props.item_contract`, `props.item_props_map`
+- `nav_container`: `props.items` with each item containing `id`, `label`, `icon`, and `destination`
+
+Conditional built-in requirements:
+
+- `input_field` with `input_type: select` or `input_type: radio` also requires `props.options`
+- `input_field` with `input_type: slider` also requires `props.range`
+
+Accessibility naming:
+
+- For controls such as `action_trigger` and `input_field`, the accessible label usually comes from visible props such as `props.label` or `props.title`
+- For `collection`, do not invent a separate `props.label`; derive the accessible name from visible heading/header context using `aria-labelledby` or the platform equivalent when possible
+
+Design rule:
+
+- Prefer a built-in contract family before creating an `x_...` custom contract. Standard families already define behavior, accessibility, tokens, and validation expectations.
+
 ## Token Schemas
 
 Every token file requires a root wrapper key matching its type (e.g. `tokens/typography.yaml` must start with `typography:`).

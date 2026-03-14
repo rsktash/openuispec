@@ -1392,6 +1392,7 @@ collection:
       grid: "grid"
       table: "table"
       carousel: "region"
+    label: "Derived from visible header text or surrounding section heading; bind with aria-labelledby or platform equivalent rather than a dedicated prop when possible"
     item_role:
       list: "listitem"
       grid: "gridcell"
@@ -1468,6 +1469,8 @@ collection:
       - "Section headers with sticky behavior"
       - "Item recycling / virtualization for large datasets"
 ```
+
+Collection containers still need an accessible name, but unlike controls such as buttons or fields, that name usually comes from visible context rather than a dedicated `label` prop. Generators SHOULD connect the collection to a visible heading or header component via `aria-labelledby` or the platform equivalent, and only fall back to an explicit synthesized label when no visible label source exists.
 
 ---
 
@@ -2022,7 +2025,7 @@ Every AI generator, regardless of platform target, MUST:
 2. Map every `contract` reference to the correct native widget per `platform_mapping`.
 3. Apply all `tokens` values within their declared `range` constraints.
 4. Implement every `state` declared in each used contract, including transitions.
-5. Set correct `a11y.role` and `a11y.label` for every component instance.
+5. Set correct `a11y.role` and `a11y.label` for every component instance. For contextual containers such as `collection`, derive the label from the visible heading/header via `aria-labelledby` or the platform equivalent when possible instead of requiring a dedicated prop.
 6. Respect `themes` by generating light/dark mode support.
 7. Handle `empty`, `loading`, and `error` states for `collection` contracts.
 8. Wire all `action.navigate` declarations to the platform's navigation system.
@@ -2039,7 +2042,7 @@ A valid OpenUISpec document:
 - Contains a root `openuispec.yaml` manifest with `spec_version`
 - References only defined tokens, contracts, screens, and flows
 - Has no circular `flow` transitions
-- Has every `required: true` prop satisfied in screen compositions
+- Has every `required: true` prop satisfied in screen compositions, including required props inherited from built-in standard contract families even when `contracts/<name>.yaml` does not restate them
 - Has every `screen.params` satisfied by its callers
 
 ### 8.4 Drift detection
