@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://openuispec.org/schema/defs/action.schema.json",
   "title": "OpenUISpec Action",
-  "description": "Discriminated union of the 13 action types in OpenUISpec",
+  "description": "Discriminated union of the 14 action types in OpenUISpec",
 
   "type": "object",
   "required": ["type"],

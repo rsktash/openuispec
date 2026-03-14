@@ -136,7 +136,7 @@ Every token file requires a root wrapper key matching its type (e.g. `tokens/typ
 
 ## Shared Definition Schemas
 
-- [Action Schema](https://openuispec.rsteam.uz/schema/defs/action.schema.json): 13 action types as discriminated union
+- [Action Schema](https://openuispec.rsteam.uz/schema/defs/action.schema.json): 14 action types as discriminated union
 - [Data Binding Schema](https://openuispec.rsteam.uz/schema/defs/data-binding.schema.json): Data sources, state, params, format expressions
 - [Common Schema](https://openuispec.rsteam.uz/schema/defs/common.schema.json): Shared types (icons, badges, conditions)
 - [Adaptive Schema](https://openuispec.rsteam.uz/schema/defs/adaptive.schema.json): Adaptive override pattern for size classes

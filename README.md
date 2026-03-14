@@ -96,7 +96,7 @@ openuispec/
 │   │   └── icons.schema.json          # Icon token schema
 │   ├── defs/
 │   │   ├── common.schema.json          # Shared types (icons, badges, etc.)
-│   │   ├── action.schema.json          # 13 action types (discriminated union)
+│   │   ├── action.schema.json          # 14 action types (discriminated union)
 │   │   ├── data-binding.schema.json    # Data sources, state, params
 │   │   ├── adaptive.schema.json        # Adaptive override pattern
 │   │   └── validation.schema.json     # Validation rule definitions
@@ -210,7 +210,7 @@ Paths are relative to `openuispec.yaml`. The `.openuispec-state.json` file is st
 | 6. Navigation flows | Multi-screen journeys with transitions and progress |
 | 7. Platform adaptation | Per-target overrides for iOS, Android, Web |
 | 8. AI generation contract | Compliance levels (MUST/SHOULD/MAY), validation, drift detection |
-| 9. Action system | 13 action types, composition, optimistic updates |
+| 9. Action system | 14 action types, composition, optimistic updates |
 | 10. Data binding & state | Sources, paths, format expressions, reactivity, caching |
 | 11. Internationalization | Locale files, `$t:` references, ICU MessageFormat, RTL, platform mapping |
 | 12. Custom contract extensions | `x_` prefixed domain-specific contracts, registration, dependencies |
