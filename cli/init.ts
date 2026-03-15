@@ -347,7 +347,9 @@ This means the project has existing UI code but hasn't been specced yet. Your jo
        type: scroll_vertical
    \`\`\`
 4. **Extract tokens** — scan for colors, fonts, spacing and create files in \`${specDir}/tokens/\`.
-5. **Update the manifest** — fill in \`data_model\`, \`api.endpoints\`, and \`generation.code_roots.backend\` in \`${specDir}/openuispec.yaml\`.
+5. **Create contract extensions** — define visual variants for the 7 built-in contracts (action_trigger, data_display, input_field, collection, nav_container, feedback, surface) in \`${specDir}/contracts/\`. These encode the design system's visual identity (shapes, token overrides, platform mappings). Read \`schema/contract.schema.json\` and examples in the package for the format.
+6. **Create locale files** — for each locale in \`i18n.supported_locales\`, create \`${specDir}/locales/<locale>.json\` with all \`$t:\` keys used in screens and flows.
+7. **Update the manifest** — fill in \`data_model\`, \`api.endpoints\` in \`${specDir}/openuispec.yaml\`.
 
 ## OpenUISpec Source Of Truth
 
@@ -762,10 +764,14 @@ Done! Your spec project is ready at ./${answers.specDir}/
 
 Getting started (new project):
   1. Edit ${answers.specDir}/openuispec.yaml — define your data model and API
-  2. Create screens in ${answers.specDir}/screens/ (one YAML per screen)
-  3. Create flows in ${answers.specDir}/flows/ (multi-step navigation)
-  4. Ask AI to generate native code from the spec
-  5. Run \`openuispec drift --snapshot --target ${answers.targets[0]}\` to baseline the first accepted target state after that target output directory exists
+  2. Create tokens in ${answers.specDir}/tokens/ (colors, typography, spacing, etc.)
+  3. Create contract extensions in ${answers.specDir}/contracts/ (visual variants for the 7 built-in contracts)
+  4. Create screens in ${answers.specDir}/screens/ (one YAML per screen)
+  5. Create flows in ${answers.specDir}/flows/ (multi-step navigation)
+  6. Create locale files in ${answers.specDir}/locales/ (one JSON per supported locale)
+  7. Run \`openuispec validate\` and \`openuispec validate semantic\` to check everything
+  8. Ask AI to generate native code from the spec
+  9. Run \`openuispec drift --snapshot --target ${answers.targets[0]}\` to baseline the first accepted target state after that target output directory exists
 
 Getting started (existing project):
   1. Ask AI to read your existing UI code and generate spec files:
