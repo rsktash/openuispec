@@ -1,6 +1,6 @@
 {
   "name": "openuispec",
-  "version": "0.1.23",
+  "version": "0.1.24",
   "license": "MIT",
   "type": "module",
   "description": "A semantic UI specification format for AI-native, platform-native app development",
@@ -31,7 +31,8 @@
     "validate:platform": "tsx schema/validate.ts platform",
     "validate:locales": "tsx schema/validate.ts locales",
     "drift": "tsx drift/index.ts",
-    "drift:snapshot": "tsx drift/index.ts --snapshot --target"
+    "drift:snapshot": "tsx drift/index.ts --snapshot --target",
+    "postinstall": "echo \"\\n  ✓ openuispec installed — if upgrading, run: openuispec update-rules\\n\""
   },
   "dependencies": {
     "ajv": "^8.17.1",
