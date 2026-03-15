@@ -33,7 +33,7 @@ test("init fails clearly without a tty unless defaults or flags are provided", (
   try {
     const output = runInit(sandbox, [], true);
     assert.match(output, /needs a TTY for prompts/);
-    assert.match(output, /--defaults/);
+    assert.match(output, /--list-options/);
   } finally {
     rmSync(sandbox, { recursive: true, force: true });
   }
