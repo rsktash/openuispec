@@ -2,10 +2,11 @@ import assert from "node:assert/strict";
 import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import test from "node:test";
 
-const repoRoot = "/Users/rustam/Projects/openuispec";
+const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const tsxBin = join(repoRoot, "node_modules", ".bin", "tsx");
 const driftScript = join(repoRoot, "drift", "index.ts");
 const prepareScript = join(repoRoot, "prepare", "index.ts");
