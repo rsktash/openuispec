@@ -19,6 +19,70 @@ import { join, relative, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { SUPPORTED_TARGETS, isSupportedTarget, type SupportedTarget } from "../drift/index.js";
 
+// ── list-options ────────────────────────────────────────────────────
+
+export type InitOptionsResponse = {
+  command: "init";
+  note: string;
+  questions: Array<{
+    key: string;
+    prompt: string;
+    type: "text" | "list" | "yes_no";
+    default: string | string[] | boolean;
+    options?: string[];
+  }>;
+  configure_targets_note: string;
+};
+
+export function listInitOptions(): InitOptionsResponse {
+  const defaults = collectDefaults();
+  return {
+    command: "init",
+    note: "After init, run `openuispec configure-target <target> --list-options` for each target to get stack choices.",
+    questions: [
+      {
+        key: "name",
+        prompt: "Project name",
+        type: "text",
+        default: defaults.name,
+      },
+      {
+        key: "spec_dir",
+        prompt: "Spec directory",
+        type: "text",
+        default: defaults.specDir,
+      },
+      {
+        key: "targets",
+        prompt: "Which platforms?",
+        type: "list",
+        default: defaults.targets,
+        options: [...SUPPORTED_TARGETS],
+      },
+      {
+        key: "with_api",
+        prompt: "Will this spec declare API endpoints?",
+        type: "yes_no",
+        default: defaults.withApi,
+      },
+      {
+        key: "backend_path",
+        prompt: "Backend folder path relative to openuispec.yaml",
+        type: "text",
+        default: defaults.backendPath ?? "../backend/",
+      },
+      {
+        key: "configure_targets",
+        prompt: "Configure target stacks now?",
+        type: "yes_no",
+        default: defaults.configureTargets,
+      },
+    ],
+    configure_targets_note:
+      "If configure_targets is true, use `openuispec configure-target <target> --list-options` for each target after init to present stack choices to the user.",
+  };
+}
+
 // ── prompts ──────────────────────────────────────────────────────────
 
 export async function ask(
@@ -563,7 +627,7 @@ function collectNonInteractiveAnswers(argv: string[]): InitAnswers {
   if (!parsed.defaults && argv.filter((a) => a !== "--quiet").length === 0) {
     console.error(
       "Error: `openuispec init` needs a TTY for prompts.\n" +
-        "Run with `--defaults` or pass flags such as `--name`, `--targets`, `--with-api`, `--backend`, and `--configure-targets`."
+        "Run with `--list-options` to get prompt definitions as JSON, or pass flags such as `--name`, `--targets`, `--with-api`, `--backend`, and `--configure-targets`."
     );
     process.exit(1);
   }
@@ -590,6 +654,11 @@ function collectNonInteractiveAnswers(argv: string[]): InitAnswers {
 // ── main ─────────────────────────────────────────────────────────────
 
 export async function init(argv: string[] = []): Promise<void> {
+  if (argv.includes("--list-options")) {
+    console.log(JSON.stringify(listInitOptions(), null, 2));
+    return;
+  }
+
   const quiet = argv.includes("--quiet");
   const interactive = stdin.isTTY && stdout.isTTY && !argv.includes("--defaults");
   const rl = interactive ? createInterface({ input: stdin, output: stdout }) : null;

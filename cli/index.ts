@@ -5,6 +5,7 @@
  * Usage:
  *   openuispec init                           Create a new spec project
  *   openuispec init --defaults                Scaffold non-interactively with unconfirmed defaults
+ *   openuispec init --list-options            Print init prompt options as JSON
  *   openuispec configure-target <t>           Configure and confirm target stack choices
  *   openuispec configure-target <t> --list-options  Print target stack prompt options as JSON
  *   openuispec drift [--target <t>]           Check for spec drift
@@ -102,6 +103,7 @@ OpenUISpec CLI v0.1
 Usage:
   openuispec init                           Create a new spec project
   openuispec init --defaults                Scaffold non-interactively with unconfirmed defaults
+  openuispec init --list-options            Print init prompt options as JSON
   openuispec init --no-configure-targets    Skip target stack setup during init
   openuispec update-rules                   Update AI rules to match installed version
   openuispec configure-target <t> [--defaults] Configure target stack; --defaults stays unconfirmed
