@@ -252,18 +252,41 @@ This means the project has existing UI code but hasn't been specced yet. Your jo
 4. **Extract tokens** — scan for colors, fonts, spacing and create files in \`${specDir}/tokens/\`.
 5. **Update the manifest** — fill in \`data_model\` and \`api.endpoints\` in \`${specDir}/openuispec.yaml\`.
 
-## Making UI changes
-1. Read the relevant spec files before modifying any UI code.
-2. If the change requires a spec update, modify the spec FIRST, then update code.
-3. Never modify generated code without updating the spec.
-4. When adding a new screen, create the corresponding spec file.
-5. When removing a screen, remove the spec file and update flow references.
+## OpenUISpec Source Of Truth
 
-## After modifying spec files
-1. Run \`openuispec validate\` to check specs against the schema.
-2. **Update the generated code** for each affected platform to match the new spec.
-3. Run \`openuispec drift --snapshot --target <target>\` to baseline the updated state.
-4. Run \`openuispec drift\` to verify no untracked drift remains.
+OpenUISpec spec files are the primary source of truth for UI behavior across platforms.
+
+### Start from spec when:
+- the request changes screen structure
+- the request changes navigation
+- the request changes fields, actions, validation, or data binding
+- the request changes tokens, variants, contracts, flows, or localization
+- the request affects more than one platform
+- the request is phrased in product/UI terms rather than platform-code terms
+
+Spec-first workflow:
+1. Read \`${specDir}/openuispec.yaml\` and the relevant spec files first.
+2. Update the spec first.
+3. Update the affected generated/native UI code to match the spec.
+4. Run \`openuispec validate\`.
+5. Verify the affected UI targets build/run if possible.
+6. Only then run \`openuispec drift --snapshot --target <target>\` for affected targets.
+7. Run \`openuispec drift --target <target>\` as a bookkeeping check.
+
+### Start from platform code when:
+- the change is platform-specific polish
+- the change is a local bug fix that does not alter shared semantic behavior
+- the request explicitly asks for an iOS-only, Android-only, or web-only adjustment
+
+Platform-first workflow:
+1. Update native/platform code.
+2. If the change affects shared semantics, sync the spec afterward.
+3. If the change is intentionally platform-specific, document it in \`platform/*.yaml\` when appropriate.
+
+### Never do this:
+- Do not snapshot drift immediately after changing spec unless the UI code has also been updated.
+- Do not treat \`openuispec drift\` as proof that generated UI matches the spec.
+- Do not modify generated UI without checking whether the spec must change first.
 
 ## CLI commands
 - \`openuispec init\` — scaffold a new spec project
