@@ -68,7 +68,7 @@ For platform generation, treat these as hard output constraints:
 
 See the examples for concrete reference projects:
 
-- [TaskFlow](./examples/taskflow/openuispec/) for a compact spec covering all 7 contract families
+- [TaskFlow](./examples/taskflow/openuispec/) for a compact reference spec covering all 7 contract families, with generated iOS, Android, and web targets under `examples/taskflow/generated/`
 - [Todo Orbit](./examples/todo-orbit/openuispec/) for a bilingual task app with generated iOS, Android, and web targets under `examples/todo-orbit/generated/`
 
 ## Repository structure
@@ -102,41 +102,42 @@ openuispec/
 │   │   └── validation.schema.json     # Validation rule definitions
 │   └── validate.ts                     # Validation script (npm run validate)
 ├── examples/
-│   ├── taskflow/                        # Compact reference spec
-│   │   ├── openuispec.yaml              # Root manifest + data model + API endpoints
-│   │   ├── tokens/
-│   │   │   ├── color.yaml               # Brand + semantic + status colors
-│   │   │   ├── typography.yaml          # Font family + 8-step type scale
-│   │   │   ├── spacing.yaml             # 4px base unit, 9-step scale
-│   │   │   ├── elevation.yaml           # 4-level elevation (none/sm/md/lg)
-│   │   │   ├── motion.yaml              # Durations, easings, patterns
-│   │   │   ├── layout.yaml              # Size classes, primitives, reflow rules
-│   │   │   ├── themes.yaml              # Light, dark, warm variants
-│   │   │   └── icons.yaml               # Icon registry with platform mappings
-│   │   ├── contracts/                   # Standard contract extensions + custom contracts
-│   │   │   ├── input_field.yaml         # Standard contract with cut_corner variant
-│   │   │   └── x_media_player.yaml      # Custom media player contract (Section 12)
-│   │   ├── screens/
-│   │   │   ├── home.yaml                # Task list with search, filters, FAB, adaptive nav
-│   │   │   ├── task_detail.yaml         # Full task view with actions + assignee sheet
-│   │   │   ├── projects.yaml            # Project grid + new project dialog
-│   │   │   ├── project_detail.yaml      # Single project with task list (stub)
-│   │   │   ├── settings.yaml            # Preferences, toggles, account management
-│   │   │   ├── profile_edit.yaml        # Edit profile form (stub)
-│   │   │   └── calendar.yaml            # Calendar view (stub)
-│   │   ├── flows/
-│   │   │   ├── create_task.yaml         # Task creation form (sheet presentation)
-│   │   │   └── edit_task.yaml           # Task editing flow
-│   │   ├── locales/
-│   │   │   └── en.json                  # English locale (ICU MessageFormat)
-│   │   └── platform/
-│   │       ├── ios.yaml                 # SwiftUI overrides + behaviors
-│   │       ├── android.yaml             # Compose overrides + behaviors
-│   │       └── web.yaml                 # React overrides + responsive rules
+│   ├── taskflow/                        # Compact reference sample with source spec and generated targets
+│   │   ├── openuispec/                  # Source OpenUISpec project
+│   │   │   ├── openuispec.yaml          # Root manifest + data model + API endpoints
+│   │   │   ├── tokens/
+│   │   │   │   ├── color.yaml           # Brand + semantic + status colors
+│   │   │   │   ├── typography.yaml      # Font family + 8-step type scale
+│   │   │   │   ├── spacing.yaml         # 4px base unit, 9-step scale
+│   │   │   │   ├── elevation.yaml       # 4-level elevation (none/sm/md/lg)
+│   │   │   │   ├── motion.yaml          # Durations, easings, patterns
+│   │   │   │   ├── layout.yaml          # Size classes, primitives, reflow rules
+│   │   │   │   ├── themes.yaml          # Light, dark, warm variants
+│   │   │   │   └── icons.yaml           # Icon registry with platform mappings
+│   │   │   ├── contracts/               # Standard contract extensions + custom contracts
+│   │   │   │   ├── input_field.yaml     # Standard contract with cut_corner variant
+│   │   │   │   └── x_media_player.yaml  # Custom media player contract (Section 12)
+│   │   │   ├── screens/
+│   │   │   │   ├── home.yaml            # Task list with search, filters, FAB, adaptive nav
+│   │   │   │   ├── task_detail.yaml     # Full task view with actions + assignee sheet
+│   │   │   │   ├── projects.yaml        # Project grid + new project dialog
+│   │   │   │   ├── project_detail.yaml  # Single project with task list (stub)
+│   │   │   │   ├── settings.yaml        # Preferences, toggles, account management
+│   │   │   │   ├── profile_edit.yaml    # Edit profile form (stub)
+│   │   │   │   └── calendar.yaml        # Calendar view (stub)
+│   │   │   ├── flows/
+│   │   │   │   ├── create_task.yaml     # Task creation form (sheet presentation)
+│   │   │   │   └── edit_task.yaml       # Task editing flow
+│   │   │   ├── locales/
+│   │   │   │   └── en.json              # English locale (ICU MessageFormat)
+│   │   │   └── platform/
+│   │   │       ├── ios.yaml             # SwiftUI overrides + behaviors
+│   │   │       ├── android.yaml         # Compose overrides + behaviors
+│   │   │       └── web.yaml             # React overrides + responsive rules
+│   │   └── generated/                   # Generated iOS, Android, and web apps
 │   └── todo-orbit/                      # Full showcase app with generated targets
 │       ├── openuispec/                  # Source OpenUISpec project
-│       ├── generated/                   # Generated iOS, Android, and web apps
-│       └── artifacts/                   # Screenshots and supporting outputs
+│       └── generated/                   # Generated iOS, Android, and web apps
 ├── cli/                                 # CLI tool (openuispec init, drift, prepare, validate)
 │   ├── index.ts                        # Entry point
 │   └── init.ts                         # Project scaffolding + AI rules
@@ -219,6 +220,8 @@ When a shared spec change needs to be applied to a target:
 
 ```bash
 openuispec validate
+openuispec validate semantic
+openuispec status
 openuispec drift --target ios --explain
 openuispec prepare --target ios
 # update the ios implementation
@@ -229,6 +232,7 @@ openuispec drift --snapshot --target ios
 Meaning:
 - `validate` checks schema correctness
 - `validate semantic` checks cross-reference integrity
+- `status` shows which targets are up to date, need a baseline, or still need generation
 - `drift --explain` shows semantic spec changes since that target's accepted baseline
 - `prepare` packages those changes into an AI/developer work bundle
 - `drift --snapshot` accepts the updated state after the target UI has been updated and the target output directory exists
