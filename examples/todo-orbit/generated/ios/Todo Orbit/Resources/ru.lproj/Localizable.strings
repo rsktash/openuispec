@@ -26,6 +26,7 @@
 "analytics.overdue_section" = "Просроченные задачи";
 "analytics.overdue_subtitle" = "Задачи, которым нужно уделить внимание в первую очередь.";
 "analytics.empty_overdue_body" = "Все важные задачи идут по плану.";
+"task_detail.title" = "Детали задачи";
 "task_detail.status" = "Статус";
 "task_detail.priority" = "Приоритет";
 "task_detail.notes" = "Заметки";

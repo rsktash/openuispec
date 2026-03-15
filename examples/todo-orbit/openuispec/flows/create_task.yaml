@@ -73,6 +73,7 @@ create_task:
 
                 - contract: input_field
                   input_type: select
+                  render_hint: segmented
                   props:
                     label: "$t:create_task.field_priority"
                     options:

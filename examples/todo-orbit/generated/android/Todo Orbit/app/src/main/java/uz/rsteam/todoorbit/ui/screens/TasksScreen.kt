@@ -235,6 +235,11 @@ fun TaskDetailPane(
             item {
                 Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.fillMaxWidth(0.72f)) {
+                        Text(
+                            stringResource(R.string.task_detail_title),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                         Text(task.title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                         Text(
                             task.dueDate?.let { formatAbsolute(it, locale) } ?: stringResource(R.string.task_detail_no_due_date),

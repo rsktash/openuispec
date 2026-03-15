@@ -323,6 +323,46 @@ button {
   opacity: 0.5;
 }
 
+.segmented-control,
+.segmented-inline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.segmented-control {
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.74);
+}
+
+.segmented-control.error {
+  border-color: rgba(220, 38, 38, 0.4);
+}
+
+.segmented-option {
+  appearance: none;
+  -webkit-appearance: none;
+  border: 0;
+  outline: none;
+  border-radius: 14px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-weight: 700;
+  padding: 10px 14px;
+  transition: background 180ms ease, color 180ms ease, transform 180ms ease;
+}
+
+.segmented-option:hover {
+  transform: translateY(-1px);
+}
+
+.segmented-option.selected {
+  background: rgba(15, 118, 110, 0.12);
+  color: var(--text);
+}
+
 .input-shell input,
 .input-shell select,
 .input-shell textarea {

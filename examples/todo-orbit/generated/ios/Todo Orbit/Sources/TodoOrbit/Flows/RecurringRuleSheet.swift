@@ -34,6 +34,7 @@ struct RecurringRuleSheet: View {
                                     .tag(RecurrenceCadence?.some(cadence))
                             }
                         }
+                        .pickerStyle(.segmented)
                         errorText("cadence")
 
                         TextField(model.string("recurring_rule.field_interval"), text: $draft.interval)
@@ -47,6 +48,7 @@ struct RecurringRuleSheet: View {
                                     Text(model.label(for: weekday)).tag(Weekday?.some(weekday))
                                 }
                             }
+                            .pickerStyle(.menu)
                             errorText("weekday")
                         }
 
@@ -79,6 +81,7 @@ struct RecurringRuleSheet: View {
                                         .tag(SummaryChannel?.some(channel))
                                 }
                             }
+                            .pickerStyle(.segmented)
                             errorText("summaryChannel")
                         }
                     }

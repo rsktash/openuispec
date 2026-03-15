@@ -18,6 +18,7 @@
     <string name="home_empty_title">Nothing to do</string>
     <string name="home_empty_body">Add a task or switch filters to see more items.</string>
     <string name="task_detail_no_due_date">No deadline</string>
+    <string name="task_detail_title">Task details</string>
     <string name="task_detail_status">Status</string>
     <string name="task_detail_priority">Priority</string>
     <string name="task_detail_notes">Notes</string>

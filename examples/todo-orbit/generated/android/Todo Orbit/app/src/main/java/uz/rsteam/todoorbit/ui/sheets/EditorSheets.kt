@@ -80,6 +80,7 @@ fun TaskEditorSheet(
                 title = stringResource(R.string.create_task_field_priority),
                 current = localDraft.priority.name,
                 options = priorityOptions,
+                style = EnumSelectorStyle.Segmented,
                 onSelected = { selected ->
                     localDraft = localDraft.copy(priority = Priority.entries.first { it.name == selected })
                 }
@@ -185,11 +186,11 @@ fun RecurringRuleSheet(
                 title = stringResource(R.string.recurring_rule_field_cadence),
                 current = draft.cadence?.name.orEmpty(),
                 options = listOf(
-                    "" to "—",
                     Cadence.Daily.name to dailyCadenceLabel,
                     Cadence.Weekly.name to weeklyCadenceLabel,
                     Cadence.Monthly.name to monthlyCadenceLabel
                 ),
+                style = EnumSelectorStyle.Segmented,
                 onSelected = {
                     draft = draft.copy(
                         cadence = Cadence.entries.firstOrNull { entry -> entry.name == it },
@@ -211,6 +212,7 @@ fun RecurringRuleSheet(
                     title = stringResource(R.string.recurring_rule_field_weekday),
                     current = draft.weekday?.name.orEmpty(),
                     options = weekdayOptions,
+                    style = EnumSelectorStyle.Dropdown,
                     onSelected = { draft = draft.copy(weekday = Weekday.entries.firstOrNull { day -> day.name == it }) }
                 )
             }
@@ -266,7 +268,8 @@ fun RecurringRuleSheet(
                 EnumSelector(
                     title = stringResource(R.string.recurring_rule_field_summary_channel),
                     current = draft.summaryChannel?.name.orEmpty(),
-                    options = summaryChannelOptions,
+                    options = summaryChannelOptions.drop(1),
+                    style = EnumSelectorStyle.Segmented,
                     onSelected = {
                         draft = draft.copy(summaryChannel = SummaryChannel.entries.firstOrNull { item -> item.name == it })
                     }

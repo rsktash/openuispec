@@ -26,6 +26,7 @@
 "analytics.overdue_section" = "Overdue review";
 "analytics.overdue_subtitle" = "Tasks that need attention first.";
 "analytics.empty_overdue_body" = "Everything important is on track.";
+"task_detail.title" = "Task details";
 "task_detail.status" = "Status";
 "task_detail.priority" = "Priority";
 "task_detail.notes" = "Notes";

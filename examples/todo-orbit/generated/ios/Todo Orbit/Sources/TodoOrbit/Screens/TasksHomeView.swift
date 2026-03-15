@@ -312,6 +312,7 @@ private struct TaskDetailPanel: View {
             }
             .padding()
         }
+        .navigationTitle(model.string("task_detail.title"))
     }
 
     private func stat(_ title: String, value: String) -> some View {

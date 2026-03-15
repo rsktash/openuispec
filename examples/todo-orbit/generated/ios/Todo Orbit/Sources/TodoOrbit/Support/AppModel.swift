@@ -286,7 +286,7 @@ final class AppModel: ObservableObject {
         guard let date else { return string("task_detail.no_due_date") }
         let formatter = RelativeDateTimeFormatter()
         formatter.locale = locale
-        formatter.unitsStyle = .full
+        formatter.unitsStyle = .abbreviated
         return formatter.localizedString(for: date, relativeTo: .now)
     }
 

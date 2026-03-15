@@ -1,5 +1,6 @@
 task_detail:
   semantic: "Displays full task information with edit, status, and destructive actions"
+  title: "$t:task_detail.title"
   status: ready
 
   params:

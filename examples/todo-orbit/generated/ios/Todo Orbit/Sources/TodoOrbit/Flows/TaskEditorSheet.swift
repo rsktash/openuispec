@@ -27,6 +27,7 @@ struct TaskEditorSheet: View {
                             Text(model.label(for: priority)).tag(priority)
                         }
                     }
+                    .pickerStyle(.segmented)
                     DatePicker(
                         model.string(editingTaskID == nil ? "create_task.field_due_date" : "edit_task.field_due_date"),
                         selection: Binding(

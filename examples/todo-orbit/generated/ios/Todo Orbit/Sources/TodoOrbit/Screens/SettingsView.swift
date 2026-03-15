@@ -20,11 +20,13 @@ struct SettingsView: View {
                         Text(model.string("settings.language_en")).tag(AppLocale.en)
                         Text(model.string("settings.language_ru")).tag(AppLocale.ru)
                     }
+                    .pickerStyle(.segmented)
 
                     Picker(model.string("settings.theme"), selection: $draft.theme) {
                         Text(model.string("settings.theme_light")).tag(ThemePreference.light)
                         Text(model.string("settings.theme_dark")).tag(ThemePreference.dark)
                     }
+                    .pickerStyle(.segmented)
 
                     Toggle(model.string("settings.reminders"), isOn: $draft.remindersEnabled)
                     Toggle(model.string("settings.daily_summary"), isOn: $draft.dailySummaryEnabled)

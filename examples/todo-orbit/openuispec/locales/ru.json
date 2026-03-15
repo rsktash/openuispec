@@ -33,6 +33,7 @@
   "analytics.empty_overdue": "Просроченных задач нет",
   "analytics.empty_overdue_body": "Все важные задачи идут по плану.",
   "task_detail.status": "Статус",
+  "task_detail.title": "Детали задачи",
   "task_detail.priority": "Приоритет",
   "task_detail.notes": "Заметки",
   "task_detail.due_date": "Срок",

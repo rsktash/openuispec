@@ -33,6 +33,7 @@
   "analytics.empty_overdue": "No overdue tasks",
   "analytics.empty_overdue_body": "Everything important is on track.",
   "task_detail.status": "Status",
+  "task_detail.title": "Task details",
   "task_detail.priority": "Priority",
   "task_detail.notes": "Notes",
   "task_detail.due_date": "Due date",

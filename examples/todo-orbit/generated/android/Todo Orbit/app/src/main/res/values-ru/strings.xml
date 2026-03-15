@@ -18,6 +18,7 @@
     <string name="home_empty_title">Список пуст</string>
     <string name="home_empty_body">Добавьте задачу или смените фильтр, чтобы увидеть элементы.</string>
     <string name="task_detail_no_due_date">Без срока</string>
+    <string name="task_detail_title">Детали задачи</string>
     <string name="task_detail_status">Статус</string>
     <string name="task_detail_priority">Приоритет</string>
     <string name="task_detail_notes">Заметки</string>

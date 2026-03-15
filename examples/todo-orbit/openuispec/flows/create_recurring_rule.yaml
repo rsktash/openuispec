@@ -96,6 +96,7 @@ create_recurring_rule:
 
                 - contract: input_field
                   input_type: select
+                  render_hint: segmented
                   props:
                     label: "$t:recurring_rule.field_cadence"
                     required: true
@@ -118,6 +119,7 @@ create_recurring_rule:
 
                 - contract: input_field
                   input_type: select
+                  render_hint: dropdown
                   props:
                     label: "$t:recurring_rule.field_weekday"
                     options:
@@ -199,6 +201,7 @@ create_recurring_rule:
 
                 - contract: input_field
                   input_type: select
+                  render_hint: segmented
                   props:
                     label: "$t:recurring_rule.field_summary_channel"
                     options:

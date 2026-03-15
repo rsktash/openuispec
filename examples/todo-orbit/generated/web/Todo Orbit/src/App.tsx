@@ -105,6 +105,7 @@ const messages: Record<Locale, Record<string, string>> = {
     "analytics.empty_trend": "No trend data yet.",
     "analytics.empty_overdue": "No overdue tasks",
     "analytics.empty_overdue_body": "Everything important is on track.",
+    "task_detail.title": "Task details",
     "task_detail.status": "Status",
     "task_detail.priority": "Priority",
     "task_detail.notes": "Notes",
@@ -249,6 +250,7 @@ const messages: Record<Locale, Record<string, string>> = {
     "analytics.empty_trend": "Данные тренда пока отсутствуют.",
     "analytics.empty_overdue": "Просроченных задач нет",
     "analytics.empty_overdue_body": "Все важные задачи идут по плану.",
+    "task_detail.title": "Детали задачи",
     "task_detail.status": "Статус",
     "task_detail.priority": "Приоритет",
     "task_detail.notes": "Заметки",
@@ -617,6 +619,7 @@ function HomeScreen({ onOpenModal }: { onOpenModal: (modal: ModalState) => void 
   const navigate = useNavigate();
   const isDesktop = useIsDesktop();
   const t = useTranslator();
+  useDocumentTitle(t("nav.tasks"));
   const filteredTasks = useMemo(
     () => filterTasks(tasks, activeFilter, deferredSearch),
     [activeFilter, deferredSearch, tasks]
@@ -720,7 +723,7 @@ function HomeScreen({ onOpenModal }: { onOpenModal: (modal: ModalState) => void 
 
                   <div className="task-copy">
                     <strong>{task.title}</strong>
-                    <span>{formatRelativeDate(task.dueDate, useAppStore.getState().locale, t("task_detail.no_due_date"))}</span>
+                    <span>{formatRelativeDate(task.dueDate, useAppStore.getState().locale, t("task_detail.no_due_date"), "short")}</span>
                   </div>
 
                   <span className="priority-dot" style={{ background: priorityAccent[task.priority] }} />
@@ -743,6 +746,8 @@ function HomeScreen({ onOpenModal }: { onOpenModal: (modal: ModalState) => void 
 function TaskDetailRoute({ onOpenModal }: { onOpenModal: (modal: ModalState) => void }) {
   const { taskId } = useParams();
   const task = useAppStore((state) => state.tasks.find((entry) => entry.id === taskId));
+  const t = useTranslator();
+  useDocumentTitle(t("task_detail.title"));
 
   if (!task) {
     return <Navigate to="/" replace />;
@@ -840,6 +845,7 @@ function AnalyticsScreen() {
   const [period, setPeriod] = useState<Period>("week");
   const t = useTranslator();
   const locale = useAppStore((state) => state.locale);
+  useDocumentTitle(t("nav.analytics"));
   const overview = getAnalyticsOverview(tasks);
   const trend = getTrendSeries(tasks, period, locale);
   const overdue = getOverdueTasks(tasks);
@@ -917,6 +923,7 @@ function SettingsScreen({ onOpenModal }: { onOpenModal: (modal: ModalState) => v
   const savePreferences = useAppStore((state) => state.savePreferences);
   const pushToast = useAppStore((state) => state.pushToast);
   const t = useTranslator();
+  useDocumentTitle(t("nav.settings"));
   const [form, setForm] = useState(preferences);
 
   useEffect(() => {
@@ -935,7 +942,7 @@ function SettingsScreen({ onOpenModal }: { onOpenModal: (modal: ModalState) => v
 
       <div className="settings-grid">
         <section className="cut-surface form-stack">
-          <SelectField
+          <SegmentedField
             label={t("settings.language")}
             value={form.locale}
             onChange={(value) => setForm((current) => ({ ...current, locale: value as Locale }))}
@@ -945,7 +952,7 @@ function SettingsScreen({ onOpenModal }: { onOpenModal: (modal: ModalState) => v
             ]}
           />
 
-          <SelectField
+          <SegmentedField
             label={t("settings.theme")}
             value={form.theme}
             onChange={(value) => setForm((current) => ({ ...current, theme: value as Theme }))}
@@ -1067,7 +1074,7 @@ function TaskFormModal({
         onChange={setNotes}
         placeholder={t("create_task.field_notes_placeholder")}
       />
-      <SelectField
+      <SegmentedField
         label={taskId ? t("edit_task.field_priority") : t("create_task.field_priority")}
         value={priority}
         onChange={(value) => setPriority(value as Priority)}
@@ -1218,7 +1225,7 @@ function RecurringRuleModal({ onClose }: { onClose: () => void }) {
             error={confirmTouched ? errors.confirmName : ""}
           />
 
-          <SelectField
+          <SegmentedField
             label={t("recurring_rule.field_cadence")}
             value={draft.cadence}
             onChange={(value) =>
@@ -1316,7 +1323,7 @@ function RecurringRuleModal({ onClose }: { onClose: () => void }) {
           />
 
           {draft.enableSummary ? (
-            <SelectField
+            <SegmentedField
               label={t("recurring_rule.field_summary_channel")}
               value={draft.summaryChannel}
               onChange={(value) =>
@@ -1677,6 +1684,46 @@ function SelectField({
   );
 }
 
+function SegmentedField({
+  label,
+  value,
+  onChange,
+  options,
+  error
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: Array<{ label: string; value: string }>;
+  error?: string;
+}) {
+  return (
+    <div className="field-block">
+      <span className="field-label">{label}</span>
+      <div className={`segmented-control ${error ? "error" : ""}`} role="radiogroup" aria-label={label}>
+        {options
+          .filter((option) => option.value !== "")
+          .map((option) => {
+            const selected = option.value === value;
+            return (
+              <button
+                key={option.value}
+                aria-checked={selected}
+                className={`segmented-option ${selected ? "selected" : ""}`}
+                onClick={() => onChange(option.value)}
+                role="radio"
+                type="button"
+              >
+                {option.label}
+              </button>
+            );
+          })}
+      </div>
+      {error ? <span className="field-error">{error}</span> : null}
+    </div>
+  );
+}
+
 function DateField({
   label,
   value,
@@ -1772,6 +1819,12 @@ function NavItem({
       {children}
     </NavLink>
   );
+}
+
+function useDocumentTitle(title: string) {
+  useEffect(() => {
+    document.title = `${title} | Todo Orbit`;
+  }, [title]);
 }
 
 function useTranslator() {
