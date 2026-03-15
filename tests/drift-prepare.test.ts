@@ -285,7 +285,7 @@ test("prepare requires user confirmation when target stack was auto-filled from 
   }
 });
 
-test("prepare blocks bootstrap readiness when backend code root is missing for declared api endpoints", () => {
+test("prepare treats missing backend code root as optional hint when api endpoints are declared", () => {
   const sandbox = mkdtempSync(join(tmpdir(), "openuispec-prepare-missing-backend-"));
 
   try {
@@ -304,10 +304,10 @@ test("prepare blocks bootstrap readiness when backend code root is missing for d
     const prepared = JSON.parse(prepareOutput);
 
     assert.equal(prepared.mode, "bootstrap");
-    assert.equal(prepared.bootstrap.generation_ready, false);
+    // backend is optional — should not block generation readiness
     assert.ok(
       prepared.next_steps.some((step: string) =>
-        step.includes("generation.code_roots.backend")
+        step.includes("Optional") && step.includes("code_roots.backend")
       )
     );
   } finally {

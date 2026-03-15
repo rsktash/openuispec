@@ -17,6 +17,7 @@ export interface Includes {
 export interface UsageLint {
   path: string;
   message: string;
+  severity?: "error" | "warning";
 }
 
 interface SemanticContext {
@@ -545,27 +546,18 @@ function lintLocaleCoverage(context: SemanticContext): UsageLint[] {
 function lintManifestGenerationContext(projectDir: string, manifest: unknown): UsageLint[] {
   if (!isRecord(manifest)) return [];
 
-  const hasApiEndpoints =
-    isRecord(manifest.api) &&
-    isRecord(manifest.api.endpoints) &&
-    Object.keys(manifest.api.endpoints).length > 0;
-  if (!hasApiEndpoints) return [];
-
+  // code_roots.backend is optional — it's a hint for AI generation, not a hard requirement
   const generation = isRecord(manifest.generation) ? manifest.generation : {};
   const codeRoots = isRecord(generation.code_roots) ? generation.code_roots : null;
   const backendRoot = codeRoots && typeof codeRoots.backend === "string" ? codeRoots.backend.trim() : "";
 
-  if (!backendRoot) {
-    return [{
-      path: "openuispec.yaml",
-      message: 'api endpoints require generation.code_roots.backend to point at the backend folder',
-    }];
-  }
+  if (!backendRoot) return [];
 
   const resolvedBackendRoot = resolve(projectDir, backendRoot);
   if (!existsSync(resolvedBackendRoot)) {
     return [{
       path: "openuispec.yaml",
+      severity: "warning",
       message: `generation.code_roots.backend points to a missing folder: ${backendRoot}`,
     }];
   }
@@ -577,14 +569,24 @@ function printSemanticErrors(label: string, errors: UsageLint[]): number {
   if (errors.length === 0) return 0;
   const previewLimit = 10;
 
-  console.log(`  FAIL  ${label} (${errors.length} semantic error(s))`);
-  for (const error of errors.slice(0, previewLimit)) {
-    console.log(`        [${error.path}] ${error.message}`);
+  const realErrors = errors.filter((e) => e.severity !== "warning");
+  const warnings = errors.filter((e) => e.severity === "warning");
+
+  if (realErrors.length > 0) {
+    console.log(`  FAIL  ${label} (${realErrors.length} semantic error(s))`);
+    for (const error of realErrors.slice(0, previewLimit)) {
+      console.log(`        [${error.path}] ${error.message}`);
+    }
+    if (realErrors.length > previewLimit) {
+      console.log(`        ... and ${realErrors.length - previewLimit} more`);
+    }
   }
-  if (errors.length > previewLimit) {
-    console.log(`        ... and ${errors.length - previewLimit} more`);
+
+  for (const warning of warnings) {
+    console.log(`  WARN  ${label}: ${warning.message}`);
   }
-  return errors.length;
+
+  return realErrors.length;
 }
 
 export function collectSemanticLint(projectDir: string, includes: Includes): UsageLint[] {

@@ -1050,14 +1050,13 @@ function buildBootstrapPrepareResult(cwd: string, target: string): PrepareResult
   const codeRoots = suggestCodeRoots(target, outputDir);
   const missingDecisions = missingPlatformDecisions(target, platformDef);
   const backendRoot = resolveBackendRoot(projectDir, manifest);
-  const backendContextRequired = hasApiEndpoints(manifest);
-  const backendContextReady = !backendContextRequired || (backendRoot !== null && existsSync(backendRoot));
+  const backendContextReady = true; // backend is optional — not a generation blocker
   const pendingUserConfirmation = platformConfig.stack_confirmation.requires_user_confirmation;
 
   const nextSteps = [
-    ...(!backendContextReady
+    ...(hasApiEndpoints(manifest) && (backendRoot === null || !existsSync(backendRoot))
       ? [
-          "Set `generation.code_roots.backend` in openuispec.yaml to the backend folder used to implement the declared API endpoints.",
+          "Optional: set `generation.code_roots.backend` in openuispec.yaml to help AI locate your backend code.",
         ]
       : []),
     ...(pendingUserConfirmation

@@ -132,7 +132,7 @@ test("validate --json returns total_errors 0 for clean project", () => {
   }
 });
 
-test("semantic validate requires backend code root when api endpoints are declared", () => {
+test("semantic validate passes when backend code root is omitted with api endpoints", () => {
   const sandbox = mkdtempSync(join(tmpdir(), "openuispec-semantic-backend-root-"));
 
   try {
@@ -145,8 +145,8 @@ test("semantic validate requires backend code root when api endpoints are declar
     );
     writeFileSync(manifestPath, content);
 
-    const output = runValidate(sandbox, ["semantic"], true);
-    assert.match(output, /generation\.code_roots\.backend/);
+    const output = runValidate(sandbox, ["semantic"]);
+    assert.match(output, /ALL PASSED/);
   } finally {
     rmSync(sandbox, { recursive: true, force: true });
   }
