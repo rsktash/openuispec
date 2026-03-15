@@ -572,9 +572,14 @@ function findProjectDir(cwd: string): string {
     }
   }
   // Fallback for running from repo root with examples/
-  const examplesDir = join(cwd, "examples", "taskflow");
-  if (existsSync(join(examplesDir, "openuispec.yaml"))) {
-    return examplesDir;
+  const exampleCandidates = [
+    join(cwd, "examples", "taskflow", "openuispec"),
+    join(cwd, "examples", "taskflow"),
+  ];
+  for (const dir of exampleCandidates) {
+    if (existsSync(join(dir, "openuispec.yaml"))) {
+      return dir;
+    }
   }
   console.error(
     "Error: No openuispec.yaml found.\n" +
