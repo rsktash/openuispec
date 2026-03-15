@@ -183,7 +183,7 @@ openuispec validate screens     # Validate only screens
 openuispec status               # Show cross-target baseline/drift status
 openuispec drift --target ${targets[0]} --explain   # Explain semantic spec drift
 openuispec prepare --target ${targets[0]}          # Build an AI-ready target update bundle
-openuispec drift --snapshot --target ${targets[0]} # Snapshot current state + git baseline
+openuispec drift --snapshot --target ${targets[0]} # Snapshot current state + git baseline after target output exists
 \`\`\`
 
 ## Learn more
@@ -276,7 +276,7 @@ Spec-first workflow:
 6. Run \`openuispec drift --target <target> --explain\` to inspect semantic changes since that target's baseline.
 7. Run \`openuispec prepare --target <target>\` to build the AI/developer work bundle for that target.
 8. Verify the affected UI targets build/run if possible.
-9. Only then run \`openuispec drift --snapshot --target <target>\` for affected targets.
+9. Only then run \`openuispec drift --snapshot --target <target>\` for affected targets, after that target output directory exists.
 10. Run \`openuispec drift --target <target> --explain\` again to confirm no spec changes remain for that target.
 11. Use \`openuispec status\` to see which other targets are still behind the updated spec.
 
@@ -302,7 +302,7 @@ Platform-first workflow:
 - \`openuispec validate semantic\` — run semantic cross-reference linting
 - \`openuispec drift --target <t>\` — check for spec drift
 - \`openuispec drift --target <t> --explain\` — explain semantic spec drift since the target baseline
-- \`openuispec drift --snapshot --target <t>\` — snapshot current state
+- \`openuispec drift --snapshot --target <t>\` — snapshot current state after the target output exists
 - \`openuispec prepare --target <t>\` — build an AI-ready target update bundle
 - \`openuispec status\` — show cross-target baseline/drift status
 - \`openuispec update-rules\` — update AI rules to match installed package version
@@ -511,7 +511,7 @@ Getting started (new project):
   2. Create screens in ${specDir}/screens/ (one YAML per screen)
   3. Create flows in ${specDir}/flows/ (multi-step navigation)
   4. Ask AI to generate native code from the spec
-  5. Run \`openuispec drift --snapshot --target ${targets[0]}\` to baseline the first accepted target state
+  5. Run \`openuispec drift --snapshot --target ${targets[0]}\` to baseline the first accepted target state after that target output directory exists
 
 Getting started (existing project):
   1. Ask AI to read your existing UI code and generate spec files:
@@ -527,7 +527,7 @@ Commands:
   openuispec status   Show cross-target baseline/drift status
   openuispec drift --target ios --explain   Explain semantic spec changes
   openuispec prepare --target ios   Build an AI-ready target update bundle
-  openuispec drift --snapshot --target ios   Save current state + git baseline
+  openuispec drift --snapshot --target ios   Save current state + git baseline after target output exists
 
 AI rules have been added to CLAUDE.md and AGENTS.md.
 

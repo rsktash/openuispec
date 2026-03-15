@@ -466,6 +466,26 @@ export function stateFilePath(projectDir: string, projectName: string, target: s
   return join(resolveOutputDir(projectDir, projectName, target), STATE_FILE);
 }
 
+function missingSnapshotMessage(
+  cwd: string,
+  projectDir: string,
+  projectName: string,
+  target: string
+): string {
+  const outDir = resolveOutputDir(projectDir, projectName, target);
+  if (!existsSync(outDir)) {
+    return (
+      `No snapshot found for target "${target}".\n` +
+      `Output directory not found: ${relative(cwd, outDir)}\n` +
+      `Run code generation for "${target}" first, then run: openuispec drift --snapshot --target ${target}`
+    );
+  }
+  return (
+    `No snapshot found for target "${target}".\n` +
+    `Run: openuispec drift --snapshot --target ${target}`
+  );
+}
+
 export function discoverTargets(projectDir: string, projectName: string): string[] {
   const outputDirs = readOutputDirs(projectDir);
   const targets: string[] = [];
@@ -626,10 +646,7 @@ export function loadTargetDrift(
   const projectName = readProjectName(projectDir);
   const statePath = stateFilePath(projectDir, projectName, target);
   if (!existsSync(statePath)) {
-    console.error(
-      `No snapshot found for target "${target}".\n` +
-        `Run: openuispec drift --snapshot --target ${target}`
-    );
+    console.error(missingSnapshotMessage(cwd, projectDir, projectName, target));
     process.exit(1);
   }
 

@@ -26,6 +26,7 @@ import { readFileSync } from "node:fs";
 interface TargetStatus {
   target: string;
   output_dir: string;
+  output_exists: boolean;
   snapshot: boolean;
   snapshot_at: string | null;
   baseline: {
@@ -74,12 +75,14 @@ function readState(statePath: string): StateFile {
 
 function buildTargetStatus(cwd: string, projectDir: string, projectName: string, target: string): TargetStatus {
   const outputDir = resolveOutputDir(projectDir, projectName, target);
+  const outputExists = existsSync(outputDir);
   const path = stateFilePath(projectDir, projectName, target);
 
   if (!existsSync(path)) {
     return {
       target,
       output_dir: outputDir,
+      output_exists: outputExists,
       snapshot: false,
       snapshot_at: null,
       baseline: {
@@ -93,7 +96,9 @@ function buildTargetStatus(cwd: string, projectDir: string, projectName: string,
       removed: 0,
       behind: false,
       explain_available: false,
-      note: "No snapshot found for this target.",
+      note: outputExists
+        ? "No snapshot found for this target."
+        : `Output directory not found. Run code generation for "${target}" first.`,
     };
   }
 
@@ -107,6 +112,7 @@ function buildTargetStatus(cwd: string, projectDir: string, projectName: string,
   return {
     target,
     output_dir: outputDir,
+    output_exists: outputExists,
     snapshot: true,
     snapshot_at: state.snapshot_at,
     baseline: {
@@ -147,11 +153,18 @@ function printReport(result: StatusResult): void {
   for (const target of result.targets) {
     const summary = target.snapshot
       ? `${target.changed} changed, ${target.added} added, ${target.removed} removed`
-      : "no snapshot";
-    const status = target.snapshot ? (target.behind ? "behind" : "up to date") : "needs baseline";
+      : target.output_exists
+        ? "no snapshot"
+        : "output missing";
+    const status = target.snapshot
+      ? (target.behind ? "behind" : "up to date")
+      : target.output_exists
+        ? "needs baseline"
+        : "needs generation";
 
     console.log(`${target.target}`);
     console.log(`  output: ${target.output_dir}`);
+    console.log(`  output exists: ${target.output_exists ? "yes" : "no"}`);
     console.log(`  snapshot: ${target.snapshot ? target.snapshot_at : "missing"}`);
     if (target.baseline.label) {
       console.log(`  baseline: ${target.baseline.label}`);

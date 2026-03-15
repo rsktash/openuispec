@@ -41,7 +41,7 @@ openuispec validate screens     # Validate only screens
 openuispec status               # Show which targets are behind
 openuispec drift --target ios --explain   # Explain semantic spec drift since ios baseline
 openuispec prepare --target ios           # Build an AI-ready ios update bundle
-openuispec drift --snapshot --target ios  # Snapshot current state + git baseline
+openuispec drift --snapshot --target ios  # Snapshot current state + git baseline after ios output exists
 ```
 
 If a target snapshot was created before baseline metadata was added, `--explain` and `status` will ask you to re-run `openuispec drift --snapshot --target <target>` for that target.

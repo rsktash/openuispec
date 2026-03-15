@@ -86,6 +86,7 @@
 - `openuispec status` is the cross-target overview command.
 - Current output includes, per target:
   - output directory
+  - whether the output directory exists
   - snapshot present or missing
   - snapshot timestamp
   - baseline kind / commit / branch
@@ -95,6 +96,7 @@
   - note for missing or legacy snapshots
 - Important positioning:
   - `status` answers "which targets are behind shared spec changes?"
+  - `status` should distinguish "needs generation" from "needs baseline"
   - `status` does not verify code alignment
 - Real-world behavior to document:
   - if `web` was re-snapshotted after the new baseline metadata was added, but `ios` and `android` still have older state files, `status` should show:
@@ -111,5 +113,7 @@
   5. `openuispec prepare --target <target>`
   6. update target UI code
   7. build/run and review
-  8. `openuispec drift --snapshot --target <target>`
+  8. ensure the target output directory exists
+  9. `openuispec drift --snapshot --target <target>`
 - `drift --snapshot` should continue to be described as bookkeeping/baselining, not as proof that the target implementation matches the spec.
+- If the target output directory does not exist yet, the CLI should direct the user to run code generation first instead of implying that snapshot can initialize an empty target.

@@ -1,5 +1,5 @@
 <!-- openuispec-rules-start -->
-<!-- openuispec-rules-version: 0.1.27 -->
+<!-- openuispec-rules-version: 0.1.28 -->
 # OpenUISpec — AI Assistant Rules
 # ================================
 # This project uses OpenUISpec to define UI as a semantic spec.
@@ -78,7 +78,7 @@ Spec-first workflow:
 6. Run `openuispec drift --target <target> --explain` to inspect semantic changes since that target's baseline.
 7. Run `openuispec prepare --target <target>` to build the AI/developer work bundle for that target.
 8. Verify the affected UI targets build/run if possible.
-9. Only then run `openuispec drift --snapshot --target <target>` for affected targets.
+9. Only then run `openuispec drift --snapshot --target <target>` for affected targets, after that target output directory exists.
 10. Run `openuispec drift --target <target> --explain` again to confirm no spec changes remain for that target.
 11. Use `openuispec status` to see which other targets are still behind the updated spec.
 
@@ -104,7 +104,7 @@ Platform-first workflow:
 - `openuispec validate semantic` — run semantic cross-reference linting
 - `openuispec drift --target <t>` — check for spec drift
 - `openuispec drift --target <t> --explain` — explain semantic spec drift since the target baseline
-- `openuispec drift --snapshot --target <t>` — snapshot current state
+- `openuispec drift --snapshot --target <t>` — snapshot current state after the target output exists
 - `openuispec prepare --target <t>` — build an AI-ready target update bundle
 - `openuispec status` — show cross-target baseline/drift status
 - `openuispec update-rules` — update AI rules to match installed package version

@@ -202,12 +202,14 @@ generation:
 
 Paths are relative to `openuispec.yaml`. The `.openuispec-state.json` file is stored inside each output directory and records spec file hashes plus the git baseline commit metadata captured at snapshot time.
 
+`openuispec drift --snapshot --target <target>` requires that target output directory to already exist. If it does not, generate the target code first, then snapshot the accepted baseline.
+
 Use the commands like this:
 - `openuispec validate` checks schema correctness
 - `openuispec validate semantic` checks cross-references such as locale keys, formatters, mappers, contracts, icons, navigation targets, and API endpoints
 - `openuispec drift --target <t> --explain` explains semantic spec changes since that target's accepted baseline
 - `openuispec prepare --target <t>` turns those changes into an AI-ready target update bundle
-- `openuispec status` shows every target's snapshot state, baseline commit, and whether that target is behind the current spec
+- `openuispec status` shows every target's snapshot state, baseline commit, and whether that target is behind the current spec, still needs a baseline, or has not been generated yet
 
 If a target snapshot was created before baseline metadata was added, `--explain` and `status` will tell you to re-run `openuispec drift --snapshot --target <target>` for that target.
 
@@ -220,6 +222,7 @@ openuispec validate
 openuispec drift --target ios --explain
 openuispec prepare --target ios
 # update the ios implementation
+# ensure the ios output directory already exists
 openuispec drift --snapshot --target ios
 ```
 
@@ -228,7 +231,7 @@ Meaning:
 - `validate semantic` checks cross-reference integrity
 - `drift --explain` shows semantic spec changes since that target's accepted baseline
 - `prepare` packages those changes into an AI/developer work bundle
-- `drift --snapshot` accepts the updated state after the target UI has been updated
+- `drift --snapshot` accepts the updated state after the target UI has been updated and the target output directory exists
 
 Before picking the next platform to update, run:
 
@@ -238,7 +241,7 @@ openuispec status
 
 to see which targets are already up to date and which ones still need to catch up with shared spec changes.
 
-`drift --snapshot` is bookkeeping. It does not prove that the target code matches the spec.
+`drift --snapshot` is bookkeeping. It does not prove that the target code matches the spec, and it will not create a missing target output directory for you.
 
 ## Spec at a glance
 

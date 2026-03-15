@@ -7,19 +7,21 @@ import { fileURLToPath } from "node:url";
 import test from "node:test";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const tsxBin = join(repoRoot, "node_modules", ".bin", "tsx");
+const nodeBin = process.execPath;
+const tsxLoader = join(repoRoot, "node_modules", "tsx", "dist", "loader.mjs");
 const validateScript = join(repoRoot, "schema", "validate.ts");
 
 function runValidate(cwd: string, args: string[], allowFailure = false): string {
   try {
-    return execFileSync(tsxBin, [validateScript, ...args], {
+    return execFileSync(nodeBin, ["--import", tsxLoader, validateScript, ...args], {
       cwd,
       encoding: "utf-8",
       stdio: ["ignore", "pipe", "pipe"],
     });
   } catch (error) {
     if (allowFailure && error instanceof Error && "stdout" in error) {
-      return String((error as any).stdout ?? "");
+      const failed = error as any;
+      return `${String(failed.stdout ?? "")}${String(failed.stderr ?? "")}`;
     }
     throw error;
   }
