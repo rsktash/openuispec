@@ -40,6 +40,8 @@ interface TargetStatus {
   removed: number;
   behind: boolean;
   explain_available: boolean;
+  status: "up to date" | "behind" | "needs baseline" | "needs generation";
+  recommended_next_step: string;
   note?: string;
 }
 
@@ -96,6 +98,10 @@ function buildTargetStatus(cwd: string, projectDir: string, projectName: string,
       removed: 0,
       behind: false,
       explain_available: false,
+      status: outputExists ? "needs baseline" : "needs generation",
+      recommended_next_step: outputExists
+        ? `Run \`openuispec drift --snapshot --target ${target}\` after reviewing the generated output.`
+        : `Run code generation for "${target}", then \`openuispec prepare --target ${target}\` to build the target work bundle.`,
       note: outputExists
         ? "No snapshot found for this target."
         : `Output directory not found. Run code generation for "${target}" first.`,
@@ -126,6 +132,11 @@ function buildTargetStatus(cwd: string, projectDir: string, projectName: string,
     removed,
     behind: changed + added + removed > 0,
     explain_available: explanation.available,
+    status: changed + added + removed > 0 ? "behind" : "up to date",
+    recommended_next_step:
+      changed + added + removed > 0
+        ? `Run \`openuispec prepare --target ${target}\` to build the target work bundle for the pending spec changes.`
+        : `No immediate action required for "${target}". Re-run \`openuispec status\` after spec changes or after re-baselining.`,
     note: explanation.available ? undefined : explanation.note,
   };
 }
@@ -156,12 +167,6 @@ function printReport(result: StatusResult): void {
       : target.output_exists
         ? "no snapshot"
         : "output missing";
-    const status = target.snapshot
-      ? (target.behind ? "behind" : "up to date")
-      : target.output_exists
-        ? "needs baseline"
-        : "needs generation";
-
     console.log(`${target.target}`);
     console.log(`  output: ${target.output_dir}`);
     console.log(`  output exists: ${target.output_exists ? "yes" : "no"}`);
@@ -170,11 +175,12 @@ function printReport(result: StatusResult): void {
       console.log(`  baseline: ${target.baseline.label}`);
     }
     console.log(`  drift: ${summary}`);
-    console.log(`  status: ${status}`);
+    console.log(`  status: ${target.status}`);
     console.log(`  explain: ${target.explain_available ? "available" : "unavailable"}`);
     if (target.note) {
       console.log(`  note: ${target.note}`);
     }
+    console.log(`  next: ${target.recommended_next_step}`);
     console.log("");
   }
 }

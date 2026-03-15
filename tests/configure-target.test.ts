@@ -38,7 +38,43 @@ test("configure-target fails clearly without a tty unless defaults are provided"
 
     const output = runConfigure(sandbox, ["android"], true);
     assert.match(output, /needs a TTY for prompts/);
+    assert.match(output, /ask the user to confirm the target stack/i);
+    assert.match(output, /interactive terminal/i);
     assert.match(output, /--defaults/);
+    assert.match(output, /remain unconfirmed/i);
+    assert.match(output, /prepare.*block implementation/i);
+  } finally {
+    rmSync(sandbox, { recursive: true, force: true });
+  }
+});
+
+test("configure-target lists prompt options as JSON without requiring a project or tty", () => {
+  const sandbox = mkdtempSync(join(tmpdir(), "openuispec-configure-target-options-"));
+
+  try {
+    const output = runConfigure(sandbox, ["web", "--list-options"]);
+    const listed = JSON.parse(output);
+
+    assert.equal(listed.target, "web");
+    assert.equal(listed.defaults_are_unconfirmed, true);
+    assert.equal(listed.confirmation_required_before_implementation, true);
+    assert.equal(listed.interactive_command, "openuispec configure-target web");
+    assert.equal(listed.defaults_command, "openuispec configure-target web --defaults");
+    assert.equal(listed.framework.prompt, "Web UI framework");
+    assert.ok(listed.framework.options.includes("react"));
+    assert.ok(listed.framework.options.includes("vue"));
+    assert.ok(listed.framework.options.includes("svelte"));
+    assert.ok(listed.framework.options.includes("other"));
+
+    const routing = listed.questions.find((question: any) => question.key === "routing");
+    assert.ok(routing);
+    assert.equal(routing.prompt, "Web routing");
+    assert.equal(routing.custom_allowed, true);
+
+    const reactRouter = routing.options.find((option: any) => option.value === "react_router");
+    assert.ok(reactRouter);
+    assert.ok(reactRouter.refs.packages.includes("react-router@{latest stable}"));
+    assert.ok(reactRouter.refs.docs.includes("https://reactrouter.com/"));
   } finally {
     rmSync(sandbox, { recursive: true, force: true });
   }
@@ -70,6 +106,8 @@ test("configure-target writes default android stack choices into platform yaml",
     assert.equal(android.generation.preferences, "datastore");
     assert.equal(android.generation.database, "none");
     assert.equal(android.generation.di, "metro");
+    assert.equal(android.generation.stack_confirmation.status, "pending_user_confirmation");
+    assert.equal(android.generation.stack_confirmation.source, "defaults");
     assert.deepEqual(android.generation.dependencies, [
       "material3",
       "activity-compose",
@@ -280,6 +318,117 @@ test("configure-target writes svelte framework with sveltekit routing and svelte
     assert.ok(web.generation.dependencies.includes("svelte"));
     assert.ok(web.generation.dependencies.includes("@sveltejs/kit"));
     assert.ok(!web.generation.dependencies.includes("react"));
+  } finally {
+    rmSync(sandbox, { recursive: true, force: true });
+  }
+});
+
+test("configure-target --set writes correct values and marks stack as confirmed", () => {
+  const sandbox = mkdtempSync(join(tmpdir(), "openuispec-configure-target-set-"));
+
+  try {
+    cpSync(join(repoRoot, "examples", "todo-orbit", "openuispec"), join(sandbox, "openuispec"), {
+      recursive: true,
+    });
+    unlinkSync(join(sandbox, "openuispec", "platform", "web.yaml"));
+
+    runConfigure(sandbox, ["web", "--set", "routing=tanstack_router", "--set", "state=zustand"]);
+
+    const configured = YAML.parse(
+      readFileSync(join(sandbox, "openuispec", "platform", "web.yaml"), "utf-8")
+    );
+    const web = configured.web;
+
+    assert.equal(web.generation.routing, "tanstack_router");
+    assert.equal(web.generation.state, "zustand");
+    assert.equal(web.generation.stack_confirmation.status, "confirmed");
+    assert.equal(web.generation.stack_confirmation.source, "user");
+  } finally {
+    rmSync(sandbox, { recursive: true, force: true });
+  }
+});
+
+test("configure-target --set preserves other existing values", () => {
+  const sandbox = mkdtempSync(join(tmpdir(), "openuispec-configure-target-set-preserve-"));
+
+  try {
+    cpSync(join(repoRoot, "examples", "todo-orbit", "openuispec"), join(sandbox, "openuispec"), {
+      recursive: true,
+    });
+    writeFileSync(
+      join(sandbox, "openuispec", "platform", "web.yaml"),
+      YAML.stringify({
+        web: {
+          framework: "react",
+          language: "typescript",
+          generation: {
+            routing: "react_router",
+            state: "zustand",
+            css: "tailwind",
+            runtime: "frontend_only",
+            storage_backend: "none",
+          },
+        },
+      })
+    );
+
+    runConfigure(sandbox, ["web", "--set", "routing=tanstack_router"]);
+
+    const configured = YAML.parse(
+      readFileSync(join(sandbox, "openuispec", "platform", "web.yaml"), "utf-8")
+    );
+    const web = configured.web;
+
+    assert.equal(web.generation.routing, "tanstack_router");
+    assert.equal(web.generation.state, "zustand");
+    assert.equal(web.generation.css, "tailwind");
+    assert.equal(web.generation.runtime, "frontend_only");
+    assert.equal(web.generation.storage_backend, "none");
+  } finally {
+    rmSync(sandbox, { recursive: true, force: true });
+  }
+});
+
+test("configure-target --set marks stack_confirmation as confirmed", () => {
+  const sandbox = mkdtempSync(join(tmpdir(), "openuispec-configure-target-set-confirmed-"));
+
+  try {
+    cpSync(join(repoRoot, "examples", "todo-orbit", "openuispec"), join(sandbox, "openuispec"), {
+      recursive: true,
+    });
+    unlinkSync(join(sandbox, "openuispec", "platform", "web.yaml"));
+
+    runConfigure(sandbox, ["web", "--set", "routing=tanstack_router"]);
+
+    const configured = YAML.parse(
+      readFileSync(join(sandbox, "openuispec", "platform", "web.yaml"), "utf-8")
+    );
+    const web = configured.web;
+
+    assert.equal(web.generation.stack_confirmation.status, "confirmed");
+    assert.equal(web.generation.stack_confirmation.source, "user");
+    assert.ok(web.generation.stack_confirmation.confirmed_at);
+  } finally {
+    rmSync(sandbox, { recursive: true, force: true });
+  }
+});
+
+test("configure-target web --defaults --quiet produces only the saved file path", () => {
+  const sandbox = mkdtempSync(join(tmpdir(), "openuispec-configure-target-quiet-"));
+
+  try {
+    cpSync(join(repoRoot, "examples", "todo-orbit", "openuispec"), join(sandbox, "openuispec"), {
+      recursive: true,
+    });
+    unlinkSync(join(sandbox, "openuispec", "platform", "web.yaml"));
+
+    const output = runConfigure(sandbox, ["web", "--defaults", "--quiet"]);
+
+    const lines = output.trim().split("\n").filter((l: string) => l.trim().length > 0);
+    assert.equal(lines.length, 1);
+    assert.match(lines[0], /platform\/web\.yaml/);
+    assert.ok(!output.includes("Configured values:"));
+    assert.ok(!output.includes("OpenUISpec"));
   } finally {
     rmSync(sandbox, { recursive: true, force: true });
   }

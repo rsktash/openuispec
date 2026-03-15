@@ -39,7 +39,7 @@ test("init fails clearly without a tty unless defaults or flags are provided", (
   }
 });
 
-test("init --defaults scaffolds a non-interactive project with backend root and target stacks", () => {
+test("init --defaults scaffolds a non-interactive project with backend config and target stacks", () => {
   const sandbox = mkdtempSync(join(tmpdir(), "openuispec-init-defaults-"));
 
   try {
@@ -49,7 +49,9 @@ test("init --defaults scaffolds a non-interactive project with backend root and 
     const manifest = readFileSync(manifestPath, "utf-8");
     assert.match(manifest, /code_roots:\n\s+backend: "\.\.\/backend\/"/);
 
-    assert.equal(existsSync(join(sandbox, "backend", ".gitkeep")), true);
+    // backend folder is NOT created by init — it's the user's responsibility
+    assert.equal(existsSync(join(sandbox, "backend")), false);
+
     assert.equal(existsSync(join(sandbox, "openuispec", "platform", "android.yaml")), true);
     assert.equal(existsSync(join(sandbox, "openuispec", "platform", "ios.yaml")), true);
     assert.equal(existsSync(join(sandbox, "openuispec", "platform", "web.yaml")), true);
@@ -62,17 +64,22 @@ test("init --defaults scaffolds a non-interactive project with backend root and 
   }
 });
 
-test("init --defaults does not add backend .gitkeep when backend folder already has content", () => {
-  const sandbox = mkdtempSync(join(tmpdir(), "openuispec-init-existing-backend-"));
+test("init --defaults --quiet produces minimal output", () => {
+  const sandbox = mkdtempSync(join(tmpdir(), "openuispec-init-quiet-"));
 
   try {
-    mkdirSync(join(sandbox, "backend"), { recursive: true });
-    writeFileSync(join(sandbox, "backend", "server.ts"), "export {};\n");
+    const output = runInit(sandbox, ["--defaults", "--quiet"]);
 
-    runInit(sandbox, ["--defaults"]);
+    const lines = output.trim().split("\n").filter((l: string) => l.trim().length > 0);
+    assert.equal(lines.length, 1);
+    assert.match(lines[0], /\.\/openuispec\//);
+    assert.ok(!output.includes("Scaffolding"));
+    assert.ok(!output.includes("OpenUISpec — Project Setup"));
+    assert.ok(!output.includes("Done!"));
+    assert.ok(!output.includes("create "));
 
-    assert.equal(existsSync(join(sandbox, "backend", "server.ts")), true);
-    assert.equal(existsSync(join(sandbox, "backend", ".gitkeep")), false);
+    assert.equal(existsSync(join(sandbox, "openuispec", "openuispec.yaml")), true);
+    assert.equal(existsSync(join(sandbox, "CLAUDE.md")), true);
   } finally {
     rmSync(sandbox, { recursive: true, force: true });
   }

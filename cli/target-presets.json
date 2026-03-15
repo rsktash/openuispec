@@ -35,10 +35,10 @@
                 "org.jetbrains.kotlin.plugin.compose"
               ],
               "libraries": [
-                "com.arkivanov.decompose:decompose:{latest}",
-                "com.arkivanov.decompose:extensions-compose-android:{latest}",
-                "com.arkivanov.essenty:lifecycle-android:{latest}",
-                "com.arkivanov.essenty:instance-keeper-android:{latest}"
+                "com.arkivanov.decompose:decompose:{latest stable}",
+                "com.arkivanov.decompose:extensions-compose-android:{latest stable}",
+                "com.arkivanov.essenty:lifecycle-android:{latest stable}",
+                "com.arkivanov.essenty:instance-keeper-android:{latest stable}"
               ],
               "docs": [
                 "https://github.com/arkivanov/Decompose",
@@ -58,8 +58,8 @@
                 "org.jetbrains.kotlin.plugin.compose"
               ],
               "libraries": [
-                "androidx.navigation:navigation-compose:{latest}",
-                "androidx.lifecycle:lifecycle-runtime-compose:{latest}"
+                "androidx.navigation:navigation-compose:{latest stable}",
+                "androidx.lifecycle:lifecycle-runtime-compose:{latest stable}"
               ],
               "docs": [
                 "https://developer.android.com/guide/navigation",
@@ -85,9 +85,9 @@
             "refs": {
               "plugins": [],
               "libraries": [
-                "com.arkivanov.mvikotlin:mvikotlin:{latest}",
-                "com.arkivanov.mvikotlin:mvikotlin-main:{latest}",
-                "com.arkivanov.mvikotlin:mvikotlin-logging:{latest}"
+                "com.arkivanov.mvikotlin:mvikotlin:{latest stable}",
+                "com.arkivanov.mvikotlin:mvikotlin-main:{latest stable}",
+                "com.arkivanov.mvikotlin:mvikotlin-logging:{latest stable}"
               ],
               "docs": [
                 "https://github.com/arkivanov/MVIKotlin"
@@ -105,9 +105,9 @@
             "refs": {
               "plugins": [],
               "libraries": [
-                "androidx.lifecycle:lifecycle-viewmodel-compose:{latest}",
-                "androidx.lifecycle:lifecycle-runtime-compose:{latest}",
-                "org.jetbrains.kotlinx:kotlinx-coroutines-core:{latest}"
+                "androidx.lifecycle:lifecycle-viewmodel-compose:{latest stable}",
+                "androidx.lifecycle:lifecycle-runtime-compose:{latest stable}",
+                "org.jetbrains.kotlinx:kotlinx-coroutines-core:{latest stable}"
               ],
               "docs": [
                 "https://developer.android.com/jetpack/androidx/releases/lifecycle",
@@ -132,8 +132,8 @@
             "refs": {
               "plugins": [],
               "libraries": [
-                "androidx.datastore:datastore-preferences:{latest}",
-                "androidx.datastore:datastore-core:{latest}"
+                "androidx.datastore:datastore-preferences:{latest stable}",
+                "androidx.datastore:datastore-core:{latest stable}"
               ],
               "docs": [
                 "https://developer.android.com/topic/libraries/architecture/datastore"
@@ -169,8 +169,8 @@
                 "app.cash.sqldelight"
               ],
               "libraries": [
-                "app.cash.sqldelight:android-driver:{latest}",
-                "app.cash.sqldelight:coroutines-extensions:{latest}"
+                "app.cash.sqldelight:android-driver:{latest stable}",
+                "app.cash.sqldelight:coroutines-extensions:{latest stable}"
               ],
               "docs": [
                 "https://github.com/sqldelight/sqldelight"
@@ -189,8 +189,8 @@
                 "androidx.room"
               ],
               "libraries": [
-                "androidx.room:room-runtime:{latest}",
-                "androidx.room:room-ktx:{latest}"
+                "androidx.room:room-runtime:{latest stable}",
+                "androidx.room:room-ktx:{latest stable}"
               ],
               "docs": [
                 "https://developer.android.com/training/data-storage/room"
@@ -224,8 +224,8 @@
             "refs": {
               "plugins": [],
               "libraries": [
-                "dev.zacsweers.metro:metro:{latest}",
-                "dev.zacsweers.metro:metro-compose:{latest}"
+                "dev.zacsweers.metro:metro:{latest stable}",
+                "dev.zacsweers.metro:metro-compose:{latest stable}"
               ],
               "docs": [
                 "https://github.com/ZacSweers/metro"
@@ -242,8 +242,8 @@
             "refs": {
               "plugins": [],
               "libraries": [
-                "io.insert-koin:koin-android:{latest}",
-                "io.insert-koin:koin-compose:{latest}"
+                "io.insert-koin:koin-android:{latest stable}",
+                "io.insert-koin:koin-compose:{latest stable}"
               ],
               "docs": [
                 "https://insert-koin.io/docs/quickstart/android/",
@@ -263,8 +263,8 @@
                 "com.google.dagger.hilt.android"
               ],
               "libraries": [
-                "com.google.dagger:hilt-android:{latest}",
-                "androidx.hilt:hilt-navigation-compose:{latest}"
+                "com.google.dagger:hilt-android:{latest stable}",
+                "androidx.hilt:hilt-navigation-compose:{latest stable}"
               ],
               "docs": [
                 "https://developer.android.com/training/dependency-injection/hilt-android",
@@ -330,7 +330,7 @@
             "dependencies": [],
             "refs": {
               "packages": [
-                "next@{latest}"
+                "next@{latest stable}"
               ],
               "docs": [
                 "https://nextjs.org/docs"
@@ -343,7 +343,7 @@
             "dependencies": [],
             "refs": {
               "packages": [
-                "hono@{latest}"
+                "hono@{latest stable}"
               ],
               "docs": [
                 "https://hono.dev/"
@@ -365,7 +365,7 @@
             ],
             "refs": {
               "packages": [
-                "tailwindcss@{latest}"
+                "tailwindcss@{latest stable}"
               ],
               "docs": [
                 "https://tailwindcss.com/docs"
@@ -406,7 +406,7 @@
             ],
             "refs": {
               "packages": [
-                "react-router@{latest}"
+                "react-router@{latest stable}"
               ],
               "docs": [
                 "https://reactrouter.com/"
@@ -422,7 +422,7 @@
             ],
             "refs": {
               "packages": [
-                "@tanstack/react-router@{latest}"
+                "@tanstack/react-router@{latest stable}"
               ],
               "docs": [
                 "https://tanstack.com/router/docs"
@@ -438,7 +438,7 @@
             ],
             "refs": {
               "packages": [
-                "vue-router@{latest}"
+                "vue-router@{latest stable}"
               ],
               "docs": [
                 "https://router.vuejs.org/"
@@ -473,7 +473,7 @@
             ],
             "refs": {
               "packages": [
-                "zustand@{latest}"
+                "zustand@{latest stable}"
               ],
               "docs": [
                 "https://zustand.docs.pmnd.rs/"
@@ -490,8 +490,8 @@
             ],
             "refs": {
               "packages": [
-                "@reduxjs/toolkit@{latest}",
-                "react-redux@{latest}"
+                "@reduxjs/toolkit@{latest stable}",
+                "react-redux@{latest stable}"
               ],
               "docs": [
                 "https://redux-toolkit.js.org/",
@@ -508,7 +508,7 @@
             ],
             "refs": {
               "packages": [
-                "@tanstack/react-query@{latest}"
+                "@tanstack/react-query@{latest stable}"
               ],
               "docs": [
                 "https://tanstack.com/query/latest"
@@ -524,7 +524,7 @@
             ],
             "refs": {
               "packages": [
-                "pinia@{latest}"
+                "pinia@{latest stable}"
               ],
               "docs": [
                 "https://pinia.vuejs.org/"
@@ -567,7 +567,7 @@
             ],
             "refs": {
               "packages": [
-                "@supabase/supabase-js@{latest}"
+                "@supabase/supabase-js@{latest stable}"
               ],
               "docs": [
                 "https://supabase.com/docs"
@@ -582,7 +582,7 @@
             ],
             "refs": {
               "packages": [
-                "firebase@{latest}"
+                "firebase@{latest stable}"
               ],
               "docs": [
                 "https://firebase.google.com/docs/web/setup"
@@ -640,7 +640,7 @@
             },
             "refs": {
               "packages": [
-                "pointfreeco/swift-composable-architecture@{latest}"
+                "pointfreeco/swift-composable-architecture@{latest stable}"
               ],
               "docs": [
                 "https://github.com/pointfreeco/swift-composable-architecture"
@@ -677,7 +677,7 @@
             ],
             "refs": {
               "packages": [
-                "stephencelis/SQLite.swift@{latest}"
+                "stephencelis/SQLite.swift@{latest stable}"
               ],
               "docs": [
                 "https://www.sqlite.org/docs.html"
@@ -717,7 +717,7 @@
             ],
             "refs": {
               "packages": [
-                "hmlongco/Factory@{latest}"
+                "hmlongco/Factory@{latest stable}"
               ],
               "docs": [
                 "https://github.com/hmlongco/Factory"

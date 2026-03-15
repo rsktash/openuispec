@@ -4,13 +4,15 @@
  *
  * Usage:
  *   openuispec init                           Create a new spec project
- *   openuispec init --defaults                Scaffold non-interactively with defaults
- *   openuispec configure-target <t>           Configure target stack and managed dependencies
+ *   openuispec init --defaults                Scaffold non-interactively with unconfirmed defaults
+ *   openuispec configure-target <t>           Configure and confirm target stack choices
+ *   openuispec configure-target <t> --list-options  Print target stack prompt options as JSON
  *   openuispec drift [--target <t>]           Check for spec drift
  *   openuispec drift --snapshot --target <t>  Snapshot current state + git baseline
  *   openuispec drift --target <t> --explain   Explain semantic changes since baseline
  *   openuispec prepare --target <t>           Build the target work bundle
  *   openuispec status                         Show cross-target baseline/drift status
+ *   openuispec check --target <t> [--json]    Composite validation + prepare readiness
  *   openuispec validate [group...]            Validate spec files against schemas
  */
 
@@ -78,6 +80,12 @@ async function main(): Promise<void> {
       break;
     }
 
+    case "check": {
+      const { runCheck } = await import("../check/index.js");
+      runCheck(rest);
+      break;
+    }
+
     case "validate": {
       const { runValidate } = await import("../schema/validate.js");
       runValidate(rest);
@@ -93,18 +101,24 @@ OpenUISpec CLI v0.1
 
 Usage:
   openuispec init                           Create a new spec project
-  openuispec init --defaults                Scaffold non-interactively with defaults
+  openuispec init --defaults                Scaffold non-interactively with unconfirmed defaults
   openuispec init --no-configure-targets    Skip target stack setup during init
   openuispec update-rules                   Update AI rules to match installed version
-  openuispec configure-target <t> [--defaults] Configure target stack and managed dependencies
+  openuispec configure-target <t> [--defaults] Configure target stack; --defaults stays unconfirmed
+  openuispec configure-target <t> --set k=v    Set specific stack values (confirmed)
+  openuispec configure-target <t> --list-options Print target stack prompt options as JSON
   openuispec drift [--target <t>]           Check for spec drift
   openuispec drift --snapshot --target <t>  Snapshot current state + git baseline
   openuispec drift --target <t> --explain   Explain semantic changes since baseline
   openuispec prepare --target <t>           Build the target work bundle
   openuispec status                         Show cross-target baseline/drift status
-  openuispec validate [group...]            Validate spec files
+  openuispec check --target <t> [--json]    Composite validation + prepare readiness
+  openuispec validate [group...] [--json]   Validate spec files
+  openuispec validate semantic --json       Semantic validation as JSON
 
 Validate groups: manifest, tokens, screens, flows, platform, locales, contracts, semantic
+
+Exit codes: 0 = success, 1 = missing config/usage error, 2 = validation failure
 
 Docs: https://openuispec.rsteam.uz
 `);
@@ -117,4 +131,7 @@ Docs: https://openuispec.rsteam.uz
   }
 }
 
-main();
+main().catch((err) => {
+  console.error(err instanceof Error ? err.message : String(err));
+  process.exit(1);
+});

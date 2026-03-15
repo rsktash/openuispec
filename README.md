@@ -188,12 +188,14 @@ Use the commands like this:
 - `openuispec validate` checks schema correctness
 - `openuispec validate semantic` checks cross-references such as locale keys, formatters, mappers, contracts, icons, navigation targets, and API endpoints
 - `openuispec init --no-configure-targets` scaffolds the spec project without running the target-stack wizard
-- `openuispec configure-target <t>` records target stack choices in `platform/<target>.yaml` using preset defaults, while still allowing custom framework/library values when the project uses something outside the catalog
+- `openuispec configure-target <t>` records and confirms target stack choices in `platform/<target>.yaml`, while still allowing custom framework/library values when the project uses something outside the catalog
 - `openuispec drift --target <t> --explain` explains semantic spec changes since that target's accepted baseline
 - `openuispec prepare --target <t>` builds the target work bundle for either first-time generation or drift-based updates
 - `openuispec status` shows every target's snapshot state, baseline commit, and whether that target is behind the current spec, still needs a baseline, or has not been generated yet
 
 In first-time generation mode, `prepare` also carries target-specific generation constraints such as native localization requirements, multi-file output rules, target folder layout expectations, and a requirement to refresh current platform/framework setup knowledge before code generation.
+
+If stack choices were auto-applied via `configure-target --defaults` or `init --defaults`, they remain unconfirmed. `prepare` will block implementation readiness until the user explicitly confirms the target stack, and AI agents should ask the user to confirm or change those choices instead of silently proceeding to code generation.
 
 When target stack choices come from the preset catalog, `prepare --json` also exposes install-oriented refs for the selected options:
 - Android: Gradle plugin ids and library coordinates

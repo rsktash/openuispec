@@ -60,20 +60,26 @@ test("status summarizes target baselines and behind state", () => {
     assert.ok(web);
     assert.equal(web.snapshot, true);
     assert.equal(web.behind, true);
+    assert.equal(web.status, "behind");
     assert.equal(web.changed, 1);
     assert.equal(web.explain_available, true);
+    assert.match(web.recommended_next_step, /openuispec prepare --target web/);
 
     const android = status.targets.find((entry: any) => entry.target === "android");
     assert.ok(android);
     assert.equal(android.output_exists, true);
     assert.equal(android.snapshot, false);
+    assert.equal(android.status, "needs baseline");
     assert.equal(android.note, "No snapshot found for this target.");
+    assert.match(android.recommended_next_step, /openuispec drift --snapshot --target android/);
 
     const ios = status.targets.find((entry: any) => entry.target === "ios");
     assert.ok(ios);
     assert.equal(ios.output_exists, false);
     assert.equal(ios.snapshot, false);
+    assert.equal(ios.status, "needs generation");
     assert.equal(ios.note, 'Output directory not found. Run code generation for "ios" first.');
+    assert.match(ios.recommended_next_step, /openuispec prepare --target ios/);
   } finally {
     rmSync(sandbox, { recursive: true, force: true });
   }

@@ -11,10 +11,12 @@ import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { basename, dirname, extname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import YAML from "yaml";
+import { listTargetWizardOptions, type TargetWizardOptionsResponse } from "../cli/configure-target.js";
 import {
   discoverSpecFiles,
   findProjectDir,
   hasStatusSemantics,
+  isSupportedTarget,
   loadTargetDrift,
   readManifest,
   readProjectName,
@@ -77,6 +79,10 @@ interface PreparePlatformConfig {
   target_sdk: number | null;
   generation: Record<string, any>;
   stack: Record<string, string>;
+  stack_confirmation: {
+    status: string | null;
+    requires_user_confirmation: boolean;
+  };
   dependency_guidance: {
     anchor_refs_only: boolean;
     notes: string[];
@@ -95,7 +101,9 @@ interface PrepareBootstrapBundle {
   output_exists: boolean;
   generation_ready: boolean;
   missing_platform_decisions: string[];
+  pending_user_confirmation: boolean;
   generation_warnings: string[];
+  target_stack_options: TargetWizardOptionsResponse | null;
   includes: Record<string, string>;
   output_format: Record<string, any>;
   i18n: {
@@ -261,6 +269,14 @@ function buildPlatformConfig(target: string, platformDef: Record<string, any>): 
     target_sdk: typeof platformDef.target_sdk === "number" ? platformDef.target_sdk : null,
     generation,
     stack,
+    stack_confirmation: {
+      status:
+        typeof generation.stack_confirmation?.status === "string"
+          ? generation.stack_confirmation.status
+          : null,
+      requires_user_confirmation:
+        generation.stack_confirmation?.status === "pending_user_confirmation",
+    },
     dependency_guidance: {
       anchor_refs_only: true,
       notes: [
@@ -803,6 +819,12 @@ function referenceExamples(): string[] {
 function generationWarnings(target: string, platformConfig: PreparePlatformConfig): string[] {
   const warnings: string[] = [];
 
+  if (platformConfig.stack_confirmation.requires_user_confirmation) {
+    warnings.push(
+      `The configured ${target} stack was applied from defaults and still requires explicit user confirmation before implementation.`
+    );
+  }
+
   for (const [key, value] of Object.entries(platformConfig.stack)) {
     if (!PRESENTATION_ONLY_KEYS.has(key) && !platformConfig.selected_option_refs[key]) {
       warnings.push(
@@ -893,6 +915,9 @@ function printReport(result: PrepareResult): void {
         console.log(`    - ${key}: ${refs.value}`);
       }
     }
+    if (result.platform_config.stack_confirmation.status) {
+      console.log(`  stack confirmation: ${result.platform_config.stack_confirmation.status}`);
+    }
     if (result.platform_config.dependency_guidance.notes.length > 0) {
       console.log("  dependency guidance:");
       for (const note of result.platform_config.dependency_guidance.notes) {
@@ -911,12 +936,21 @@ function printReport(result: PrepareResult): void {
     console.log("\nBootstrap Bundle");
     console.log(`  output exists: ${result.bootstrap.output_exists ? "yes" : "no"}`);
     console.log(`  generation ready: ${result.bootstrap.generation_ready ? "yes" : "no"}`);
+    console.log(
+      `  pending user confirmation: ${result.bootstrap.pending_user_confirmation ? "yes" : "no"}`
+    );
 
     if (result.bootstrap.missing_platform_decisions.length > 0) {
       console.log("  missing platform decisions:");
       for (const key of result.bootstrap.missing_platform_decisions) {
         console.log(`    - ${key}`);
       }
+    }
+
+    if (result.bootstrap.target_stack_options) {
+      console.log("  target stack options:");
+      console.log(`    - interactive: ${result.bootstrap.target_stack_options.interactive_command}`);
+      console.log(`    - non-interactive schema: openuispec configure-target ${result.target} --list-options`);
     }
 
     if (result.bootstrap.generation_warnings.length > 0) {
@@ -1018,11 +1052,17 @@ function buildBootstrapPrepareResult(cwd: string, target: string): PrepareResult
   const backendRoot = resolveBackendRoot(projectDir, manifest);
   const backendContextRequired = hasApiEndpoints(manifest);
   const backendContextReady = !backendContextRequired || (backendRoot !== null && existsSync(backendRoot));
+  const pendingUserConfirmation = platformConfig.stack_confirmation.requires_user_confirmation;
 
   const nextSteps = [
     ...(!backendContextReady
       ? [
           "Set `generation.code_roots.backend` in openuispec.yaml to the backend folder used to implement the declared API endpoints.",
+        ]
+      : []),
+    ...(pendingUserConfirmation
+      ? [
+          `Run \`openuispec configure-target ${target}\` without \`--defaults\` and confirm the stack choices before implementation.`,
         ]
       : []),
     ...(missingDecisions.length > 0
@@ -1069,9 +1109,14 @@ function buildBootstrapPrepareResult(cwd: string, target: string): PrepareResult
     items: [],
     bootstrap: {
       output_exists: existsSync(outputDir),
-      generation_ready: missingDecisions.length === 0 && backendContextReady,
+      generation_ready: missingDecisions.length === 0 && backendContextReady && !pendingUserConfirmation,
       missing_platform_decisions: missingDecisions,
+      pending_user_confirmation: pendingUserConfirmation,
       includes: manifest.includes ?? {},
+      target_stack_options:
+        (missingDecisions.length > 0 || pendingUserConfirmation) && isSupportedTarget(target)
+          ? listTargetWizardOptions(target)
+          : null,
       output_format: outputFormat,
       i18n: {
         default_locale: manifest.i18n?.default_locale ?? null,

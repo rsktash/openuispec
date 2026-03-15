@@ -41,6 +41,7 @@
   - it should offer preset defaults for known stacks
   - it must still allow custom values when the project uses frameworks or libraries outside the catalog
   - `openuispec init --no-configure-targets` should remain available for users who want to defer target stack decisions until later
+  - `--defaults` is an unattended fallback only; it must not count as user confirmation for implementation
 - It should support two modes:
   1. bootstrap mode when no target snapshot exists yet
   2. update mode when a target snapshot exists
@@ -69,6 +70,9 @@
   - AI should resolve exact versions and wiring from current platform docs instead of assuming the preset list is exhaustive
 - Bootstrap mode should surface soft warnings when configured framework/stack values are custom and therefore not covered by preset dependency refs.
   - these warnings should explain that dependency guidance is incomplete, not silently omit the missing refs
+- Bootstrap mode should also surface pending stack confirmation when values were auto-applied from defaults.
+  - `generation_ready` must remain false in that state
+  - AI consumers should ask the user to confirm or change the stack before starting implementation
 - Bootstrap mode should also carry explicit generation constraints for the target:
   - localization rules
     - use target-native runtime localization resources

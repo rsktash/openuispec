@@ -134,6 +134,14 @@ test("prepare emits a bootstrap bundle and recommends configure-target when stac
     assert.equal(prepared.bootstrap.generation_ready, false);
     assert.deepEqual(prepared.bootstrap.missing_platform_decisions, ["runtime", "storage_backend"]);
     assert.deepEqual(prepared.bootstrap.generation_warnings, []);
+    assert.equal(prepared.bootstrap.target_stack_options.target, "web");
+    assert.equal(prepared.bootstrap.target_stack_options.interactive_command, "openuispec configure-target web");
+    assert.ok(
+      prepared.bootstrap.target_stack_options.questions.some((question: any) => question.key === "runtime")
+    );
+    assert.ok(
+      prepared.bootstrap.target_stack_options.questions.some((question: any) => question.key === "storage_backend")
+    );
     assert.equal(prepared.bootstrap.i18n.default_locale, "en");
     assert.deepEqual(prepared.bootstrap.i18n.supported_locales, ["en", "ru"]);
     assert.equal(prepared.bootstrap.output_format.language, "typescript");
@@ -225,6 +233,7 @@ test("prepare marks bootstrap generation ready after required platform choices a
     assert.equal(prepared.platform_config.stack.runtime, "frontend_only");
     assert.equal(prepared.platform_config.stack.storage_backend, "none");
     assert.equal(prepared.bootstrap.generation_ready, true);
+    assert.equal(prepared.bootstrap.target_stack_options, null);
     assert.deepEqual(prepared.bootstrap.missing_platform_decisions, []);
     assert.ok(
       prepared.next_steps.some((step: string) =>
@@ -234,6 +243,41 @@ test("prepare marks bootstrap generation ready after required platform choices a
     assert.ok(
       prepared.next_steps.some((step: string) =>
         step.includes("run `openuispec drift --snapshot --target web` to baseline it")
+      )
+    );
+  } finally {
+    rmSync(sandbox, { recursive: true, force: true });
+  }
+});
+
+test("prepare requires user confirmation when target stack was auto-filled from defaults", () => {
+  const sandbox = mkdtempSync(join(tmpdir(), "openuispec-prepare-pending-confirmation-"));
+
+  try {
+    cpSync(join(repoRoot, "examples", "todo-orbit", "openuispec"), join(sandbox, "openuispec"), {
+      recursive: true,
+    });
+    mkdirSync(join(sandbox, "backend"), { recursive: true });
+
+    run(sandbox, nodeBin, tsxArgs(join(repoRoot, "cli", "index.ts"), ["configure-target", "web", "--defaults"]));
+
+    const prepareOutput = run(sandbox, nodeBin, tsxArgs(prepareScript, ["--target", "web", "--json"]));
+    const prepared = JSON.parse(prepareOutput);
+
+    assert.equal(prepared.mode, "bootstrap");
+    assert.equal(prepared.platform_config.stack_confirmation.status, "pending_user_confirmation");
+    assert.equal(prepared.platform_config.stack_confirmation.requires_user_confirmation, true);
+    assert.equal(prepared.bootstrap.pending_user_confirmation, true);
+    assert.equal(prepared.bootstrap.generation_ready, false);
+    assert.equal(prepared.bootstrap.target_stack_options.target, "web");
+    assert.ok(
+      prepared.bootstrap.generation_warnings.some((warning: string) =>
+        warning.includes("requires explicit user confirmation")
+      )
+    );
+    assert.ok(
+      prepared.next_steps.some((step: string) =>
+        step.includes("without `--defaults`") && step.includes("confirm the stack choices")
       )
     );
   } finally {
@@ -303,7 +347,7 @@ test("prepare includes package-manager install refs for configured target option
     );
     assert.ok(
       prepared.platform_config.selected_option_refs.architecture.libraries.includes(
-        "com.arkivanov.decompose:decompose:{latest}"
+        "com.arkivanov.decompose:decompose:{latest stable}"
       )
     );
     assert.equal(
@@ -312,7 +356,7 @@ test("prepare includes package-manager install refs for configured target option
     );
     assert.ok(
       prepared.platform_config.selected_option_refs.state.libraries.includes(
-        "com.arkivanov.mvikotlin:mvikotlin:{latest}"
+        "com.arkivanov.mvikotlin:mvikotlin:{latest stable}"
       )
     );
     assert.ok(
@@ -326,7 +370,7 @@ test("prepare includes package-manager install refs for configured target option
     );
     assert.ok(
       prepared.platform_config.selected_option_refs.preferences.libraries.includes(
-        "androidx.datastore:datastore-preferences:{latest}"
+        "androidx.datastore:datastore-preferences:{latest stable}"
       )
     );
     assert.equal(
@@ -335,7 +379,7 @@ test("prepare includes package-manager install refs for configured target option
     );
     assert.ok(
       prepared.platform_config.selected_option_refs.di.libraries.includes(
-        "dev.zacsweers.metro:metro:{latest}"
+        "dev.zacsweers.metro:metro:{latest stable}"
       )
     );
     assert.ok(
@@ -370,14 +414,14 @@ test("prepare exposes npm package specs for configured web target options", () =
     assert.equal(prepared.mode, "bootstrap");
     assert.equal(prepared.platform_config.selected_option_refs.routing.value, "react_router");
     assert.ok(
-      prepared.platform_config.selected_option_refs.routing.packages.includes("react-router@{latest}")
+      prepared.platform_config.selected_option_refs.routing.packages.includes("react-router@{latest stable}")
     );
     assert.ok(
       prepared.platform_config.selected_option_refs.routing.docs.includes("https://reactrouter.com/")
     );
     assert.equal(prepared.platform_config.selected_option_refs.state.value, "zustand");
     assert.ok(
-      prepared.platform_config.selected_option_refs.state.packages.includes("zustand@{latest}")
+      prepared.platform_config.selected_option_refs.state.packages.includes("zustand@{latest stable}")
     );
   } finally {
     rmSync(sandbox, { recursive: true, force: true });
@@ -478,11 +522,11 @@ test("prepare recognizes vue as a known web framework with vue-specific constrai
     assert.equal(prepared.platform_config.framework, "vue");
     assert.equal(prepared.platform_config.selected_option_refs.routing.value, "vue_router");
     assert.ok(
-      prepared.platform_config.selected_option_refs.routing.packages.includes("vue-router@{latest}")
+      prepared.platform_config.selected_option_refs.routing.packages.includes("vue-router@{latest stable}")
     );
     assert.equal(prepared.platform_config.selected_option_refs.state.value, "pinia");
     assert.ok(
-      prepared.platform_config.selected_option_refs.state.packages.includes("pinia@{latest}")
+      prepared.platform_config.selected_option_refs.state.packages.includes("pinia@{latest stable}")
     );
     assert.ok(
       !prepared.bootstrap.generation_warnings.some((warning: string) =>
@@ -534,7 +578,7 @@ test("prepare includes tailwind refs when css is configured", () => {
     assert.equal(prepared.mode, "bootstrap");
     assert.equal(prepared.platform_config.selected_option_refs.css.value, "tailwind");
     assert.ok(
-      prepared.platform_config.selected_option_refs.css.packages.includes("tailwindcss@{latest}")
+      prepared.platform_config.selected_option_refs.css.packages.includes("tailwindcss@{latest stable}")
     );
   } finally {
     rmSync(sandbox, { recursive: true, force: true });

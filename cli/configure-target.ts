@@ -4,10 +4,8 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import YAML from "yaml";
-import { findProjectDir, readManifest } from "../drift/index.js";
+import { findProjectDir, isSupportedTarget, readManifest, type SupportedTarget } from "../drift/index.js";
 import { ask, askChoice } from "./init.js";
-
-type SupportedTarget = "ios" | "android" | "web";
 
 type WizardOptionPreset = {
   value: string;
@@ -44,12 +42,61 @@ type TargetWizardPreset = {
   questions: ChoiceQuestionPreset[];
 };
 
+export type TargetWizardOptionsResponse = {
+  target: SupportedTarget;
+  defaults_are_unconfirmed: true;
+  confirmation_required_before_implementation: true;
+  interactive_command: string;
+  defaults_command: string;
+  framework: {
+    prompt: string;
+    recommended: string;
+    options: string[];
+    custom_allowed: true;
+  };
+  questions: Array<{
+    key: string;
+    prompt: string;
+    recommended: string;
+    custom_allowed: true;
+    options: WizardOptionPreset[];
+  }>;
+};
+
 function readWizardPresets(): Record<SupportedTarget, TargetWizardPreset> {
   const presetsPath = join(dirname(fileURLToPath(import.meta.url)), "target-presets.json");
   return JSON.parse(readFileSync(presetsPath, "utf-8")) as Record<SupportedTarget, TargetWizardPreset>;
 }
 
 const TARGET_WIZARDS = readWizardPresets();
+
+function listFrameworkOptions(wizard: TargetWizardPreset): string[] {
+  return [...new Set([...(wizard.framework_options ?? [wizard.framework]), "other"])];
+}
+
+export function listTargetWizardOptions(target: SupportedTarget): TargetWizardOptionsResponse {
+  const wizard = TARGET_WIZARDS[target];
+  return {
+    target,
+    defaults_are_unconfirmed: true,
+    confirmation_required_before_implementation: true,
+    interactive_command: `openuispec configure-target ${target}`,
+    defaults_command: `openuispec configure-target ${target} --defaults`,
+    framework: {
+      prompt: wizard.framework_prompt ?? `${target} framework`,
+      recommended: wizard.framework,
+      options: listFrameworkOptions(wizard),
+      custom_allowed: true,
+    },
+    questions: wizard.questions.map((question) => ({
+      key: question.key,
+      prompt: question.prompt,
+      recommended: question.recommended,
+      custom_allowed: true,
+      options: question.options,
+    })),
+  };
+}
 
 function filterOptionsForFramework(
   question: ChoiceQuestionPreset,
@@ -279,32 +326,72 @@ function buildGeneration(
   return generation;
 }
 
+function stackConfirmation(useDefaults: boolean): Record<string, string> {
+  const now = new Date().toISOString();
+  return useDefaults
+    ? {
+        status: "pending_user_confirmation",
+        source: "defaults",
+        updated_at: now,
+      }
+    : {
+        status: "confirmed",
+        source: "user",
+        confirmed_at: now,
+      };
+}
+
 function parseTarget(argv: string[]): SupportedTarget | null {
   const direct = argv[0];
-  if (direct && ["ios", "android", "web"].includes(direct)) {
-    return direct as SupportedTarget;
+  if (direct && isSupportedTarget(direct)) {
+    return direct;
   }
   const targetIdx = argv.indexOf("--target");
-  if (targetIdx !== -1 && argv[targetIdx + 1] && ["ios", "android", "web"].includes(argv[targetIdx + 1])) {
-    return argv[targetIdx + 1] as SupportedTarget;
+  if (targetIdx !== -1 && argv[targetIdx + 1] && isSupportedTarget(argv[targetIdx + 1])) {
+    return argv[targetIdx + 1];
   }
   return null;
 }
 
+function parseSetPairs(argv: string[]): Record<string, string> {
+  const pairs: Record<string, string> = {};
+  for (let i = 0; i < argv.length; i++) {
+    if (argv[i] === "--set" && argv[i + 1]) {
+      const raw = argv[i + 1];
+      const eqIdx = raw.indexOf("=");
+      if (eqIdx > 0) {
+        pairs[raw.slice(0, eqIdx)] = raw.slice(eqIdx + 1);
+      }
+      i++;
+    }
+  }
+  return pairs;
+}
+
 export async function runConfigureTarget(argv: string[]): Promise<void> {
   const target = parseTarget(argv);
+  const listOptions = argv.includes("--list-options");
   const useDefaults = argv.includes("--defaults");
-  const interactive = stdin.isTTY && stdout.isTTY && !useDefaults;
+  const quiet = argv.includes("--quiet");
+  const setPairs = parseSetPairs(argv);
+  const hasSetPairs = Object.keys(setPairs).length > 0;
+  const interactive = stdin.isTTY && stdout.isTTY && !useDefaults && !hasSetPairs;
   if (!target) {
     console.error("Error: target is required for configure-target");
-    console.error("Usage: openuispec configure-target <ios|android|web> [--defaults]");
+    console.error("Usage: openuispec configure-target <ios|android|web> [--defaults] [--list-options] [--set key=value]");
     process.exit(1);
   }
 
-  if (!interactive && !useDefaults) {
+  if (listOptions) {
+    console.log(JSON.stringify(listTargetWizardOptions(target), null, 2));
+    return;
+  }
+
+  if (!interactive && !useDefaults && !hasSetPairs) {
     console.error(
       "Error: `openuispec configure-target` needs a TTY for prompts.\n" +
-        "Run with `--defaults` in non-interactive environments."
+        "Preferred: ask the user to confirm the target stack, then run `openuispec configure-target <target>` in an interactive terminal.\n" +
+        "Fallback: run with `--defaults` only for unattended setup; those values remain unconfirmed and `prepare` will block implementation until the user confirms them."
     );
     process.exit(1);
   }
@@ -351,7 +438,16 @@ export async function runConfigureTarget(argv: string[]): Promise<void> {
 
   let answers = computeDefaultAnswers(framework);
 
-  if (interactive) {
+  if (hasSetPairs) {
+    // Non-interactive --set path: merge provided values with existing/defaults
+    const knownKeys = new Set(wizard.questions.map((q) => q.key));
+    for (const [key, value] of Object.entries(setPairs)) {
+      if (!knownKeys.has(key)) {
+        console.error(`Warning: "${key}" does not match any wizard question; setting as custom value.`);
+      }
+      answers[key] = value;
+    }
+  } else if (interactive) {
     const rl = createInterface({ input: stdin, output: stdout });
 
     try {
@@ -393,10 +489,14 @@ export async function runConfigureTarget(argv: string[]): Promise<void> {
     }
   }
 
+  // --set implies confirmed (user explicitly chose values); --defaults without --set is pending
   const updatedPlatform: Record<string, any> = {
     ...existingPlatform,
     framework,
-    generation: buildGeneration(wizard, answers, existingGeneration, framework),
+    generation: {
+      ...buildGeneration(wizard, answers, existingGeneration, framework),
+      stack_confirmation: stackConfirmation(useDefaults && !hasSetPairs),
+    },
   };
 
   if (wizard.language) updatedPlatform.language = wizard.language;
@@ -408,9 +508,16 @@ export async function runConfigureTarget(argv: string[]): Promise<void> {
 
   writeFileSync(platformPath, YAML.stringify({ [target]: updatedPlatform }));
 
-  console.log(`\nSaved ${relative(process.cwd(), platformPath)}`);
-  console.log("Configured values:");
-  for (const [key, value] of Object.entries(answers)) {
-    console.log(`  - ${key}: ${value}`);
+  const savedPath = relative(process.cwd(), platformPath);
+  if (argv.includes("--silent")) {
+    // Called as subroutine (e.g. from init --quiet) — no output at all
+  } else if (quiet) {
+    console.log(savedPath);
+  } else {
+    console.log(`\nSaved ${savedPath}`);
+    console.log("Configured values:");
+    for (const [key, value] of Object.entries(answers)) {
+      console.log(`  - ${key}: ${value}`);
+    }
   }
 }

@@ -22,6 +22,8 @@ import { execFileSync } from "node:child_process";
 import YAML from "yaml";
 
 const STATE_FILE = ".openuispec-state.json";
+export const SUPPORTED_TARGETS = ["ios", "android", "web"] as const;
+export type SupportedTarget = typeof SUPPORTED_TARGETS[number];
 
 // ── types ─────────────────────────────────────────────────────────────
 
@@ -82,6 +84,10 @@ export function listFiles(dir: string, ext: string): string[] {
   } catch {
     return [];
   }
+}
+
+export function isSupportedTarget(value: string): value is SupportedTarget {
+  return (SUPPORTED_TARGETS as readonly string[]).includes(value);
 }
 
 function hashFile(filePath: string): string {
@@ -680,7 +686,7 @@ function check(
 
   const d = result.drift;
   const hasDrift = d.changed.length > 0 || d.added.length > 0 || d.removed.length > 0;
-  process.exit(hasDrift ? 1 : 0);
+  process.exit(hasDrift ? 2 : 0);
 }
 
 function checkAll(
@@ -724,7 +730,7 @@ function checkAll(
     }
   }
 
-  process.exit(anyDrift ? 1 : 0);
+  process.exit(anyDrift ? 2 : 0);
 }
 
 // ── output ────────────────────────────────────────────────────────────

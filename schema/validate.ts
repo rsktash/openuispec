@@ -14,7 +14,7 @@ import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
 import type { ErrorObject } from "ajv";
 import YAML from "yaml";
-import { runSemanticLint, type Includes } from "./semantic-lint.js";
+import { runSemanticLint, collectSemanticLint, type Includes } from "./semantic-lint.js";
 
 const require = createRequire(import.meta.url);
 const Ajv2020 = require("ajv/dist/2020") as typeof import("ajv").default;
@@ -311,6 +311,71 @@ function lintFlowFile(dataPath: string): number {
   return errors.length;
 }
 
+// ── collect variants (structured errors for --json) ──────────────────
+
+interface JsonError {
+  file: string;
+  path: string;
+  message: string;
+}
+
+function collectValidateFile(
+  ajv: AjvInstance,
+  dataPath: string,
+  schemaId: string,
+  label?: string,
+): JsonError[] {
+  const name = label ?? basename(dataPath);
+  const data = loadData(dataPath);
+  const validate = ajv.getSchema(schemaId);
+
+  if (!validate) {
+    return [{ file: name, path: "(root)", message: `schema ${schemaId} not found` }];
+  }
+
+  const valid = validate(data);
+  if (valid) return [];
+
+  const errors: ErrorObject[] = validate.errors ?? [];
+  return errors.map((e) => ({
+    file: name,
+    path: e.instancePath || "(root)",
+    message: e.message ?? "unknown error",
+  }));
+}
+
+function collectLintScreenFile(dataPath: string): JsonError[] {
+  const root = getSingleRootValue(loadData(dataPath));
+  const errors = lintScreenLikeDefinition(root, basename(dataPath));
+  return errors.map((e) => ({
+    file: basename(dataPath),
+    path: e.path,
+    message: e.message,
+  }));
+}
+
+function collectLintFlowFile(dataPath: string): JsonError[] {
+  const root = getSingleRootValue(loadData(dataPath));
+  if (!isRecord(root) || !isRecord(root.screens)) return [];
+
+  const errors: UsageLint[] = [];
+  for (const [screenId, screenEntry] of Object.entries(root.screens)) {
+    if (!isRecord(screenEntry) || !isRecord(screenEntry.screen_inline)) continue;
+    errors.push(
+      ...lintScreenLikeDefinition(
+        screenEntry.screen_inline,
+        `${basename(dataPath)}/screens/${screenId}/screen_inline`,
+      ),
+    );
+  }
+
+  return errors.map((e) => ({
+    file: basename(dataPath),
+    path: e.path,
+    message: e.message,
+  }));
+}
+
 // ── build Ajv instance with all schemas ──────────────────────────────
 
 function buildAjv(): AjvInstance {
@@ -436,9 +501,15 @@ function resolveInclude(projectDir: string, includePath: string): string {
 
 // ── validation groups ────────────────────────────────────────────────
 
+interface JsonGroupResult {
+  group: string;
+  errors: JsonError[];
+}
+
 interface ValidationGroup {
   label: string;
   run(ajv: AjvInstance, projectDir: string, includes: Includes): number;
+  collectJson(ajv: AjvInstance, projectDir: string, includes: Includes, groupKey: string): JsonGroupResult;
 }
 
 const GROUPS: Record<string, ValidationGroup> = {
@@ -450,6 +521,12 @@ const GROUPS: Record<string, ValidationGroup> = {
         join(projectDir, "openuispec.yaml"),
         `${BASE}openuispec.schema.json`,
       );
+    },
+    collectJson(ajv, projectDir, _includes, groupKey) {
+      return {
+        group: groupKey,
+        errors: collectValidateFile(ajv, join(projectDir, "openuispec.yaml"), `${BASE}openuispec.schema.json`),
+      };
     },
   },
 
@@ -476,6 +553,27 @@ const GROUPS: Record<string, ValidationGroup> = {
       }
       return errors;
     },
+    collectJson(ajv, projectDir, includes, groupKey) {
+      const errors: JsonError[] = [];
+      const tokensDir = resolveInclude(projectDir, includes.tokens);
+      const tokenMap: Record<string, string> = {
+        "color.yaml": "color.schema.json",
+        "typography.yaml": "typography.schema.json",
+        "spacing.yaml": "spacing.schema.json",
+        "elevation.yaml": "elevation.schema.json",
+        "motion.yaml": "motion.schema.json",
+        "layout.yaml": "layout.schema.json",
+        "themes.yaml": "themes.schema.json",
+        "icons.yaml": "icons.schema.json",
+      };
+      for (const [data, schema] of Object.entries(tokenMap)) {
+        const filePath = join(tokensDir, data);
+        if (existsSync(filePath)) {
+          errors.push(...collectValidateFile(ajv, filePath, `${BASE}tokens/${schema}`));
+        }
+      }
+      return { group: groupKey, errors };
+    },
   },
 
   screens: {
@@ -491,6 +589,18 @@ const GROUPS: Record<string, ValidationGroup> = {
         }
       }
       return errors;
+    },
+    collectJson(ajv, projectDir, includes, groupKey) {
+      const errors: JsonError[] = [];
+      const dir = resolveInclude(projectDir, includes.screens);
+      for (const f of listFiles(dir, ".yaml")) {
+        const schemaErrors = collectValidateFile(ajv, f, `${BASE}screen.schema.json`);
+        errors.push(...schemaErrors);
+        if (schemaErrors.length === 0) {
+          errors.push(...collectLintScreenFile(f));
+        }
+      }
+      return { group: groupKey, errors };
     },
   },
 
@@ -508,6 +618,18 @@ const GROUPS: Record<string, ValidationGroup> = {
       }
       return errors;
     },
+    collectJson(ajv, projectDir, includes, groupKey) {
+      const errors: JsonError[] = [];
+      const dir = resolveInclude(projectDir, includes.flows);
+      for (const f of listFiles(dir, ".yaml")) {
+        const schemaErrors = collectValidateFile(ajv, f, `${BASE}flow.schema.json`);
+        errors.push(...schemaErrors);
+        if (schemaErrors.length === 0) {
+          errors.push(...collectLintFlowFile(f));
+        }
+      }
+      return { group: groupKey, errors };
+    },
   },
 
   platform: {
@@ -520,6 +642,14 @@ const GROUPS: Record<string, ValidationGroup> = {
       }
       return errors;
     },
+    collectJson(ajv, projectDir, includes, groupKey) {
+      const errors: JsonError[] = [];
+      const dir = resolveInclude(projectDir, includes.platform);
+      for (const f of listFiles(dir, ".yaml")) {
+        errors.push(...collectValidateFile(ajv, f, `${BASE}platform.schema.json`));
+      }
+      return { group: groupKey, errors };
+    },
   },
 
   locales: {
@@ -531,6 +661,14 @@ const GROUPS: Record<string, ValidationGroup> = {
         errors += validateFile(ajv, f, `${BASE}locale.schema.json`);
       }
       return errors;
+    },
+    collectJson(ajv, projectDir, includes, groupKey) {
+      const errors: JsonError[] = [];
+      const dir = resolveInclude(projectDir, includes.locales);
+      for (const f of listFiles(dir, ".json")) {
+        errors.push(...collectValidateFile(ajv, f, `${BASE}locale.schema.json`));
+      }
+      return { group: groupKey, errors };
     },
   },
 
@@ -549,12 +687,36 @@ const GROUPS: Record<string, ValidationGroup> = {
       }
       return errors;
     },
+    collectJson(ajv, projectDir, includes, groupKey) {
+      const errors: JsonError[] = [];
+      const dir = resolveInclude(projectDir, includes.contracts);
+      for (const f of listFiles(dir, ".yaml")) {
+        const name = basename(f);
+        if (name.startsWith("x_")) {
+          errors.push(...collectValidateFile(ajv, f, `${BASE}custom-contract.schema.json`));
+        } else {
+          errors.push(...collectValidateFile(ajv, f, `${BASE}contract.schema.json`));
+        }
+      }
+      return { group: groupKey, errors };
+    },
   },
 
   semantic: {
     label: "Semantic",
     run(_ajv, projectDir, includes) {
       return runSemanticLint(projectDir, includes);
+    },
+    collectJson(_ajv, projectDir, includes, groupKey) {
+      const lintErrors = collectSemanticLint(projectDir, includes);
+      return {
+        group: groupKey,
+        errors: lintErrors.map((e) => ({
+          file: e.path.includes("/") ? e.path.split("/")[0] : e.path,
+          path: e.path,
+          message: e.message,
+        })),
+      };
     },
   },
 };
@@ -590,22 +752,47 @@ function findProjectDir(cwd: string): string {
 
 // ── main ─────────────────────────────────────────────────────────────
 
+export { buildAjv, readIncludes, GROUPS };
+export type { JsonGroupResult, JsonError };
+
 export function runValidate(argv: string[]): void {
+  const jsonMode = argv.includes("--json");
+  const filteredArgs = argv.filter((a) => a !== "--json");
+
   const selected =
-    argv.length > 0
-      ? argv.filter((a) => a in GROUPS)
+    filteredArgs.length > 0
+      ? filteredArgs.filter((a) => a in GROUPS)
       : Object.keys(GROUPS);
 
   if (selected.length === 0) {
     console.error(
       `Unknown group(s). Available: ${Object.keys(GROUPS).join(", ")}`,
     );
-    process.exit(2);
+    process.exit(1);
   }
 
   const projectDir = findProjectDir(process.cwd());
   const includes = readIncludes(projectDir);
   const ajv = buildAjv();
+
+  if (jsonMode) {
+    const groups: JsonGroupResult[] = [];
+    let totalErrors = 0;
+
+    for (const key of selected) {
+      const result = GROUPS[key].collectJson(ajv, projectDir, includes, key);
+      groups.push(result);
+      totalErrors += result.errors.length;
+    }
+
+    console.log(JSON.stringify({ groups, total_errors: totalErrors }, null, 2));
+
+    if (totalErrors > 0) {
+      process.exit(2);
+    }
+    return;
+  }
+
   let totalErrors = 0;
 
   for (const key of selected) {
@@ -617,7 +804,7 @@ export function runValidate(argv: string[]): void {
   console.log(`\n${"=".repeat(50)}`);
   if (totalErrors > 0) {
     console.log(`FAILED: ${totalErrors} total validation error(s)`);
-    process.exit(1);
+    process.exit(2);
   } else {
     console.log("ALL PASSED: Every example file validates successfully");
   }

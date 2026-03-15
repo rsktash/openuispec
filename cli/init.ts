@@ -76,13 +76,13 @@ function ensureDir(path: string): void {
   mkdirSync(path, { recursive: true });
 }
 
-function writeIfMissing(path: string, content: string): boolean {
+function writeIfMissing(path: string, content: string, quiet = false): boolean {
   if (existsSync(path)) {
-    console.log(`  skip ${relative(process.cwd(), path)} (exists)`);
+    if (!quiet) console.log(`  skip ${relative(process.cwd(), path)} (exists)`);
     return false;
   }
   writeFileSync(path, content);
-  console.log(`  create ${relative(process.cwd(), path)}`);
+  if (!quiet) console.log(`  create ${relative(process.cwd(), path)}`);
   return true;
 }
 
@@ -434,6 +434,7 @@ export { getPackageVersion };
 
 interface InitOptions {
   defaults: boolean;
+  quiet: boolean;
   name?: string;
   specDir?: string;
   targets?: string[];
@@ -468,12 +469,13 @@ function requireFlagValue(argv: string[], index: number, flag: string): string {
 }
 
 function parseInitArgs(argv: string[]): InitOptions {
-  const options: InitOptions = { defaults: argv.includes("--defaults") };
+  const options: InitOptions = { defaults: argv.includes("--defaults"), quiet: argv.includes("--quiet") };
 
   for (let index = 0; index < argv.length; index++) {
     const arg = argv[index];
     switch (arg) {
       case "--defaults":
+      case "--quiet":
         break;
       case "--name":
         options.name = requireFlagValue(argv, index, arg);
@@ -558,7 +560,7 @@ function collectNonInteractiveAnswers(argv: string[]): InitAnswers {
   const parsed = parseInitArgs(argv);
   const defaults = collectDefaults();
 
-  if (!parsed.defaults && argv.length === 0) {
+  if (!parsed.defaults && argv.filter((a) => a !== "--quiet").length === 0) {
     console.error(
       "Error: `openuispec init` needs a TTY for prompts.\n" +
         "Run with `--defaults` or pass flags such as `--name`, `--targets`, `--with-api`, `--backend`, and `--configure-targets`."
@@ -588,10 +590,11 @@ function collectNonInteractiveAnswers(argv: string[]): InitAnswers {
 // ── main ─────────────────────────────────────────────────────────────
 
 export async function init(argv: string[] = []): Promise<void> {
+  const quiet = argv.includes("--quiet");
   const interactive = stdin.isTTY && stdout.isTTY && !argv.includes("--defaults");
   const rl = interactive ? createInterface({ input: stdin, output: stdout }) : null;
 
-  console.log("\nOpenUISpec — Project Setup\n");
+  if (!quiet) console.log("\nOpenUISpec — Project Setup\n");
 
   try {
     const cwd = process.cwd();
@@ -600,7 +603,7 @@ export async function init(argv: string[] = []): Promise<void> {
 
     // ── create folders ─────────────────────────────────────────────
 
-    console.log("\nScaffolding...\n");
+    if (!quiet) console.log("\nScaffolding...\n");
 
     const root = join(cwd, answers.specDir);
     const dirs = [
@@ -624,14 +627,16 @@ export async function init(argv: string[] = []): Promise<void> {
       manifestTemplate(answers.name, answers.targets, {
         withApi: answers.withApi,
         backendPath: answers.backendPath,
-      })
+      }),
+      quiet
     );
 
     // ── spec README ──────────────────────────────────────────────
 
     writeIfMissing(
       join(root, "README.md"),
-      specReadmeTemplate(answers.name, answers.targets)
+      specReadmeTemplate(answers.name, answers.targets),
+      quiet
     );
 
     // ── .gitkeep for empty dirs ────────────────────────────────────
@@ -645,20 +650,8 @@ export async function init(argv: string[] = []): Promise<void> {
         const gk = join(dir, ".gitkeep");
         if (!existsSync(gk)) {
           writeFileSync(gk, "");
-          console.log(`  create ${relative(cwd, gk)}`);
+          if (!quiet) console.log(`  create ${relative(cwd, gk)}`);
         }
-      }
-    }
-
-    if (answers.withApi && answers.backendPath) {
-      const backendDir = resolve(root, answers.backendPath);
-      const backendExisted = existsSync(backendDir);
-      ensureDir(backendDir);
-      const backendEntries = readdirSync(backendDir).filter((entry) => entry !== ".gitkeep");
-      const backendGitkeep = join(backendDir, ".gitkeep");
-      if ((!backendExisted || backendEntries.length === 0) && !existsSync(backendGitkeep)) {
-        writeFileSync(backendGitkeep, "");
-        console.log(`  create ${relative(cwd, backendGitkeep)}`);
       }
     }
 
@@ -671,28 +664,31 @@ export async function init(argv: string[] = []): Promise<void> {
       if (existsSync(filePath)) {
         const existing = readFileSync(filePath, "utf-8");
         if (existing.includes("OpenUISpec")) {
-          console.log(`  skip ${file} (already has OpenUISpec rules)`);
+          if (!quiet) console.log(`  skip ${file} (already has OpenUISpec rules)`);
           continue;
         }
         appendFileSync(filePath, "\n" + rules);
-        console.log(`  update ${file} (appended rules)`);
+        if (!quiet) console.log(`  update ${file} (appended rules)`);
       } else {
         writeFileSync(filePath, rules.trimStart());
-        console.log(`  create ${file}`);
+        if (!quiet) console.log(`  create ${file}`);
       }
     }
 
     if (answers.configureTargets) {
-      console.log("\nConfiguring target stacks...\n");
+      if (!quiet) console.log("\nConfiguring target stacks...\n");
       const { runConfigureTarget } = await import("./configure-target.js");
       for (const target of answers.targets) {
-        await runConfigureTarget([target, ...(interactive ? [] : ["--defaults"])]);
+        await runConfigureTarget([target, ...(interactive ? [] : ["--defaults"]), ...(quiet ? ["--silent"] : [])]);
       }
     }
 
     // ── done ───────────────────────────────────────────────────────
 
-    console.log(`
+    if (quiet) {
+      console.log(`./${answers.specDir}/`);
+    } else {
+      console.log(`
 Done! Your spec project is ready at ./${answers.specDir}/
 
 Getting started (new project):
@@ -723,6 +719,7 @@ AI rules have been added to CLAUDE.md and AGENTS.md.
 
 Docs: https://openuispec.rsteam.uz
 `);
+    }
   } catch (err) {
     rl?.close();
     throw err;

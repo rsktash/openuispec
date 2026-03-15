@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { basename, join, resolve } from "node:path";
 import YAML from "yaml";
-import { listFiles } from "../drift/index.js";
+import { listFiles, readManifest } from "../drift/index.js";
 
 type UnknownRecord = Record<string, unknown>;
 
@@ -204,9 +204,7 @@ function collectIconRefs(filePath: string): { refs: Set<string>; suffixes: strin
   return { refs, suffixes };
 }
 
-function buildContext(projectDir: string, includes: Includes): SemanticContext {
-  const manifestPath = join(projectDir, "openuispec.yaml");
-  const manifest = loadYaml(manifestPath) as UnknownRecord;
+function buildContext(projectDir: string, includes: Includes, manifest: UnknownRecord): SemanticContext {
 
   const localeDir = resolve(projectDir, includes.locales);
   const localeFiles = new Map<string, Set<string>>();
@@ -589,8 +587,36 @@ function printSemanticErrors(label: string, errors: UsageLint[]): number {
   return errors.length;
 }
 
+export function collectSemanticLint(projectDir: string, includes: Includes): UsageLint[] {
+  const manifest = readManifest(projectDir) as UnknownRecord;
+  const context = buildContext(projectDir, includes, manifest);
+  const contractsDir = resolve(projectDir, includes.contracts);
+
+  const allErrors: UsageLint[] = [
+    ...lintLocaleCoverage(context),
+    ...lintManifestGenerationContext(projectDir, context.manifest),
+  ];
+
+  const files = [
+    join(projectDir, "openuispec.yaml"),
+    ...listFiles(resolve(projectDir, includes.screens), ".yaml"),
+    ...listFiles(resolve(projectDir, includes.flows), ".yaml"),
+    ...listFiles(resolve(projectDir, includes.platform), ".yaml"),
+    ...listFiles(resolve(projectDir, includes.contracts), ".yaml"),
+  ];
+
+  for (const filePath of files) {
+    allErrors.push(
+      ...lintFile(filePath, context, { validateTokens: !filePath.startsWith(contractsDir) })
+    );
+  }
+
+  return allErrors;
+}
+
 export function runSemanticLint(projectDir: string, includes: Includes): number {
-  const context = buildContext(projectDir, includes);
+  const manifest = readManifest(projectDir) as UnknownRecord;
+  const context = buildContext(projectDir, includes, manifest);
   let total = 0;
   const contractsDir = resolve(projectDir, includes.contracts);
 
