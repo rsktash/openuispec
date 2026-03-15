@@ -61,6 +61,7 @@ settings:
         children:
           - contract: input_field
             input_type: select
+            render_hint: segmented
             props:
               label: "$t:settings.language"
               icon: { ref: "globe", position: leading }
@@ -71,6 +72,7 @@ settings:
 
           - contract: input_field
             input_type: select
+            render_hint: segmented
             props:
               label: "$t:settings.theme"
               options:

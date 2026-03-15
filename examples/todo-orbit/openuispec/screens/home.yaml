@@ -122,7 +122,7 @@ home:
           item_variant: compact
           item_props_map:
             title: "item.title"
-            subtitle: "{item.due_date | format:date_relative}"
+            subtitle: "{item.due_date | format:date_relative.abbreviated}"
             leading:
               contract: input_field
               input_type: checkbox

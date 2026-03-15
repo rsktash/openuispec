@@ -15,7 +15,8 @@ import {
   existsSync,
   appendFileSync,
 } from "node:fs";
-import { join, relative } from "node:path";
+import { join, relative, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 
 // ── prompts ──────────────────────────────────────────────────────────
 
@@ -62,6 +63,21 @@ function writeIfMissing(path: string, content: string): boolean {
   writeFileSync(path, content);
   console.log(`  create ${relative(process.cwd(), path)}`);
   return true;
+}
+
+// ── version ─────────────────────────────────────────────────────────
+
+const RULES_START_MARKER = "<!-- openuispec-rules-start -->";
+const RULES_END_MARKER = "<!-- openuispec-rules-end -->";
+
+function getPackageVersion(): string {
+  const pkgPath = join(
+    dirname(fileURLToPath(import.meta.url)),
+    "..",
+    "package.json"
+  );
+  const pkg = JSON.parse(readFileSync(pkgPath, "utf-8"));
+  return pkg.version;
 }
 
 // ── templates ────────────────────────────────────────────────────────
@@ -175,7 +191,10 @@ Docs: https://openuispec.rsteam.uz
 
 function aiRulesBlock(specDir: string, targets: string[]): string {
   const targetList = targets.map((t) => `"${t}"`).join(", ");
+  const version = getPackageVersion();
   return `
+${RULES_START_MARKER}
+<!-- openuispec-rules-version: ${version} -->
 # OpenUISpec — AI Assistant Rules
 # ================================
 # This project uses OpenUISpec to define UI as a semantic spec.
@@ -242,17 +261,109 @@ This means the project has existing UI code but hasn't been specced yet. Your jo
 
 ## After modifying spec files
 1. Run \`openuispec validate\` to check specs against the schema.
-2. Run \`openuispec drift --snapshot --target <target>\` for each affected platform.
-3. Run \`openuispec drift\` to verify no untracked drift remains.
+2. **Update the generated code** for each affected platform to match the new spec.
+3. Run \`openuispec drift --snapshot --target <target>\` to baseline the updated state.
+4. Run \`openuispec drift\` to verify no untracked drift remains.
 
 ## CLI commands
 - \`openuispec init\` — scaffold a new spec project
 - \`openuispec validate [group...]\` — validate spec files against schemas
 - \`openuispec drift --target <t>\` — check for spec drift
 - \`openuispec drift --snapshot --target <t>\` — snapshot current state
+- \`openuispec update-rules\` — update AI rules to match installed package version
 - \`openuispec drift --all\` — include stubs in drift check
+${RULES_END_MARKER}
 `;
 }
+
+// ── update-rules ────────────────────────────────────────────────────
+
+export function updateRules(): void {
+  const cwd = process.cwd();
+  const version = getPackageVersion();
+
+  // Detect spec dir from existing openuispec.yaml
+  let specDir = "openuispec";
+  for (const candidate of ["openuispec", "spec", "."]) {
+    if (existsSync(join(cwd, candidate, "openuispec.yaml"))) {
+      specDir = candidate;
+      break;
+    }
+  }
+
+  // Detect targets from manifest
+  let targets = ["ios", "android", "web"];
+  try {
+    const manifest = readFileSync(
+      join(cwd, specDir, "openuispec.yaml"),
+      "utf-8"
+    );
+    const match = manifest.match(/targets:\s*\[([^\]]+)\]/);
+    if (match) {
+      targets = match[1].split(",").map((t) => t.trim().replace(/['"]/g, ""));
+    }
+  } catch {}
+
+  const rules = aiRulesBlock(specDir, targets);
+  let updated = 0;
+
+  for (const file of ["CLAUDE.md", "AGENTS.md"]) {
+    const filePath = join(cwd, file);
+    if (!existsSync(filePath)) continue;
+
+    const content = readFileSync(filePath, "utf-8");
+
+    // Try marker-based replacement first
+    const startIdx = content.indexOf(RULES_START_MARKER);
+    const endIdx = content.indexOf(RULES_END_MARKER);
+
+    if (startIdx !== -1 && endIdx !== -1) {
+      const before = content.slice(0, startIdx);
+      const after = content.slice(endIdx + RULES_END_MARKER.length);
+      writeFileSync(filePath, before + rules.trimStart().trimEnd() + after);
+      console.log(`  updated ${file} (v${version})`);
+      updated++;
+      continue;
+    }
+
+    // Fallback: find the OpenUISpec rules block by header pattern
+    // The block runs from the header to EOF (it's always the last content)
+    const headerIdx = content.indexOf("# OpenUISpec — AI Assistant Rules");
+    if (headerIdx !== -1) {
+      const before = content.slice(0, headerIdx);
+      const newContent = before + rules.trimStart().trimEnd() + "\n";
+      writeFileSync(filePath, newContent);
+      console.log(`  updated ${file} (v${version}, migrated to markers)`);
+      updated++;
+      continue;
+    }
+
+    console.log(`  skip ${file} (no OpenUISpec rules block found)`);
+  }
+
+  if (updated === 0) {
+    console.log(
+      "No CLAUDE.md or AGENTS.md with OpenUISpec rules found.\nRun `openuispec init` first."
+    );
+  } else {
+    console.log(`\nAI rules updated to v${version}`);
+  }
+}
+
+/**
+ * Extract the rules version from a CLAUDE.md / AGENTS.md file.
+ * Returns null if no version marker is found.
+ */
+export function extractRulesVersion(filePath: string): string | null {
+  if (!existsSync(filePath)) return null;
+  const content = readFileSync(filePath, "utf-8");
+  const match = content.match(
+    /<!-- openuispec-rules-version:\s*([^\s]+)\s*-->/
+  );
+  return match ? match[1] : null;
+}
+
+export { getPackageVersion };
 
 // ── main ─────────────────────────────────────────────────────────────
 

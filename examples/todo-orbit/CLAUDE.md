@@ -1,3 +1,5 @@
+<!-- openuispec-rules-start -->
+<!-- openuispec-rules-version: 0.1.22 -->
 # OpenUISpec — AI Assistant Rules
 # ================================
 # This project uses OpenUISpec to define UI as a semantic spec.
@@ -64,12 +66,15 @@ This means the project has existing UI code but hasn't been specced yet. Your jo
 
 ## After modifying spec files
 1. Run `openuispec validate` to check specs against the schema.
-2. Run `openuispec drift --snapshot --target <target>` for each affected platform.
-3. Run `openuispec drift` to verify no untracked drift remains.
+2. **Update the generated code** for each affected platform to match the new spec.
+3. Run `openuispec drift --snapshot --target <target>` to baseline the updated state.
+4. Run `openuispec drift` to verify no untracked drift remains.
 
 ## CLI commands
 - `openuispec init` — scaffold a new spec project
 - `openuispec validate [group...]` — validate spec files against schemas
 - `openuispec drift --target <t>` — check for spec drift
 - `openuispec drift --snapshot --target <t>` — snapshot current state
+- `openuispec update-rules` — update AI rules to match installed package version
 - `openuispec drift --all` — include stubs in drift check
+<!-- openuispec-rules-end -->
