@@ -1,6 +1,6 @@
 {
   "name": "openuispec",
-  "version": "0.1.26",
+  "version": "0.1.27",
   "license": "MIT",
   "type": "module",
   "description": "A semantic UI specification format for AI-native, platform-native app development",
@@ -35,7 +35,7 @@
     "validate:locales": "tsx schema/validate.ts locales",
     "drift": "tsx drift/index.ts",
     "drift:snapshot": "tsx drift/index.ts --snapshot --target",
-    "prepare": "tsx prepare/index.ts",
+    "prepare:target": "tsx prepare/index.ts",
     "status": "tsx status/index.ts",
     "postinstall": "echo \"\\n  ✓ openuispec installed — if upgrading, run: openuispec update-rules\\n\""
   },
