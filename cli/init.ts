@@ -17,6 +17,7 @@ import {
 } from "node:fs";
 import { join, relative, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { SUPPORTED_TARGETS, isSupportedTarget, type SupportedTarget } from "../drift/index.js";
 
 // ── prompts ──────────────────────────────────────────────────────────
 
@@ -202,7 +203,7 @@ Do NOT guess the file format — skipping this step will produce invalid YAML th
 openuispec validate             # Validate spec files against schemas
 openuispec validate semantic    # Run semantic cross-reference linting
 openuispec validate screens     # Validate only screens
-openuispec configure-target ${targets[0]} [--defaults] # Configure target stack defaults
+openuispec configure-target ${targets[0]} [--defaults] # Configure target stack; --defaults stays unconfirmed
 openuispec status               # Show cross-target baseline/drift status
 openuispec drift --target ${targets[0]} --explain   # Explain semantic spec drift
 openuispec prepare --target ${targets[0]}          # Build the target work bundle
@@ -212,6 +213,8 @@ openuispec drift --snapshot --target ${targets[0]} # Snapshot current state + gi
 The target work bundle has two modes:
 - \`bootstrap\` when no snapshot exists yet, for first-time generation
 - \`update\` after a snapshot exists, for drift-based target updates
+
+If target stack values were written with \`--defaults\`, treat them as unconfirmed. Before generating code, ask the user to confirm or change the stack and run \`openuispec configure-target <target>\` without \`--defaults\`.
 
 ## Learn more
 
@@ -302,6 +305,7 @@ Spec-first workflow:
 5. Run \`openuispec validate semantic\`.
 6. Run \`openuispec drift --target <target> --explain\` to inspect semantic changes since that target's baseline.
 7. Run \`openuispec prepare --target <target>\` to build the target work bundle for that target. In \`bootstrap\` mode it provides first-generation constraints; in \`update\` mode it provides drift-based update scope.
+   If the target stack was filled from defaults, stop and ask the user to confirm or change it before implementation.
 8. Verify the affected UI targets build/run if possible.
 9. Only then run \`openuispec drift --snapshot --target <target>\` for affected targets, after that target output directory exists.
 10. Run \`openuispec drift --target <target> --explain\` again to confirm no spec changes remain for that target.
@@ -322,6 +326,7 @@ Platform-first workflow:
 - Do not treat \`openuispec drift\` as proof that generated UI matches the spec.
 - Do not skip \`--explain\` / \`prepare\` when another platform needs to catch up with shared spec changes.
 - Do not modify generated UI without checking whether the spec must change first.
+- Do not use \`configure-target --defaults\` as silent approval for implementation. Ask the user to confirm the stack first.
 
 ## CLI commands
 - \`openuispec init\` — scaffold a new spec project
@@ -330,7 +335,7 @@ Platform-first workflow:
 - \`openuispec drift --target <t>\` — check for spec drift
 - \`openuispec drift --target <t> --explain\` — explain semantic spec drift since the target baseline
 - \`openuispec drift --snapshot --target <t>\` — snapshot current state after the target output exists
-- \`openuispec prepare --target <t>\` — build the target work bundle
+- \`openuispec prepare --target <t>\` — build the target work bundle and check whether stack confirmation is still pending
 - \`openuispec status\` — show cross-target baseline/drift status
 - \`openuispec update-rules\` — update AI rules to match installed package version
 - \`openuispec drift --all\` — include stubs in drift check
@@ -354,7 +359,7 @@ export function updateRules(): void {
   }
 
   // Detect targets from manifest
-  let targets = ["ios", "android", "web"];
+  let targets = [...SUPPORTED_TARGETS];
   try {
     const manifest = readFileSync(
       join(cwd, specDir, "openuispec.yaml"),
@@ -447,11 +452,10 @@ interface InitAnswers {
 }
 
 function parseTargetsValue(raw: string): string[] {
-  const allowed = new Set(["ios", "android", "web"]);
   return raw
     .split(",")
     .map((value) => value.trim().toLowerCase())
-    .filter((value): value is string => allowed.has(value));
+    .filter((value): value is SupportedTarget => isSupportedTarget(value));
 }
 
 function requireFlagValue(argv: string[], index: number, flag: string): string {
@@ -516,7 +520,7 @@ function collectDefaults(): InitAnswers {
   return {
     name: defaultName,
     specDir: "openuispec",
-    targets: ["ios", "android", "web"],
+    targets: [...SUPPORTED_TARGETS],
     withApi: true,
     backendPath: "../backend/",
     configureTargets: true,
@@ -527,7 +531,7 @@ async function collectInteractiveAnswers(rl: ReturnType<typeof createInterface>)
   const defaults = collectDefaults();
   const name = await ask(rl, "Project name", defaults.name);
   const specDir = await ask(rl, "Spec directory", defaults.specDir);
-  const targets = await askList(rl, "\nWhich platforms?", ["ios", "android", "web"], defaults.targets);
+  const targets = await askList(rl, "\nWhich platforms?", [...SUPPORTED_TARGETS], defaults.targets);
 
   if (targets.length === 0) {
     console.error("At least one target is required.");
@@ -709,7 +713,7 @@ Getting started (existing project):
 Commands:
   openuispec validate             Validate spec files
   openuispec validate semantic   Check semantic cross-references
-  openuispec configure-target ios [--defaults]   Configure target stack defaults
+  openuispec configure-target ios [--defaults]   Configure target stack; --defaults stays unconfirmed
   openuispec status   Show cross-target baseline/drift status
   openuispec drift --target ios --explain   Explain semantic spec changes
   openuispec prepare --target ios   Build the target work bundle

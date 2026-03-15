@@ -1,5 +1,5 @@
 <!-- openuispec-rules-start -->
-<!-- openuispec-rules-version: 0.1.28 -->
+<!-- openuispec-rules-version: 0.1.29 -->
 # OpenUISpec — AI Assistant Rules
 # ================================
 # This project uses OpenUISpec to define UI as a semantic spec.
@@ -77,6 +77,7 @@ Spec-first workflow:
 5. Run `openuispec validate semantic`.
 6. Run `openuispec drift --target <target> --explain` to inspect semantic changes since that target's baseline.
 7. Run `openuispec prepare --target <target>` to build the target work bundle for that target. In `bootstrap` mode it provides first-generation constraints; in `update` mode it provides drift-based update scope.
+   If the target stack was filled from defaults, stop and ask the user to confirm or change it before implementation.
 8. Verify the affected UI targets build/run if possible.
 9. Only then run `openuispec drift --snapshot --target <target>` for affected targets, after that target output directory exists.
 10. Run `openuispec drift --target <target> --explain` again to confirm no spec changes remain for that target.
@@ -97,16 +98,16 @@ Platform-first workflow:
 - Do not treat `openuispec drift` as proof that generated UI matches the spec.
 - Do not skip `--explain` / `prepare` when another platform needs to catch up with shared spec changes.
 - Do not modify generated UI without checking whether the spec must change first.
+- Do not use `configure-target --defaults` as silent approval for implementation. Ask the user to confirm the stack first.
 
 ## CLI commands
 - `openuispec init` — scaffold a new spec project
 - `openuispec validate [group...]` — validate spec files against schemas
 - `openuispec validate semantic` — run semantic cross-reference linting
-- `openuispec configure-target <t> [--defaults]` — configure target stack defaults
 - `openuispec drift --target <t>` — check for spec drift
 - `openuispec drift --target <t> --explain` — explain semantic spec drift since the target baseline
 - `openuispec drift --snapshot --target <t>` — snapshot current state after the target output exists
-- `openuispec prepare --target <t>` — build the target work bundle
+- `openuispec prepare --target <t>` — build the target work bundle and check whether stack confirmation is still pending
 - `openuispec status` — show cross-target baseline/drift status
 - `openuispec update-rules` — update AI rules to match installed package version
 - `openuispec drift --all` — include stubs in drift check
