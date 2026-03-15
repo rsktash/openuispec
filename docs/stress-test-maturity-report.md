@@ -14,7 +14,7 @@ This assessment stress-tested the project at four layers:
 
 ```bash
 npm ci
-npm run validate                                # from examples/taskflow (workspace script)
+npm run validate                                # from examples/taskflow/openuispec (workspace script)
 npx tsx ../../../schema/validate.ts            # from examples/todo-orbit/openuispec
 npx tsc --noEmit
 for t in ios android web; do

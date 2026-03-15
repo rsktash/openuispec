@@ -68,7 +68,7 @@ For platform generation, treat these as hard output constraints:
 
 See the examples for concrete reference projects:
 
-- [TaskFlow](./examples/taskflow/) for a compact spec covering all 7 contract families
+- [TaskFlow](./examples/taskflow/openuispec/) for a compact spec covering all 7 contract families
 - [Todo Orbit](./examples/todo-orbit/openuispec/) for a bilingual task app with generated iOS, Android, and web targets under `examples/todo-orbit/generated/`
 
 ## Repository structure
@@ -154,21 +154,21 @@ Every file type has a corresponding JSON Schema in `schema/`. **Read the schema 
 
 | File | Schema | Root key | Example |
 |------|--------|----------|---------|
-| `openuispec.yaml` | `openuispec.schema.json` | `spec_version` | [openuispec.yaml](./examples/taskflow/openuispec.yaml) |
-| `screens/*.yaml` | `screen.schema.json` | `<screen_id>` | [home.yaml](./examples/taskflow/screens/home.yaml) |
-| `flows/*.yaml` | `flow.schema.json` | `<flow_id>` | [create_task.yaml](./examples/taskflow/flows/create_task.yaml) |
-| `platform/*.yaml` | `platform.schema.json` | `platform` | [ios.yaml](./examples/taskflow/platform/ios.yaml) |
-| `locales/*.json` | `locale.schema.json` | (object) | [en.json](./examples/taskflow/locales/en.json) |
-| `contracts/<name>.yaml` | `contract.schema.json` | `<contract_name>` | [input_field.yaml](./examples/taskflow/contracts/input_field.yaml) |
-| `contracts/x_*.yaml` | `custom-contract.schema.json` | `<x_name>` | [x_media_player.yaml](./examples/taskflow/contracts/x_media_player.yaml) |
-| `tokens/color.yaml` | `tokens/color.schema.json` | `color` | [color.yaml](./examples/taskflow/tokens/color.yaml) |
-| `tokens/typography.yaml` | `tokens/typography.schema.json` | `typography` | [typography.yaml](./examples/taskflow/tokens/typography.yaml) |
-| `tokens/spacing.yaml` | `tokens/spacing.schema.json` | `spacing` | [spacing.yaml](./examples/taskflow/tokens/spacing.yaml) |
-| `tokens/elevation.yaml` | `tokens/elevation.schema.json` | `elevation` | [elevation.yaml](./examples/taskflow/tokens/elevation.yaml) |
-| `tokens/motion.yaml` | `tokens/motion.schema.json` | `motion` | [motion.yaml](./examples/taskflow/tokens/motion.yaml) |
-| `tokens/layout.yaml` | `tokens/layout.schema.json` | `layout` | [layout.yaml](./examples/taskflow/tokens/layout.yaml) |
-| `tokens/themes.yaml` | `tokens/themes.schema.json` | `themes` | [themes.yaml](./examples/taskflow/tokens/themes.yaml) |
-| `tokens/icons.yaml` | `tokens/icons.schema.json` | `icons` | [icons.yaml](./examples/taskflow/tokens/icons.yaml) |
+| `openuispec.yaml` | `openuispec.schema.json` | `spec_version` | [openuispec.yaml](./examples/taskflow/openuispec/openuispec.yaml) |
+| `screens/*.yaml` | `screen.schema.json` | `<screen_id>` | [home.yaml](./examples/taskflow/openuispec/screens/home.yaml) |
+| `flows/*.yaml` | `flow.schema.json` | `<flow_id>` | [create_task.yaml](./examples/taskflow/openuispec/flows/create_task.yaml) |
+| `platform/*.yaml` | `platform.schema.json` | `platform` | [ios.yaml](./examples/taskflow/openuispec/platform/ios.yaml) |
+| `locales/*.json` | `locale.schema.json` | (object) | [en.json](./examples/taskflow/openuispec/locales/en.json) |
+| `contracts/<name>.yaml` | `contract.schema.json` | `<contract_name>` | [input_field.yaml](./examples/taskflow/openuispec/contracts/input_field.yaml) |
+| `contracts/x_*.yaml` | `custom-contract.schema.json` | `<x_name>` | [x_media_player.yaml](./examples/taskflow/openuispec/contracts/x_media_player.yaml) |
+| `tokens/color.yaml` | `tokens/color.schema.json` | `color` | [color.yaml](./examples/taskflow/openuispec/tokens/color.yaml) |
+| `tokens/typography.yaml` | `tokens/typography.schema.json` | `typography` | [typography.yaml](./examples/taskflow/openuispec/tokens/typography.yaml) |
+| `tokens/spacing.yaml` | `tokens/spacing.schema.json` | `spacing` | [spacing.yaml](./examples/taskflow/openuispec/tokens/spacing.yaml) |
+| `tokens/elevation.yaml` | `tokens/elevation.schema.json` | `elevation` | [elevation.yaml](./examples/taskflow/openuispec/tokens/elevation.yaml) |
+| `tokens/motion.yaml` | `tokens/motion.schema.json` | `motion` | [motion.yaml](./examples/taskflow/openuispec/tokens/motion.yaml) |
+| `tokens/layout.yaml` | `tokens/layout.schema.json` | `layout` | [layout.yaml](./examples/taskflow/openuispec/tokens/layout.yaml) |
+| `tokens/themes.yaml` | `tokens/themes.schema.json` | `themes` | [themes.yaml](./examples/taskflow/openuispec/tokens/themes.yaml) |
+| `tokens/icons.yaml` | `tokens/icons.schema.json` | `icons` | [icons.yaml](./examples/taskflow/openuispec/tokens/icons.yaml) |
 
 Every token file **must** have a single root wrapper key matching its type:
 

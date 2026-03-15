@@ -1,0 +1,132 @@
+{
+  "spec_version": "0.1",
+  "snapshot_at": "2026-03-15T05:20:23.787Z",
+  "target": "web",
+  "baseline": {
+    "kind": "git_commit",
+    "commit": "709ec02d79a3edd621863f20003c21150e7a1a17",
+    "branch": "main"
+  },
+  "files": {
+    "openuispec.yaml": {
+      "hash": "sha256:413d74e551e71150d61ada887fbc125aa48b3a6c057d1c6c7fa2cd36a4350fe2",
+      "status": "ready"
+    },
+    "tokens/color.yaml": {
+      "hash": "sha256:b769af85f66e14ace88d2b6e5a11ac2732fb001a35344b7e3229ae36668bccb4",
+      "status": "ready"
+    },
+    "tokens/elevation.yaml": {
+      "hash": "sha256:f9b0f34ba84f77b48770d81df5e33da692629d3067c45ed68d3b549146b7f65c",
+      "status": "ready"
+    },
+    "tokens/icons.yaml": {
+      "hash": "sha256:a422aa27b1127f29d62c48ef5d5a17987d162145166af9d23138ba59b647bc25",
+      "status": "ready"
+    },
+    "tokens/layout.yaml": {
+      "hash": "sha256:f52a4e1d5f792e560269fdd82a74c8811853282292fd06f3a3bec6ab8b1ca3c6",
+      "status": "ready"
+    },
+    "tokens/motion.yaml": {
+      "hash": "sha256:0acb21666bb9a5f835e1b67f4011eb630f48d39a36c3ae12f98e072d7635fca9",
+      "status": "ready"
+    },
+    "tokens/spacing.yaml": {
+      "hash": "sha256:20d1f650a4436db3a8f39a0514970cc33e1e831ae0e472e13f230412e4929732",
+      "status": "ready"
+    },
+    "tokens/themes.yaml": {
+      "hash": "sha256:5076df061af81f277ec82205d1e02f46b8a1f95607009829ebe3ad9126feb8d5",
+      "status": "ready"
+    },
+    "tokens/typography.yaml": {
+      "hash": "sha256:f7e3c5119122fb4b46df78496838a660980f6b217cd7ca4d6000fd4e6f5c42f4",
+      "status": "ready"
+    },
+    "screens/calendar.yaml": {
+      "hash": "sha256:d4ee3599fcfb5d3fde8a84c107406257ecb1d9dbc49c7d1e3324f235c5ef4e91",
+      "status": "stub"
+    },
+    "screens/home.yaml": {
+      "hash": "sha256:bf5a95b1d538735426c7b6cf7df9bfddcce8e8d18025e3a7e192eb519f78efe7",
+      "status": "ready"
+    },
+    "screens/profile_edit.yaml": {
+      "hash": "sha256:86ede84864f92a7b4774f4fa702909c1967004b9a501defadba9eb66b99b5eab",
+      "status": "stub"
+    },
+    "screens/project_detail.yaml": {
+      "hash": "sha256:a1ea7927ffded9a6bb9e0b44ce311f4c5a96640aeca524c3889ce0aa80334291",
+      "status": "stub"
+    },
+    "screens/projects.yaml": {
+      "hash": "sha256:af91b5450782ce4518ee887aa0108a643ef067104f9187374e9913f03a23d9dd",
+      "status": "ready"
+    },
+    "screens/settings.yaml": {
+      "hash": "sha256:b131805d0ae73a5f5f9ab41a158f48d7bad7887388ffe2bf633b032a2a53df73",
+      "status": "ready"
+    },
+    "screens/task_detail.yaml": {
+      "hash": "sha256:b8625a6205f54bd810a6c6308b857519f5f0357271a9fe75ba795c6111372241",
+      "status": "ready"
+    },
+    "flows/create_task.yaml": {
+      "hash": "sha256:604b2439dc97d1b138a108847997e441bf15072cbc73a19582c11c5bde060e63",
+      "status": "ready"
+    },
+    "flows/edit_task.yaml": {
+      "hash": "sha256:83f412f6f2d1e31065f29f99a3c13498e78d158a3e4e857b04dcedf9d600d07e",
+      "status": "stub"
+    },
+    "platform/android.yaml": {
+      "hash": "sha256:baf4a1f2aabc3b71efcb21c5d9d9f3d17ba098ec7bf36c2765a5f2dfd80d4ea0",
+      "status": "ready"
+    },
+    "platform/ios.yaml": {
+      "hash": "sha256:faf082d2c28b1a1fc19d0abe536a25d26858114db81bb08d500af7d622a5d6b8",
+      "status": "ready"
+    },
+    "platform/web.yaml": {
+      "hash": "sha256:5c9181431b58a98b21aba6e2de384f0324a78f6e5924223819484911e1a76703",
+      "status": "ready"
+    },
+    "locales/en.json": {
+      "hash": "sha256:eca3961456a7e56cbdd3b86a9c366ab598359aeedb514089616f7da470cd0ba1",
+      "status": "ready"
+    },
+    "contracts/action_trigger.yaml": {
+      "hash": "sha256:8bae0479c711fe6403d68c0df3e89d85c79d281842539d0233f08f0a77a0dc57",
+      "status": "ready"
+    },
+    "contracts/collection.yaml": {
+      "hash": "sha256:0d5b9aac5c25d689b08ab2dfda4980cc59e93938d4d07b33c7e216eaadce25e4",
+      "status": "ready"
+    },
+    "contracts/data_display.yaml": {
+      "hash": "sha256:381af6d133e85e21b73881f54ef48a711f08ada5091bc510719e20eb329be169",
+      "status": "ready"
+    },
+    "contracts/feedback.yaml": {
+      "hash": "sha256:f39a7173b3b272c1075cc11f8ae952e919a24515d2cbede77940a7b4a1fee59c",
+      "status": "ready"
+    },
+    "contracts/input_field.yaml": {
+      "hash": "sha256:817cba9a58e4f2bc711113246d32fe84b2355bad22e1ce59fd87a825a9156681",
+      "status": "ready"
+    },
+    "contracts/nav_container.yaml": {
+      "hash": "sha256:dfe3a14a5a48de1a460bed03d833a018962fc57d1b912bb7c9a4511cb24dd05d",
+      "status": "ready"
+    },
+    "contracts/surface.yaml": {
+      "hash": "sha256:ab4242102f4b0d4dbd59f15a5cf14cfc72b82030280b37344261ce26a0cf23f5",
+      "status": "ready"
+    },
+    "contracts/x_media_player.yaml": {
+      "hash": "sha256:3b26de6077288fe0d7707a78fec26ec2f5619d710c002ba3c858e7170aa34743",
+      "status": "ready"
+    }
+  }
+}

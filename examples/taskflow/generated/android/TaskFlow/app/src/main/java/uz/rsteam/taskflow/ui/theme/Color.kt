@@ -1,0 +1,30 @@
+package uz.rsteam.taskflow.ui.theme
+
+import androidx.compose.ui.graphics.Color
+
+val BrandPrimary = Color(0xFF5B4FE8)
+val BrandSecondary = Color(0xFFE8634F)
+val SurfacePrimary = Color(0xFFFFFFFF)
+val SurfaceSecondary = Color(0xFFF7F6F3)
+val SurfaceTertiary = Color(0xFFEFEEE8)
+val TextPrimary = Color(0xFF1C1B1A)
+val TextSecondary = Color(0xFF6B6966)
+val TextTertiary = Color(0xFF9C9A94)
+val Success = Color(0xFF2D9D5E)
+val Warning = Color(0xFFD4920E)
+val Danger = Color(0xFFD43B3B)
+val Info = Color(0xFF3B82D4)
+val PriorityLow = Color(0xFF9CA3AF)
+val PriorityMedium = Color(0xFF3B82D4)
+val PriorityHigh = Color(0xFFD4920E)
+val PriorityUrgent = Color(0xFFD43B3B)
+
+val DarkSurfacePrimary = Color(0xFF171515)
+val DarkSurfaceSecondary = Color(0xFF221F1F)
+val DarkSurfaceTertiary = Color(0xFF2B2727)
+val DarkTextPrimary = Color(0xFFF6F2EF)
+val DarkTextSecondary = Color(0xFFD2CBC6)
+val DarkTextTertiary = Color(0xFFA39891)
+val WarmSurfacePrimary = Color(0xFFF9F6F0)
+val WarmSurfaceSecondary = Color(0xFFF2ECE1)
+val WarmSurfaceTertiary = Color(0xFFEAE0D2)

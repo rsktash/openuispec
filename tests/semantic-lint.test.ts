@@ -31,7 +31,7 @@ test("semantic validate catches broken cross references", () => {
   try {
     cpSync(join(repoRoot, "examples", "taskflow"), sandbox, { recursive: true });
 
-    const screenPath = join(sandbox, "screens", "home.yaml");
+    const screenPath = join(sandbox, "openuispec", "screens", "home.yaml");
     let content = readFileSync(screenPath, "utf-8");
     content = content
       .replace("$t:nav.tasks", "$t:nav.missing")

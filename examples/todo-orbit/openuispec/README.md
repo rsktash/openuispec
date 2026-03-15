@@ -29,7 +29,7 @@ Do NOT guess the file format — skipping this step will produce invalid YAML th
 **Reference files inside the package (read in this order):**
 1. `README.md` — schema tables, file format reference, root keys
 2. `spec/openuispec-v0.1.md` — full specification (contracts, layout, expressions, etc.)
-3. `examples/taskflow/` — complete working example with all file types
+3. `examples/taskflow/openuispec/` — complete working example with all file types
 4. `schema/` — JSON Schemas for validation
 
 ## CLI commands

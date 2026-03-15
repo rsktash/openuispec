@@ -5,7 +5,7 @@
  * Usage:
  *   openuispec validate                    # validate all spec files
  *   openuispec validate tokens screens     # validate specific groups
- *   npm run validate                       # from repo (uses examples/taskflow)
+ *   npm run validate                       # from repo (uses examples/taskflow/openuispec)
  */
 
 import { readFileSync, readdirSync, existsSync } from "node:fs";

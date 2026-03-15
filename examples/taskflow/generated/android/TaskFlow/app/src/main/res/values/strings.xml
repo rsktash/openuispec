@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">TaskFlow</string>
+
+    <string name="nav_tasks">Tasks</string>
+    <string name="nav_projects">Projects</string>
+    <string name="nav_calendar">Calendar</string>
+    <string name="nav_settings">Settings</string>
+
+    <string name="home_search_label">Search tasks</string>
+    <string name="home_search_placeholder">Search by title, tag, or project…</string>
+    <string name="home_filter_all">All</string>
+    <string name="home_filter_today">Today</string>
+    <string name="home_filter_upcoming">Upcoming</string>
+    <string name="home_filter_done">Done</string>
+    <string name="home_empty_title">All caught up!</string>
+    <string name="home_empty_body">No tasks match this filter. Tap + to add one.</string>
+    <string name="home_new_task">New task</string>
+    <string name="home_mark_complete">Mark %1$s complete</string>
+    <plurals name="home_task_count">
+        <item quantity="zero">No tasks today</item>
+        <item quantity="one">%1$d task today</item>
+        <item quantity="other">%1$d tasks today</item>
+    </plurals>
+
+    <string name="task_detail_status">Status</string>
+    <string name="task_detail_priority">Priority</string>
+    <string name="task_detail_due">Due</string>
+    <string name="task_detail_description">Description</string>
+    <string name="task_detail_details">Details</string>
+    <string name="task_detail_project">Project</string>
+    <string name="task_detail_assignee">Assignee</string>
+    <string name="task_detail_unassigned">Unassigned</string>
+    <string name="task_detail_tags">Tags</string>
+    <string name="task_detail_created">Created</string>
+    <string name="task_detail_edit">Edit task</string>
+    <string name="task_detail_toggle_status_todo">Mark complete</string>
+    <string name="task_detail_toggle_status_done">Reopen task</string>
+    <string name="task_detail_delete">Delete task</string>
+    <string name="task_detail_delete_title">Delete task?</string>
+    <string name="task_detail_delete_message">This action cannot be undone. The task “%1$s” will be permanently removed.</string>
+    <string name="task_detail_task_updated">Task updated</string>
+    <string name="task_detail_update_error">Couldn’t update status</string>
+    <string name="task_detail_task_deleted">Task deleted</string>
+    <string name="task_detail_assign_to">Assign to</string>
+    <string name="task_detail_search_people">Search people</string>
+    <string name="task_detail_search_people_placeholder">Name or email…</string>
+
+    <string name="create_task_title">New task</string>
+    <string name="create_task_save">Save</string>
+    <string name="create_task_saving">Saving…</string>
+    <string name="create_task_field_title">Title</string>
+    <string name="create_task_field_title_placeholder">What needs to be done?</string>
+    <string name="create_task_field_description">Description</string>
+    <string name="create_task_field_description_placeholder">Add details, notes, or context…</string>
+    <string name="create_task_field_project">Project</string>
+    <string name="create_task_field_project_placeholder">Select a project</string>
+    <string name="create_task_field_priority">Priority</string>
+    <string name="create_task_field_due_date">Due date</string>
+    <string name="create_task_field_due_date_placeholder">No due date</string>
+    <string name="create_task_field_tags">Tags</string>
+    <string name="create_task_field_tags_placeholder">Add tags separated by commas</string>
+    <string name="create_task_field_tags_helper">Press comma or Enter to add a tag</string>
+    <string name="create_task_field_assign_to_me">Assign to me</string>
+    <string name="create_task_success">Task created</string>
+    <string name="create_task_error_title">Couldn’t create task</string>
+
+    <string name="edit_task_title">Edit task</string>
+    <string name="edit_task_save">Save</string>
+    <string name="edit_task_saving">Saving…</string>
+    <string name="edit_task_field_title">Title</string>
+    <string name="edit_task_field_description">Description</string>
+    <string name="edit_task_field_priority">Priority</string>
+    <string name="edit_task_field_due_date">Due date</string>
+    <string name="edit_task_success">Task updated</string>
+    <string name="edit_task_error_title">Couldn’t update task</string>
+
+    <string name="projects_title">Projects</string>
+    <string name="projects_new_project">New project</string>
+    <string name="projects_empty_title">No projects yet</string>
+    <string name="projects_empty_body">Create a project to organize your tasks.</string>
+    <string name="projects_dialog_title">New project</string>
+    <string name="projects_field_name">Project name</string>
+    <string name="projects_field_name_placeholder">e.g., Product Launch</string>
+    <string name="projects_field_color">Color</string>
+    <string name="projects_field_icon">Icon</string>
+    <string name="projects_created">Project created</string>
+    <plurals name="projects_task_count">
+        <item quantity="zero">No tasks</item>
+        <item quantity="one">%1$d task</item>
+        <item quantity="other">%1$d tasks</item>
+    </plurals>
+
+    <string name="project_detail_empty_title">No tasks in this project</string>
+    <string name="project_detail_empty_body">Add a task to get started.</string>
+
+    <string name="settings_preferences">Preferences</string>
+    <string name="settings_theme">Theme</string>
+    <string name="settings_theme_system">System</string>
+    <string name="settings_theme_light">Light</string>
+    <string name="settings_theme_dark">Dark</string>
+    <string name="settings_theme_warm">Warm</string>
+    <string name="settings_default_priority">Default priority</string>
+    <string name="settings_notifications">Push notifications</string>
+    <string name="settings_reminders">Due date reminders</string>
+    <string name="settings_reminders_helper">Get notified 1 hour before a task is due</string>
+    <string name="settings_data">Data</string>
+    <string name="settings_export">Export data</string>
+    <string name="settings_export_success">Export sent to your email</string>
+    <string name="settings_delete_account">Delete account</string>
+    <string name="settings_delete_title">Delete your account?</string>
+    <string name="settings_delete_message">This will permanently delete your account and all your data. This action cannot be undone.</string>
+    <string name="settings_delete_confirm">Delete my account</string>
+    <string name="settings_app_version">TaskFlow v1.0.0</string>
+    <string name="settings_app_credit">Built with OpenUISpec</string>
+
+    <string name="profile_change_photo">Change photo</string>
+    <string name="profile_field_name">Name</string>
+    <string name="profile_field_email">Email</string>
+    <string name="profile_save">Save changes</string>
+    <string name="profile_success">Profile updated</string>
+
+    <string name="calendar_title">Calendar</string>
+    <string name="calendar_coming_soon">Coming in a future version</string>
+
+    <string name="priority_low">Low</string>
+    <string name="priority_medium">Medium</string>
+    <string name="priority_high">High</string>
+    <string name="priority_urgent">Urgent</string>
+
+    <string name="status_todo">To do</string>
+    <string name="status_in_progress">In progress</string>
+    <string name="status_done">Done</string>
+    <string name="media_player_error">Unable to play media</string>
+
+    <string name="validation_required">This field is required</string>
+    <string name="validation_min_length">Must be at least %1$d characters</string>
+    <string name="validation_tag_format">Tags may only contain letters, numbers, and hyphens</string>
+
+    <string name="common_cancel">Cancel</string>
+    <string name="common_delete">Delete</string>
+    <string name="common_create">Create</string>
+    <string name="common_back">Back</string>
+    <string name="common_no_due_date">No due date</string>
+    <string name="common_add">Add</string>
+    <string name="common_save">Save</string>
+    <string name="common_stub">Stub screen defined by the spec</string>
+    <string name="common_search">Search</string>
+    <string name="common_today">Today</string>
+    <string name="common_unknown">Unknown</string>
+    <string name="common_name">Name</string>
+    <string name="common_email">Email</string>
+    <string name="common_color">Color</string>
+    <string name="common_icon">Icon</string>
+</resources>

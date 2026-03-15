@@ -1,5 +1,5 @@
 <!-- openuispec-rules-start -->
-<!-- openuispec-rules-version: 0.1.23 -->
+<!-- openuispec-rules-version: 0.1.27 -->
 # OpenUISpec — AI Assistant Rules
 # ================================
 # This project uses OpenUISpec to define UI as a semantic spec.
@@ -20,7 +20,7 @@ Do NOT guess the file format — skipping this step will produce invalid YAML th
 **Reference files inside the package (read in this order):**
 1. `README.md` — schema tables, file format reference, root wrapper keys
 2. `spec/openuispec-v0.1.md` — full specification (contracts, layout, expressions, adaptive, etc.)
-3. `examples/taskflow/` — complete working example with all file types
+3. `examples/taskflow/openuispec/` — complete working example with all file types
 4. `schema/` — JSON Schemas for every file type
 
 These files are updated with each package version. Always read from the installed package,
@@ -57,22 +57,46 @@ This means the project has existing UI code but hasn't been specced yet. Your jo
 4. **Extract tokens** — scan for colors, fonts, spacing and create files in `openuispec/tokens/`.
 5. **Update the manifest** — fill in `data_model` and `api.endpoints` in `openuispec/openuispec.yaml`.
 
-## Making UI changes
-1. Read the relevant spec files before modifying any UI code.
-2. If the change requires a spec update, modify the spec FIRST, then update code.
-3. Never modify generated code without updating the spec.
-4. When adding a new screen, create the corresponding spec file.
-5. When removing a screen, remove the spec file and update flow references.
+## OpenUISpec Source Of Truth
 
-## After modifying spec files
-1. Run `openuispec validate` to check specs against the schema.
-2. Run `openuispec validate semantic`.
-3. Run `openuispec drift --target <target> --explain` to inspect semantic changes since that target's baseline.
-4. Run `openuispec prepare --target <target>` to build the target update bundle.
-5. **Update the generated code** for each affected platform to match the new spec.
-6. Run `openuispec drift --snapshot --target <target>` to baseline the updated state.
-7. Run `openuispec drift --target <target> --explain` again to confirm no spec changes remain for that target.
-8. Run `openuispec status` to see which other targets are still behind.
+OpenUISpec spec files are the primary source of truth for UI behavior across platforms.
+
+### Start from spec when:
+- the request changes screen structure
+- the request changes navigation
+- the request changes fields, actions, validation, or data binding
+- the request changes tokens, variants, contracts, flows, or localization
+- the request affects more than one platform
+- the request is phrased in product/UI terms rather than platform-code terms
+
+Spec-first workflow:
+1. Read `openuispec/openuispec.yaml` and the relevant spec files first.
+2. Update the spec first.
+3. Update the affected generated/native UI code to match the spec.
+4. Run `openuispec validate`.
+5. Run `openuispec validate semantic`.
+6. Run `openuispec drift --target <target> --explain` to inspect semantic changes since that target's baseline.
+7. Run `openuispec prepare --target <target>` to build the AI/developer work bundle for that target.
+8. Verify the affected UI targets build/run if possible.
+9. Only then run `openuispec drift --snapshot --target <target>` for affected targets.
+10. Run `openuispec drift --target <target> --explain` again to confirm no spec changes remain for that target.
+11. Use `openuispec status` to see which other targets are still behind the updated spec.
+
+### Start from platform code when:
+- the change is platform-specific polish
+- the change is a local bug fix that does not alter shared semantic behavior
+- the request explicitly asks for an iOS-only, Android-only, or web-only adjustment
+
+Platform-first workflow:
+1. Update native/platform code.
+2. If the change affects shared semantics, sync the spec afterward.
+3. If the change is intentionally platform-specific, document it in `platform/*.yaml` when appropriate.
+
+### Never do this:
+- Do not snapshot drift immediately after changing spec unless the UI code has also been updated.
+- Do not treat `openuispec drift` as proof that generated UI matches the spec.
+- Do not skip `--explain` / `prepare` when another platform needs to catch up with shared spec changes.
+- Do not modify generated UI without checking whether the spec must change first.
 
 ## CLI commands
 - `openuispec init` — scaffold a new spec project
@@ -82,6 +106,7 @@ This means the project has existing UI code but hasn't been specced yet. Your jo
 - `openuispec drift --target <t> --explain` — explain semantic spec drift since the target baseline
 - `openuispec drift --snapshot --target <t>` — snapshot current state
 - `openuispec prepare --target <t>` — build an AI-ready target update bundle
+- `openuispec status` — show cross-target baseline/drift status
 - `openuispec update-rules` — update AI rules to match installed package version
 - `openuispec drift --all` — include stubs in drift check
 <!-- openuispec-rules-end -->

@@ -1,0 +1,26 @@
+name: TaskFlow
+options:
+  bundleIdPrefix: uz.rsteam
+  deploymentTarget:
+    iOS: "17.0"
+settings:
+  base:
+    PRODUCT_NAME: TaskFlow
+targets:
+  TaskFlow:
+    type: application
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: Sources/TaskFlow
+      - path: Resources
+        buildPhase: resources
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: TaskFlow
+        INFOPLIST_KEY_UILaunchScreen_Generation: true
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: true
+        INFOPLIST_KEY_UIUserInterfaceStyle: Automatic
+        SWIFT_VERSION: 5.10
+        PRODUCT_BUNDLE_IDENTIFIER: uz.rsteam.taskflow
