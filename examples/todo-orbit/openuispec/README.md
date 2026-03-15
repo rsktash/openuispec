@@ -36,10 +36,15 @@ Do NOT guess the file format — skipping this step will produce invalid YAML th
 
 ```bash
 openuispec validate             # Validate spec files against schemas
+openuispec validate semantic    # Check semantic cross-references
 openuispec validate screens     # Validate only screens
-openuispec drift --target ios    # Check for spec drift
-openuispec drift --snapshot --target ios  # Snapshot current state
+openuispec status               # Show which targets are behind
+openuispec drift --target ios --explain   # Explain semantic spec drift since ios baseline
+openuispec prepare --target ios           # Build an AI-ready ios update bundle
+openuispec drift --snapshot --target ios  # Snapshot current state + git baseline
 ```
+
+If a target snapshot was created before baseline metadata was added, `--explain` and `status` will ask you to re-run `openuispec drift --snapshot --target <target>` for that target.
 
 ## Learn more
 

@@ -66,15 +66,22 @@ This means the project has existing UI code but hasn't been specced yet. Your jo
 
 ## After modifying spec files
 1. Run `openuispec validate` to check specs against the schema.
-2. **Update the generated code** for each affected platform to match the new spec.
-3. Run `openuispec drift --snapshot --target <target>` to baseline the updated state.
-4. Run `openuispec drift` to verify no untracked drift remains.
+2. Run `openuispec validate semantic`.
+3. Run `openuispec drift --target <target> --explain` to inspect semantic changes since that target's baseline.
+4. Run `openuispec prepare --target <target>` to build the target update bundle.
+5. **Update the generated code** for each affected platform to match the new spec.
+6. Run `openuispec drift --snapshot --target <target>` to baseline the updated state.
+7. Run `openuispec drift --target <target> --explain` again to confirm no spec changes remain for that target.
+8. Run `openuispec status` to see which other targets are still behind.
 
 ## CLI commands
 - `openuispec init` — scaffold a new spec project
 - `openuispec validate [group...]` — validate spec files against schemas
+- `openuispec validate semantic` — run semantic cross-reference linting
 - `openuispec drift --target <t>` — check for spec drift
+- `openuispec drift --target <t> --explain` — explain semantic spec drift since the target baseline
 - `openuispec drift --snapshot --target <t>` — snapshot current state
+- `openuispec prepare --target <t>` — build an AI-ready target update bundle
 - `openuispec update-rules` — update AI rules to match installed package version
 - `openuispec drift --all` — include stubs in drift check
 <!-- openuispec-rules-end -->

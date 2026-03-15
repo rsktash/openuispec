@@ -1,6 +1,6 @@
 {
   "name": "openuispec",
-  "version": "0.1.25",
+  "version": "0.1.26",
   "license": "MIT",
   "type": "module",
   "description": "A semantic UI specification format for AI-native, platform-native app development",
@@ -12,6 +12,8 @@
   "files": [
     "cli/",
     "drift/",
+    "prepare/",
+    "status/",
     "schema/",
     "spec/",
     "docs/",
@@ -23,6 +25,7 @@
     "openuispec": "./cli/index.ts"
   },
   "scripts": {
+    "test": "node --import tsx --test tests/*.test.ts",
     "validate": "tsx schema/validate.ts",
     "validate:manifest": "tsx schema/validate.ts manifest",
     "validate:tokens": "tsx schema/validate.ts tokens",
@@ -32,6 +35,8 @@
     "validate:locales": "tsx schema/validate.ts locales",
     "drift": "tsx drift/index.ts",
     "drift:snapshot": "tsx drift/index.ts --snapshot --target",
+    "prepare": "tsx prepare/index.ts",
+    "status": "tsx status/index.ts",
     "postinstall": "echo \"\\n  ✓ openuispec installed — if upgrading, run: openuispec update-rules\\n\""
   },
   "dependencies": {

@@ -27,6 +27,12 @@ icons:
           ios: "plus"
           android: "add"
           web: "plus"
+      pencil:
+        semantic: "Edit an existing task or item"
+        platform:
+          ios: "pencil"
+          android: "edit"
+          web: "pencil"
       search:
         semantic: "Search tasks"
         platform:

@@ -5,7 +5,10 @@
  * Usage:
  *   openuispec init                           Create a new spec project
  *   openuispec drift [--target <t>]           Check for spec drift
- *   openuispec drift --snapshot --target <t>  Snapshot current state
+ *   openuispec drift --snapshot --target <t>  Snapshot current state + git baseline
+ *   openuispec drift --target <t> --explain   Explain semantic changes since baseline
+ *   openuispec prepare --target <t>           Build an AI-ready target update bundle
+ *   openuispec status                         Show cross-target baseline/drift status
  *   openuispec validate [group...]            Validate spec files against schemas
  */
 
@@ -55,6 +58,18 @@ async function main(): Promise<void> {
       break;
     }
 
+    case "prepare": {
+      const { runPrepare } = await import("../prepare/index.js");
+      runPrepare(rest);
+      break;
+    }
+
+    case "status": {
+      const { runStatus } = await import("../status/index.js");
+      runStatus(rest);
+      break;
+    }
+
     case "validate": {
       const { runValidate } = await import("../schema/validate.js");
       runValidate(rest);
@@ -72,10 +87,13 @@ Usage:
   openuispec init                           Create a new spec project
   openuispec update-rules                   Update AI rules to match installed version
   openuispec drift [--target <t>]           Check for spec drift
-  openuispec drift --snapshot --target <t>  Snapshot current state
+  openuispec drift --snapshot --target <t>  Snapshot current state + git baseline
+  openuispec drift --target <t> --explain   Explain semantic changes since baseline
+  openuispec prepare --target <t>           Build an AI-ready target update bundle
+  openuispec status                         Show cross-target baseline/drift status
   openuispec validate [group...]            Validate spec files
 
-Validate groups: manifest, tokens, screens, flows, platform, locales, contracts
+Validate groups: manifest, tokens, screens, flows, platform, locales, contracts, semantic
 
 Docs: https://openuispec.rsteam.uz
 `);

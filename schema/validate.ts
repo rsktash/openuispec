@@ -14,6 +14,7 @@ import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
 import type { ErrorObject } from "ajv";
 import YAML from "yaml";
+import { runSemanticLint, type Includes } from "./semantic-lint.js";
 
 const require = createRequire(import.meta.url);
 const Ajv2020 = require("ajv/dist/2020") as typeof import("ajv").default;
@@ -409,15 +410,6 @@ function validateFile(
 
 // ── includes resolution ──────────────────────────────────────────────
 
-interface Includes {
-  tokens: string;
-  contracts: string;
-  screens: string;
-  flows: string;
-  platform: string;
-  locales: string;
-}
-
 const DEFAULT_INCLUDES: Includes = {
   tokens: "./tokens/",
   contracts: "./contracts/",
@@ -556,6 +548,13 @@ const GROUPS: Record<string, ValidationGroup> = {
         }
       }
       return errors;
+    },
+  },
+
+  semantic: {
+    label: "Semantic",
+    run(_ajv, projectDir, includes) {
+      return runSemanticLint(projectDir, includes);
     },
   },
 };

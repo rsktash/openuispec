@@ -137,11 +137,13 @@ openuispec/
 │       ├── openuispec/                  # Source OpenUISpec project
 │       ├── generated/                   # Generated iOS, Android, and web apps
 │       └── artifacts/                   # Screenshots and supporting outputs
-├── cli/                                 # CLI tool (openuispec init, drift, validate)
+├── cli/                                 # CLI tool (openuispec init, drift, prepare, validate)
 │   ├── index.ts                        # Entry point
 │   └── init.ts                         # Project scaffolding + AI rules
 ├── drift/                               # Drift detection (spec change tracking)
 │   └── index.ts                        # Hash-based drift checker
+├── prepare/                             # AI-ready target work bundle generation
+│   └── index.ts                        # Baseline-aware target preparation
 ├── LICENSE
 └── README.md
 ```
@@ -183,6 +185,8 @@ brand:
 
 Validate with: `openuispec validate`
 
+Use `openuispec validate semantic` to run cross-reference linting for locale keys, formatter refs, mapper refs, contracts, icons, navigation targets, and API endpoint references.
+
 ## Output directories
 
 By default, drift stores state in `generated/<target>/<project>/`. To point targets to your actual code directories, add `output_dir` to `openuispec.yaml`:
@@ -196,7 +200,45 @@ generation:
     ios: "../kmp-ui/iosApp/"
 ```
 
-Paths are relative to `openuispec.yaml`. The `.openuispec-state.json` file is stored inside each output directory.
+Paths are relative to `openuispec.yaml`. The `.openuispec-state.json` file is stored inside each output directory and records spec file hashes plus the git baseline commit metadata captured at snapshot time.
+
+Use the commands like this:
+- `openuispec validate` checks schema correctness
+- `openuispec validate semantic` checks cross-references such as locale keys, formatters, mappers, contracts, icons, navigation targets, and API endpoints
+- `openuispec drift --target <t> --explain` explains semantic spec changes since that target's accepted baseline
+- `openuispec prepare --target <t>` turns those changes into an AI-ready target update bundle
+- `openuispec status` shows every target's snapshot state, baseline commit, and whether that target is behind the current spec
+
+If a target snapshot was created before baseline metadata was added, `--explain` and `status` will tell you to re-run `openuispec drift --snapshot --target <target>` for that target.
+
+## Target update workflow
+
+When a shared spec change needs to be applied to a target:
+
+```bash
+openuispec validate
+openuispec drift --target ios --explain
+openuispec prepare --target ios
+# update the ios implementation
+openuispec drift --snapshot --target ios
+```
+
+Meaning:
+- `validate` checks schema correctness
+- `validate semantic` checks cross-reference integrity
+- `drift --explain` shows semantic spec changes since that target's accepted baseline
+- `prepare` packages those changes into an AI/developer work bundle
+- `drift --snapshot` accepts the updated state after the target UI has been updated
+
+Before picking the next platform to update, run:
+
+```bash
+openuispec status
+```
+
+to see which targets are already up to date and which ones still need to catch up with shared spec changes.
+
+`drift --snapshot` is bookkeeping. It does not prove that the target code matches the spec.
 
 ## Spec at a glance
 
