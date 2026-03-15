@@ -111,6 +111,16 @@
             "type": "string"
           }
         },
+        "code_roots": {
+          "type": "object",
+          "description": "Additional project code roots used as generation context.",
+          "properties": {
+            "backend": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
         "output_format": {
           "type": "object",
           "description": "Per-target generation config",

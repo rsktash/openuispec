@@ -4,10 +4,12 @@
  *
  * Usage:
  *   openuispec init                           Create a new spec project
+ *   openuispec init --defaults                Scaffold non-interactively with defaults
+ *   openuispec configure-target <t>           Configure target stack and managed dependencies
  *   openuispec drift [--target <t>]           Check for spec drift
  *   openuispec drift --snapshot --target <t>  Snapshot current state + git baseline
  *   openuispec drift --target <t> --explain   Explain semantic changes since baseline
- *   openuispec prepare --target <t>           Build an AI-ready target update bundle
+ *   openuispec prepare --target <t>           Build the target work bundle
  *   openuispec status                         Show cross-target baseline/drift status
  *   openuispec validate [group...]            Validate spec files against schemas
  */
@@ -45,12 +47,18 @@ async function main(): Promise<void> {
 
   switch (command) {
     case "init":
-      await init();
+      await init(rest);
       break;
 
     case "update-rules":
       updateRules();
       break;
+
+    case "configure-target": {
+      const { runConfigureTarget } = await import("./configure-target.js");
+      await runConfigureTarget(rest);
+      break;
+    }
 
     case "drift": {
       const { runDrift } = await import("../drift/index.js");
@@ -85,11 +93,14 @@ OpenUISpec CLI v0.1
 
 Usage:
   openuispec init                           Create a new spec project
+  openuispec init --defaults                Scaffold non-interactively with defaults
+  openuispec init --no-configure-targets    Skip target stack setup during init
   openuispec update-rules                   Update AI rules to match installed version
+  openuispec configure-target <t> [--defaults] Configure target stack and managed dependencies
   openuispec drift [--target <t>]           Check for spec drift
   openuispec drift --snapshot --target <t>  Snapshot current state + git baseline
   openuispec drift --target <t> --explain   Explain semantic changes since baseline
-  openuispec prepare --target <t>           Build an AI-ready target update bundle
+  openuispec prepare --target <t>           Build the target work bundle
   openuispec status                         Show cross-target baseline/drift status
   openuispec validate [group...]            Validate spec files
 

@@ -8,10 +8,17 @@
  */
 
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
-import { basename, extname, join, relative, resolve } from "node:path";
+import { basename, dirname, extname, join, relative, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import YAML from "yaml";
 import {
+  discoverSpecFiles,
+  findProjectDir,
+  hasStatusSemantics,
   loadTargetDrift,
+  readManifest,
+  readProjectName,
+  readStatus,
   resolveOutputDir,
   type FileExplanation,
   type ExplainResult,
@@ -27,10 +34,87 @@ interface PrepareItem {
   notes: string[];
 }
 
+interface BootstrapSpecFile {
+  spec_file: string;
+  category: string;
+  spec_status: string | null;
+  notes: string[];
+}
+
+interface PrepareLocalizationConstraints {
+  must_use_platform_native_i18n: boolean;
+  forbid_in_memory_string_maps: boolean;
+  runtime_resources: string[];
+  required_files: string[];
+  lookup_module_guidance: string;
+  notes: string[];
+}
+
+interface PrepareFileStructureConstraints {
+  forbid_single_file_output: boolean;
+  required_directories: string[];
+  screen_split_rule: string;
+  component_split_rule: string;
+  notes: string[];
+}
+
+interface PreparePlatformSetupConstraints {
+  refresh_target_platform_knowledge: boolean;
+  notes: string[];
+}
+
+interface PrepareGenerationConstraints {
+  localization: PrepareLocalizationConstraints;
+  file_structure: PrepareFileStructureConstraints;
+  platform_setup: PreparePlatformSetupConstraints;
+}
+
+interface PreparePlatformConfig {
+  framework: string | null;
+  language: string | null;
+  min_version: string | null;
+  min_sdk: number | null;
+  target_sdk: number | null;
+  generation: Record<string, any>;
+  stack: Record<string, string>;
+  dependency_guidance: {
+    anchor_refs_only: boolean;
+    notes: string[];
+  };
+  selected_option_refs: Record<string, {
+    value: string;
+    plugins: string[];
+    libraries: string[];
+    packages: string[];
+    docs: string[];
+  }>;
+  dependencies: string[];
+}
+
+interface PrepareBootstrapBundle {
+  output_exists: boolean;
+  generation_ready: boolean;
+  missing_platform_decisions: string[];
+  generation_warnings: string[];
+  includes: Record<string, string>;
+  output_format: Record<string, any>;
+  i18n: {
+    default_locale: string | null;
+    supported_locales: string[];
+  };
+  spec_files: BootstrapSpecFile[];
+  generation_rules: string[];
+  generation_constraints: PrepareGenerationConstraints;
+  reference_examples: string[];
+}
+
 interface PrepareResult {
+  mode: "bootstrap" | "update";
   project: string;
   target: string;
   output_dir: string;
+  backend_root: string | null;
+  platform_config: PreparePlatformConfig;
   code_roots: string[];
   baseline: {
     kind: string | null;
@@ -45,11 +129,168 @@ interface PrepareResult {
   changes_available: boolean;
   explanation_note?: string;
   items: PrepareItem[];
+  bootstrap?: PrepareBootstrapBundle;
   next_steps: string[];
 }
 
-function readManifest(projectDir: string): Record<string, any> {
-  return YAML.parse(readFileSync(join(projectDir, "openuispec.yaml"), "utf-8"));
+function resolvePackageRoot(): string {
+  return resolve(dirname(fileURLToPath(import.meta.url)), "..");
+}
+
+function readPlatformDefinition(projectDir: string, manifest: Record<string, any>, target: string): Record<string, any> {
+  const platformDir = resolve(projectDir, manifest.includes?.platform ?? "./platform/");
+  const platformPath = join(platformDir, `${target}.yaml`);
+  if (!existsSync(platformPath)) return {};
+  try {
+    const doc = YAML.parse(readFileSync(platformPath, "utf-8"));
+    return doc?.[target] ?? {};
+  } catch {
+    return {};
+  }
+}
+
+function readTargetPresetDependencyLinks(target: string): {
+  questions: Array<{
+    key: string;
+    options: Array<{
+      value: string;
+      generation_value?: string;
+      refs?: {
+        plugins?: string[];
+        libraries?: string[];
+        packages?: string[];
+        docs?: string[];
+      };
+    }>;
+  }>;
+} {
+  try {
+    const presetPath = join(resolvePackageRoot(), "cli", "target-presets.json");
+    const presets = JSON.parse(readFileSync(presetPath, "utf-8")) as Record<
+      string,
+      {
+        questions?: Array<{
+          key: string;
+          options?: Array<{
+            value: string;
+            generation_value?: string;
+            refs?: {
+              plugins?: string[];
+              libraries?: string[];
+              packages?: string[];
+              docs?: string[];
+            };
+          }>;
+        }>;
+      }
+    >;
+    return {
+      questions: (presets[target]?.questions ?? []).map((question) => ({
+        key: question.key,
+        options: question.options ?? [],
+      })),
+    };
+  } catch {
+    return { questions: [] };
+  }
+}
+
+function platformStackKeys(target: string): string[] {
+  switch (target) {
+    case "android":
+      return ["architecture", "state", "preferences", "database", "di", "naming"];
+    case "web":
+      return ["runtime", "routing", "state", "storage_backend", "bundler", "css", "naming"];
+    case "ios":
+      return ["architecture", "persistence", "di", "naming"];
+    default:
+      return [];
+  }
+}
+
+function buildPlatformConfig(target: string, platformDef: Record<string, any>): PreparePlatformConfig {
+  const generation =
+    platformDef.generation && typeof platformDef.generation === "object" ? platformDef.generation : {};
+  const links = readTargetPresetDependencyLinks(target);
+  const stack = Object.fromEntries(
+    platformStackKeys(target)
+      .map((key) => [key, generation[key]])
+      .filter((entry): entry is [string, string] => typeof entry[1] === "string" && entry[1].trim().length > 0)
+  );
+  const dependencies = Array.isArray(generation.dependencies)
+    ? generation.dependencies.filter((dep): dep is string => typeof dep === "string")
+    : [];
+  const selectedOptionRefs = Object.fromEntries(
+    links.questions
+      .map((question) => {
+        const generationValue = generation[question.key];
+        if (typeof generationValue !== "string" || generationValue.trim().length === 0) {
+          return null;
+        }
+        const selected = question.options.find(
+          (option) => option.value === generationValue || option.generation_value === generationValue
+        );
+        if (!selected?.refs) {
+          return null;
+        }
+        return [
+          question.key,
+          {
+            value: selected.value,
+            plugins: selected.refs.plugins ?? [],
+            libraries: selected.refs.libraries ?? [],
+            packages: selected.refs.packages ?? [],
+            docs: selected.refs.docs ?? [],
+          },
+        ] as const;
+      })
+      .filter((entry): entry is readonly [string, {
+        value: string;
+        plugins: string[];
+        libraries: string[];
+        packages: string[];
+        docs: string[];
+      }] => entry !== null)
+  );
+
+  return {
+    framework: typeof platformDef.framework === "string" ? platformDef.framework : null,
+    language: typeof platformDef.language === "string" ? platformDef.language : null,
+    min_version: typeof platformDef.min_version === "string" ? platformDef.min_version : null,
+    min_sdk: typeof platformDef.min_sdk === "number" ? platformDef.min_sdk : null,
+    target_sdk: typeof platformDef.target_sdk === "number" ? platformDef.target_sdk : null,
+    generation,
+    stack,
+    dependency_guidance: {
+      anchor_refs_only: true,
+      notes: [
+        "Selected option refs are anchor dependencies and setup references, not a complete dependency manifest.",
+        "Add any supporting runtime, build, plugin, repository, annotation-processing, and dev/test dependencies required by the current platform/framework setup.",
+        "Resolve exact versions, compatibility, and project wiring from current platform documentation instead of relying on stale memory.",
+      ],
+    },
+    selected_option_refs: selectedOptionRefs,
+    dependencies,
+  };
+}
+
+function hasApiEndpoints(manifest: Record<string, any>): boolean {
+  const endpoints = manifest.api?.endpoints;
+  return typeof endpoints === "object" && endpoints !== null && Object.keys(endpoints).length > 0;
+}
+
+const KNOWN_WEB_FRAMEWORKS = new Set(["react", "vue", "svelte"]);
+
+function isKnownWebFramework(framework: string | null): boolean {
+  return framework !== null && KNOWN_WEB_FRAMEWORKS.has(framework);
+}
+
+function resolveBackendRoot(projectDir: string, manifest: Record<string, any>): string | null {
+  const backendRoot = manifest.generation?.code_roots?.backend;
+  if (typeof backendRoot !== "string" || backendRoot.trim().length === 0) {
+    return null;
+  }
+  return resolve(projectDir, backendRoot);
 }
 
 function categorizeSpecFile(relPath: string): string {
@@ -119,27 +360,16 @@ function walkFiles(root: string, files: string[], depth = 0): void {
   }
 }
 
+const SEARCHABLE_EXTENSIONS = new Set([
+  ".ts", ".tsx", ".js", ".jsx", ".json",
+  ".swift", ".kt", ".kts", ".xml",
+  ".css", ".scss", ".md", ".plist",
+  ".yaml", ".yml", ".strings",
+]);
+
 function isSearchableFile(filePath: string): boolean {
   if (basename(filePath) === ".openuispec-state.json") return false;
-  const ext = extname(filePath).toLowerCase();
-  return new Set([
-    ".ts",
-    ".tsx",
-    ".js",
-    ".jsx",
-    ".json",
-    ".swift",
-    ".kt",
-    ".kts",
-    ".xml",
-    ".css",
-    ".scss",
-    ".md",
-    ".plist",
-    ".yaml",
-    ".yml",
-    ".strings",
-  ]).has(ext);
+  return SEARCHABLE_EXTENSIONS.has(extname(filePath).toLowerCase());
 }
 
 function normalizeTerm(term: string): string | null {
@@ -241,6 +471,371 @@ function buildCategoryNotes(category: string, target: string): string[] {
   }
 }
 
+function buildBootstrapNotes(category: string, target: string, specStatus: string | null): string[] {
+  const notes = buildCategoryNotes(category, target);
+  if (specStatus === "stub") {
+    notes.unshift("This spec file is marked stub, so treat it as incomplete guidance during first-time generation.");
+  } else if (specStatus === "draft") {
+    notes.unshift("This spec file is draft quality. Generate conservatively and expect follow-up refinement.");
+  } else if (specStatus === "ready") {
+    notes.unshift("This spec file is ready and should be implemented in the initial target output.");
+  }
+  return notes;
+}
+
+function generationRules(target: string, outputDir: string, manifest: Record<string, any>): string[] {
+  const outputFormat = manifest.generation?.output_format?.[target] ?? {};
+  const rules = [
+    "Read openuispec.yaml first, then follow the referenced spec files instead of inventing structure from memory.",
+    "Implement every ready or draft screen and flow in the target output; treat stub screens and flows as incomplete guidance.",
+    "Apply token files, locale resources, contracts, and platform overrides together so the generated target is internally consistent.",
+    "Do not leave unresolved locale keys, token references, or placeholder assets in the generated UI.",
+    `Write the generated ${target} output under ${outputDir}.`,
+    `After the first accepted ${target} output exists, run \`openuispec drift --snapshot --target ${target}\` to baseline it.`,
+  ];
+
+  if (outputFormat.framework || outputFormat.language) {
+    rules.unshift(
+      `Target output must follow ${outputFormat.language ?? "the configured language"} / ${outputFormat.framework ?? "the configured framework"}.`
+    );
+  }
+
+  return rules;
+}
+
+function localizationConstraints(
+  target: string,
+  platformConfig?: Pick<PreparePlatformConfig, "framework">
+): PrepareLocalizationConstraints {
+  switch (target) {
+    case "ios":
+      return {
+        must_use_platform_native_i18n: true,
+        forbid_in_memory_string_maps: true,
+        runtime_resources: [
+          "Bundle-backed locale resources under Resources/<locale>.lproj/Localizable.strings",
+        ],
+        required_files: [
+          "Resources/en.lproj/Localizable.strings",
+          "Resources/<other-locale>.lproj/Localizable.strings",
+        ],
+        lookup_module_guidance:
+          "Use SwiftUI/Foundation localization backed by bundle resources, not inline dictionaries or generated in-memory maps.",
+        notes: [
+          "Localized strings must resolve through the app bundle at runtime.",
+          "Do not hardcode locale maps inside views, models, or app support files.",
+        ],
+      };
+    case "android":
+      return {
+        must_use_platform_native_i18n: true,
+        forbid_in_memory_string_maps: true,
+        runtime_resources: [
+          "Android string resources under app/src/main/res/values/strings.xml and locale-specific values-*/strings.xml",
+        ],
+        required_files: [
+          "app/src/main/res/values/strings.xml",
+          "app/src/main/res/values-<locale>/strings.xml",
+        ],
+        lookup_module_guidance:
+          "Use Android string resources with stringResource/getString lookups, not Kotlin in-memory maps or constants tables.",
+        notes: [
+          "Localized resources must be packaged under res/values* so they participate in Android resource resolution.",
+          "Do not leave locale content embedded inside composable files or support classes.",
+        ],
+      };
+    case "web": {
+      const fw = platformConfig?.framework;
+      if (fw && !isKnownWebFramework(fw)) {
+        return {
+          must_use_platform_native_i18n: true,
+          forbid_in_memory_string_maps: true,
+          runtime_resources: [
+            "File-backed locale resources such as src/locales/<locale>.json or framework-native message modules",
+          ],
+          required_files: [
+            "src/locales/<locale>.json or equivalent file-backed locale resources",
+            "A dedicated i18n module/provider wired through the selected web framework",
+          ],
+          lookup_module_guidance:
+            "Use file-backed locale resources with a dedicated i18n module/provider, not inline maps in the root app shell, route modules, or screen/component files.",
+          notes: [
+            `The configured web framework (${fw}) is not a built-in preset, so this guidance stays framework-agnostic.`,
+            "Locale files must be imported from dedicated resource files, not defined inline in UI components.",
+          ],
+        };
+      }
+      if (fw === "vue") {
+        return {
+          must_use_platform_native_i18n: true,
+          forbid_in_memory_string_maps: true,
+          runtime_resources: [
+            "File-backed locale resources such as src/locales/<locale>.json loaded through vue-i18n",
+          ],
+          required_files: [
+            "src/locales/<locale>.json or equivalent file-backed locale resources",
+            "src/i18n.ts or equivalent vue-i18n setup module",
+          ],
+          lookup_module_guidance:
+            "Use vue-i18n with file-backed locale resources, not inline string maps in App.vue or component files.",
+          notes: [
+            "Locale files must be imported from dedicated resource files, not defined inline in Vue components.",
+            "The generated web app should support locale fallback through vue-i18n rather than ad hoc object lookups.",
+          ],
+        };
+      }
+      if (fw === "svelte") {
+        return {
+          must_use_platform_native_i18n: true,
+          forbid_in_memory_string_maps: true,
+          runtime_resources: [
+            "File-backed locale resources such as src/lib/locales/<locale>.json or SvelteKit i18n modules",
+          ],
+          required_files: [
+            "src/lib/locales/<locale>.json or equivalent file-backed locale resources",
+            "src/lib/i18n.ts or equivalent dedicated i18n module",
+          ],
+          lookup_module_guidance:
+            "Use file-backed locale resources with a dedicated i18n module, not inline string maps in +layout.svelte, +page.svelte, or component files.",
+          notes: [
+            "Locale files must be imported from dedicated resource files under src/lib/, not defined inline in Svelte components.",
+            "The generated web app should support locale fallback through the i18n module rather than ad hoc object lookups.",
+          ],
+        };
+      }
+      return {
+        must_use_platform_native_i18n: true,
+        forbid_in_memory_string_maps: true,
+        runtime_resources: [
+          "File-backed locale resources such as src/locales/<locale>.json or generated message modules",
+        ],
+        required_files: [
+          "src/locales/<locale>.json or equivalent file-backed locale resources",
+          "src/i18n.ts or equivalent dedicated i18n module",
+        ],
+        lookup_module_guidance:
+          "Use file-backed locale resources with a dedicated i18n module/provider, not a giant in-memory map inside App.tsx or screen/component files.",
+        notes: [
+          "Locale files must be imported from dedicated resource files, not defined inline in UI components.",
+          "The generated web app should support locale fallback through the i18n module rather than ad hoc object lookups.",
+        ],
+      };
+    }
+    default:
+      return {
+        must_use_platform_native_i18n: true,
+        forbid_in_memory_string_maps: true,
+        runtime_resources: ["Use target-native runtime localization resources."],
+        required_files: ["Create file-backed locale resources for each supported locale."],
+        lookup_module_guidance:
+          "Use the target's native localization system instead of inline string maps.",
+        notes: [],
+      };
+  }
+}
+
+function fileStructureConstraints(
+  target: string,
+  platformConfig?: Pick<PreparePlatformConfig, "framework">
+): PrepareFileStructureConstraints {
+  switch (target) {
+    case "ios":
+      return {
+        forbid_single_file_output: true,
+        required_directories: [
+          "Sources/<Project>/App",
+          "Sources/<Project>/Screens",
+          "Sources/<Project>/Components",
+          "Sources/<Project>/Models",
+          "Sources/<Project>/Support",
+          "Resources",
+        ],
+        screen_split_rule: "Generate one primary screen/view per file under Sources/<Project>/Screens.",
+        component_split_rule: "Place reusable UI primitives and shared subviews under Sources/<Project>/Components instead of keeping them in a monolithic screen file.",
+        notes: [
+          "The app entry file may stay separate, but it must not contain the full app implementation.",
+          "Models, support logic, and screens should live in separate files and folders.",
+        ],
+      };
+    case "android":
+      return {
+        forbid_single_file_output: true,
+        required_directories: [
+          "app/src/main/java/<package>/ui/screens",
+          "app/src/main/java/<package>/ui/components",
+          "app/src/main/java/<package>/model",
+          "app/src/main/java/<package>/support",
+          "app/src/main/res",
+        ],
+        screen_split_rule: "Generate one primary screen composable file per screen under ui/screens.",
+        component_split_rule: "Put reusable composables under ui/components and keep models/support logic out of screen files.",
+        notes: [
+          "Do not place every screen, component, and model into a single Kotlin source file.",
+          "Resource XML, models, and UI code should remain separated.",
+        ],
+      };
+    case "web": {
+      const fw = platformConfig?.framework;
+      if (fw && !isKnownWebFramework(fw)) {
+        return {
+          forbid_single_file_output: true,
+          required_directories: [
+            "src/routes or framework-appropriate screen modules",
+            "src/components",
+            "src/locales or generated messages",
+            "src/state, src/store, or framework-specific state modules",
+            "src",
+          ],
+          screen_split_rule:
+            "Generate one primary route/screen module per screen in the framework-appropriate location rather than embedding the entire app in a single root file.",
+          component_split_rule:
+            "Put reusable components in dedicated component modules and keep state/i18n/helpers in separate support files.",
+          notes: [
+            `The configured web framework (${fw}) is not a built-in preset, so file layout guidance is framework-agnostic.`,
+            "The root app shell may compose providers and routing, but it must not contain the entire generated application.",
+          ],
+        };
+      }
+      if (fw === "vue") {
+        return {
+          forbid_single_file_output: true,
+          required_directories: [
+            "src/views or src/pages",
+            "src/components",
+            "src/locales",
+            "src/stores",
+            "src",
+          ],
+          screen_split_rule: "Generate one Vue SFC per screen under src/views rather than embedding all screens in App.vue.",
+          component_split_rule: "Put reusable components under src/components and keep stores/i18n helpers in separate modules.",
+          notes: [
+            "App.vue may compose the app shell with router-view, but it must not contain the entire generated application.",
+            "Pinia stores, composables, and locale resources should live outside view/component files.",
+          ],
+        };
+      }
+      if (fw === "svelte") {
+        return {
+          forbid_single_file_output: true,
+          required_directories: [
+            "src/routes",
+            "src/lib/components",
+            "src/lib/locales",
+            "src/lib/stores",
+            "src/lib",
+          ],
+          screen_split_rule: "Generate one +page.svelte per screen under src/routes following SvelteKit file-based routing.",
+          component_split_rule: "Put reusable components under src/lib/components and keep stores/i18n helpers in src/lib/.",
+          notes: [
+            "+layout.svelte may compose the app shell, but it must not contain the entire generated application.",
+            "Svelte stores, helpers, and locale resources should live under src/lib/ outside route files.",
+          ],
+        };
+      }
+      return {
+        forbid_single_file_output: true,
+        required_directories: [
+          "src/screens",
+          "src/components",
+          "src/locales or src/generated",
+          "src/state or src/store",
+          "src",
+        ],
+        screen_split_rule: "Generate one screen module per screen under src/screens rather than embedding all screens in App.tsx.",
+        component_split_rule: "Put reusable components under src/components and keep state/i18n helpers in separate modules.",
+        notes: [
+          "App.tsx may compose the app shell, but it must not contain the entire generated application.",
+          "Shared state, helpers, and generated resources should live outside screen/component files.",
+        ],
+      };
+    }
+    default:
+      return {
+        forbid_single_file_output: true,
+        required_directories: ["Create separate directories for screens, components, resources, and support code."],
+        screen_split_rule: "Generate one screen per file.",
+        component_split_rule: "Keep reusable components separate from screens.",
+        notes: [],
+      };
+  }
+}
+
+function generationConstraints(target: string, platformConfig: PreparePlatformConfig): PrepareGenerationConstraints {
+  return {
+    localization: localizationConstraints(target, platformConfig),
+    file_structure: fileStructureConstraints(target, platformConfig),
+    platform_setup: {
+      refresh_target_platform_knowledge: true,
+      notes: [
+        `Refresh current ${target} platform/framework setup guidance before generation instead of relying on stale memory.`,
+        "Check current project scaffolding, resource wiring, navigation APIs, packaging rules, and other toolchain-sensitive conventions for this target.",
+      ],
+    },
+  };
+}
+
+const PRESENTATION_ONLY_KEYS = new Set(["naming", "bundler", "css"]);
+
+function requiredPlatformDecisionKeys(target: string): string[] {
+  return platformStackKeys(target).filter((key) => !PRESENTATION_ONLY_KEYS.has(key));
+}
+
+function missingPlatformDecisions(target: string, platformDef: Record<string, any>): string[] {
+  const generation = platformDef.generation ?? {};
+  return requiredPlatformDecisionKeys(target).filter((key) => {
+    const value = generation[key];
+    return typeof value !== "string" || value.trim().length === 0;
+  });
+}
+
+function referenceExamples(): string[] {
+  const packageRoot = resolvePackageRoot();
+  const candidates = [
+    join(packageRoot, "README.md"),
+    join(packageRoot, "spec", "openuispec-v0.1.md"),
+    join(packageRoot, "examples", "taskflow", "openuispec"),
+    join(packageRoot, "schema"),
+  ];
+
+  return candidates.filter((candidate) => existsSync(candidate));
+}
+
+function generationWarnings(target: string, platformConfig: PreparePlatformConfig): string[] {
+  const warnings: string[] = [];
+
+  for (const [key, value] of Object.entries(platformConfig.stack)) {
+    if (!PRESENTATION_ONLY_KEYS.has(key) && !platformConfig.selected_option_refs[key]) {
+      warnings.push(
+        `The configured ${target} ${key} value "${value}" is custom or not covered by the preset catalog, so automatic dependency guidance is unavailable for that choice.`
+      );
+    }
+  }
+
+  if (target === "web" && platformConfig.framework && !isKnownWebFramework(platformConfig.framework)) {
+    warnings.push(
+      `The configured web framework "${platformConfig.framework}" is custom, so bootstrap generation constraints are framework-agnostic instead of React-specific.`
+    );
+  }
+
+  return warnings;
+}
+
+function bootstrapSpecFiles(projectDir: string, target: string): BootstrapSpecFile[] {
+  return discoverSpecFiles(projectDir)
+    .map((filePath) => {
+      const relPath = relative(projectDir, filePath);
+      const specStatus = hasStatusSemantics(relPath) ? readStatus(filePath) : null;
+      const category = categorizeSpecFile(relPath);
+      return {
+        spec_file: relPath,
+        category,
+        spec_status: specStatus,
+        notes: buildBootstrapNotes(category, target, specStatus),
+      };
+    })
+    .sort((a, b) => a.category.localeCompare(b.category) || a.spec_file.localeCompare(b.spec_file));
+}
+
 function explanationItems(
   explanation: ExplainResult | undefined,
   outputDir: string,
@@ -264,7 +859,19 @@ function printReport(result: PrepareResult): void {
   console.log("==================");
   console.log(`Project: ${result.project}`);
   console.log(`Target: ${result.target}`);
+  console.log(`Mode: ${result.mode}`);
   console.log(`Output: ${result.output_dir}`);
+  if (result.backend_root) {
+    console.log(`Backend: ${result.backend_root}`);
+  }
+
+  const platformLabel = [result.platform_config.language, result.platform_config.framework]
+    .filter(Boolean)
+    .join(" / ");
+  if (platformLabel) {
+    console.log(`Platform: ${platformLabel}`);
+  }
+
   if (result.baseline.commit) {
     const shortCommit = result.baseline.commit.slice(0, 12);
     const branch = result.baseline.branch ? ` on ${result.baseline.branch}` : "";
@@ -275,7 +882,87 @@ function printReport(result: PrepareResult): void {
     `Summary: ${result.summary.changed} changed, ${result.summary.added} added, ${result.summary.removed} removed`
   );
 
-  if (!result.changes_available) {
+  if (Object.keys(result.platform_config.stack).length > 0 || result.platform_config.dependencies.length > 0) {
+    console.log("\nPlatform Stack");
+    for (const [key, value] of Object.entries(result.platform_config.stack)) {
+      console.log(`  ${key}: ${value}`);
+    }
+    if (Object.keys(result.platform_config.selected_option_refs).length > 0) {
+      console.log("  selected option refs:");
+      for (const [key, refs] of Object.entries(result.platform_config.selected_option_refs)) {
+        console.log(`    - ${key}: ${refs.value}`);
+      }
+    }
+    if (result.platform_config.dependency_guidance.notes.length > 0) {
+      console.log("  dependency guidance:");
+      for (const note of result.platform_config.dependency_guidance.notes) {
+        console.log(`    - ${note}`);
+      }
+    }
+    if (result.platform_config.dependencies.length > 0) {
+      console.log("  dependencies:");
+      for (const dependency of result.platform_config.dependencies) {
+        console.log(`    - ${dependency}`);
+      }
+    }
+  }
+
+  if (result.mode === "bootstrap" && result.bootstrap) {
+    console.log("\nBootstrap Bundle");
+    console.log(`  output exists: ${result.bootstrap.output_exists ? "yes" : "no"}`);
+    console.log(`  generation ready: ${result.bootstrap.generation_ready ? "yes" : "no"}`);
+
+    if (result.bootstrap.missing_platform_decisions.length > 0) {
+      console.log("  missing platform decisions:");
+      for (const key of result.bootstrap.missing_platform_decisions) {
+        console.log(`    - ${key}`);
+      }
+    }
+
+    if (result.bootstrap.generation_warnings.length > 0) {
+      console.log("  generation warnings:");
+      for (const warning of result.bootstrap.generation_warnings) {
+        console.log(`    - ${warning}`);
+      }
+    }
+
+    if (result.code_roots.length > 0) {
+      console.log("  code roots:");
+      for (const root of result.code_roots) {
+        console.log(`    - ${root}`);
+      }
+    }
+
+    console.log("  spec files:");
+    for (const file of result.bootstrap.spec_files) {
+      const statusLabel = file.spec_status ? ` [${file.spec_status}]` : "";
+      console.log(`    - ${file.spec_file} (${file.category})${statusLabel}`);
+    }
+
+    console.log("  generation rules:");
+    for (const rule of result.bootstrap.generation_rules) {
+      console.log(`    - ${rule}`);
+    }
+
+    console.log("  generation constraints:");
+    console.log(
+      `    - localization: native i18n required = ${result.bootstrap.generation_constraints.localization.must_use_platform_native_i18n ? "yes" : "no"}`
+    );
+    console.log(
+      `    - localization: forbid in-memory maps = ${result.bootstrap.generation_constraints.localization.forbid_in_memory_string_maps ? "yes" : "no"}`
+    );
+    console.log(
+      `    - file structure: forbid single-file output = ${result.bootstrap.generation_constraints.file_structure.forbid_single_file_output ? "yes" : "no"}`
+    );
+    console.log(
+      `    - platform setup: refresh target knowledge = ${result.bootstrap.generation_constraints.platform_setup.refresh_target_platform_knowledge ? "yes" : "no"}`
+    );
+
+    console.log("  references:");
+    for (const ref of result.bootstrap.reference_examples) {
+      console.log(`    - ${ref}`);
+    }
+  } else if (!result.changes_available) {
     console.log(`\n${result.explanation_note ?? "No semantic changes available."}`);
   } else if (result.items.length === 0) {
     console.log("\nNo target updates are currently required from spec drift.");
@@ -318,13 +1005,97 @@ function printReport(result: PrepareResult): void {
   }
 }
 
-function buildPrepareResult(target: string): PrepareResult {
-  const cwd = process.cwd();
+function buildBootstrapPrepareResult(cwd: string, target: string): PrepareResult {
+  const projectDir = findProjectDir(cwd);
+  const projectName = readProjectName(projectDir);
+  const outputDir = resolveOutputDir(projectDir, projectName, target);
+  const manifest = readManifest(projectDir);
+  const platformDef = readPlatformDefinition(projectDir, manifest, target);
+  const platformConfig = buildPlatformConfig(target, platformDef);
+  const outputFormat = manifest.generation?.output_format?.[target] ?? {};
+  const codeRoots = suggestCodeRoots(target, outputDir);
+  const missingDecisions = missingPlatformDecisions(target, platformDef);
+  const backendRoot = resolveBackendRoot(projectDir, manifest);
+  const backendContextRequired = hasApiEndpoints(manifest);
+  const backendContextReady = !backendContextRequired || (backendRoot !== null && existsSync(backendRoot));
+
+  const nextSteps = [
+    ...(!backendContextReady
+      ? [
+          "Set `generation.code_roots.backend` in openuispec.yaml to the backend folder used to implement the declared API endpoints.",
+        ]
+      : []),
+    ...(missingDecisions.length > 0
+      ? [
+          `Run \`openuispec configure-target ${target}\` to choose the missing ${target} stack defaults before generation.`,
+        ]
+      : []),
+    `Read the manifest and referenced ${target} spec files from this bundle before generating target code.`,
+    ...(missingDecisions.length === 0
+      ? [
+          `Generate the initial ${target} implementation in ${outputDir}.`,
+          "Build or run the generated target and review screens, flows, and localization wiring.",
+          `After the first accepted ${target} output exists, run \`openuispec drift --snapshot --target ${target}\` to baseline it.`,
+        ]
+      : []),
+  ];
+
+  if (outputFormat.framework || outputFormat.language) {
+    nextSteps.unshift(
+      `Target mapping context: ${outputFormat.language ?? "unknown language"} / ${outputFormat.framework ?? "unknown framework"}.`
+    );
+  }
+
+  return {
+    mode: "bootstrap",
+    project: projectName,
+    target,
+    output_dir: outputDir,
+    backend_root: backendRoot,
+    platform_config: platformConfig,
+    code_roots: codeRoots,
+    baseline: {
+      kind: null,
+      commit: null,
+      branch: null,
+    },
+    summary: {
+      changed: 0,
+      added: 0,
+      removed: 0,
+    },
+    changes_available: false,
+    explanation_note: "No snapshot exists yet. This is a first-time generation bundle.",
+    items: [],
+    bootstrap: {
+      output_exists: existsSync(outputDir),
+      generation_ready: missingDecisions.length === 0 && backendContextReady,
+      missing_platform_decisions: missingDecisions,
+      includes: manifest.includes ?? {},
+      output_format: outputFormat,
+      i18n: {
+        default_locale: manifest.i18n?.default_locale ?? null,
+        supported_locales: manifest.i18n?.supported_locales ?? [],
+      },
+      spec_files: bootstrapSpecFiles(projectDir, target),
+      generation_rules: generationRules(target, outputDir, manifest),
+      generation_constraints: generationConstraints(target, platformConfig),
+      generation_warnings: generationWarnings(target, platformConfig),
+      reference_examples: referenceExamples(),
+    },
+    next_steps: nextSteps,
+  };
+}
+
+function buildUpdatePrepareResult(cwd: string, target: string): PrepareResult {
   const { projectDir, projectName, result } = loadTargetDrift(cwd, target, false, true);
   const outputDir = resolveOutputDir(projectDir, projectName, target);
   const codeRoots = suggestCodeRoots(target, outputDir);
   const manifest = readManifest(projectDir);
+  const platformDef = readPlatformDefinition(projectDir, manifest, target);
+  const platformConfig = buildPlatformConfig(target, platformDef);
   const outputFormat = manifest.generation?.output_format?.[target] ?? {};
+  const backendRoot = resolveBackendRoot(projectDir, manifest);
   const items = explanationItems(result.explanation, outputDir, codeRoots, target);
 
   const nextSteps = [
@@ -341,9 +1112,12 @@ function buildPrepareResult(target: string): PrepareResult {
   }
 
   return {
+    mode: "update",
     project: projectName,
     target,
     output_dir: outputDir,
+    backend_root: backendRoot,
+    platform_config: platformConfig,
     code_roots: codeRoots,
     baseline: {
       kind: result.state.baseline?.kind ?? null,
@@ -360,6 +1134,18 @@ function buildPrepareResult(target: string): PrepareResult {
     items,
     next_steps: nextSteps,
   };
+}
+
+function buildPrepareResult(target: string): PrepareResult {
+  const cwd = process.cwd();
+  const projectDir = findProjectDir(cwd);
+  const projectName = readProjectName(projectDir);
+  const outputDir = resolveOutputDir(projectDir, projectName, target);
+  const statePath = join(outputDir, ".openuispec-state.json");
+  if (!existsSync(statePath)) {
+    return buildBootstrapPrepareResult(cwd, target);
+  }
+  return buildUpdatePrepareResult(cwd, target);
 }
 
 export function runPrepare(argv: string[]): void {

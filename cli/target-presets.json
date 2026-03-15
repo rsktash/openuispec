@@ -1,0 +1,746 @@
+{
+  "android": {
+    "framework": "compose",
+    "framework_prompt": "Android UI framework",
+    "framework_options": [
+      "compose"
+    ],
+    "language": "kotlin",
+    "min_sdk": 26,
+    "target_sdk": 35,
+    "generation_defaults": {
+      "naming": "Kotlin conventions"
+    },
+    "base_dependencies": [
+      "material3",
+      "activity-compose"
+    ],
+    "questions": [
+      {
+        "key": "architecture",
+        "prompt": "Android architecture",
+        "recommended": "decompose",
+        "options": [
+          {
+            "value": "decompose",
+            "generation_value": "decompose",
+            "dependencies": [
+              "decompose",
+              "decompose-compose",
+              "essenty-lifecycle",
+              "essenty-instance-keeper"
+            ],
+            "refs": {
+              "plugins": [
+                "org.jetbrains.kotlin.plugin.compose"
+              ],
+              "libraries": [
+                "com.arkivanov.decompose:decompose:{latest}",
+                "com.arkivanov.decompose:extensions-compose-android:{latest}",
+                "com.arkivanov.essenty:lifecycle-android:{latest}",
+                "com.arkivanov.essenty:instance-keeper-android:{latest}"
+              ],
+              "docs": [
+                "https://github.com/arkivanov/Decompose",
+                "https://github.com/arkivanov/Essenty"
+              ]
+            }
+          },
+          {
+            "value": "plain_compose",
+            "generation_value": "plain compose",
+            "dependencies": [
+              "navigation-compose",
+              "lifecycle-runtime-compose"
+            ],
+            "refs": {
+              "plugins": [
+                "org.jetbrains.kotlin.plugin.compose"
+              ],
+              "libraries": [
+                "androidx.navigation:navigation-compose:{latest}",
+                "androidx.lifecycle:lifecycle-runtime-compose:{latest}"
+              ],
+              "docs": [
+                "https://developer.android.com/guide/navigation",
+                "https://developer.android.com/jetpack/androidx/releases/lifecycle"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "key": "state",
+        "prompt": "Android state management",
+        "recommended": "mvikotlin",
+        "options": [
+          {
+            "value": "mvikotlin",
+            "generation_value": "mvikotlin",
+            "dependencies": [
+              "mvikotlin",
+              "mvikotlin-main",
+              "mvikotlin-logging"
+            ],
+            "refs": {
+              "plugins": [],
+              "libraries": [
+                "com.arkivanov.mvikotlin:mvikotlin:{latest}",
+                "com.arkivanov.mvikotlin:mvikotlin-main:{latest}",
+                "com.arkivanov.mvikotlin:mvikotlin-logging:{latest}"
+              ],
+              "docs": [
+                "https://github.com/arkivanov/MVIKotlin"
+              ]
+            }
+          },
+          {
+            "value": "viewmodel",
+            "generation_value": "viewmodel",
+            "dependencies": [
+              "lifecycle-viewmodel-compose",
+              "lifecycle-runtime-compose",
+              "kotlinx-coroutines-core"
+            ],
+            "refs": {
+              "plugins": [],
+              "libraries": [
+                "androidx.lifecycle:lifecycle-viewmodel-compose:{latest}",
+                "androidx.lifecycle:lifecycle-runtime-compose:{latest}",
+                "org.jetbrains.kotlinx:kotlinx-coroutines-core:{latest}"
+              ],
+              "docs": [
+                "https://developer.android.com/jetpack/androidx/releases/lifecycle",
+                "https://github.com/Kotlin/kotlinx.coroutines"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "key": "preferences",
+        "prompt": "Android preferences storage",
+        "recommended": "datastore",
+        "options": [
+          {
+            "value": "datastore",
+            "generation_value": "datastore",
+            "dependencies": [
+              "datastore-preferences",
+              "datastore-core"
+            ],
+            "refs": {
+              "plugins": [],
+              "libraries": [
+                "androidx.datastore:datastore-preferences:{latest}",
+                "androidx.datastore:datastore-core:{latest}"
+              ],
+              "docs": [
+                "https://developer.android.com/topic/libraries/architecture/datastore"
+              ]
+            }
+          },
+          {
+            "value": "none",
+            "generation_value": "none",
+            "dependencies": [],
+            "refs": {
+              "plugins": [],
+              "libraries": [],
+              "docs": []
+            }
+          }
+        ]
+      },
+      {
+        "key": "database",
+        "prompt": "Android database storage",
+        "recommended": "none",
+        "options": [
+          {
+            "value": "sqldelight",
+            "generation_value": "sqldelight",
+            "dependencies": [
+              "sqldelight",
+              "sqldelight-coroutines"
+            ],
+            "refs": {
+              "plugins": [
+                "app.cash.sqldelight"
+              ],
+              "libraries": [
+                "app.cash.sqldelight:android-driver:{latest}",
+                "app.cash.sqldelight:coroutines-extensions:{latest}"
+              ],
+              "docs": [
+                "https://github.com/sqldelight/sqldelight"
+              ]
+            }
+          },
+          {
+            "value": "room",
+            "generation_value": "room",
+            "dependencies": [
+              "room-runtime",
+              "room-ktx"
+            ],
+            "refs": {
+              "plugins": [
+                "androidx.room"
+              ],
+              "libraries": [
+                "androidx.room:room-runtime:{latest}",
+                "androidx.room:room-ktx:{latest}"
+              ],
+              "docs": [
+                "https://developer.android.com/training/data-storage/room"
+              ]
+            }
+          },
+          {
+            "value": "none",
+            "generation_value": "none",
+            "dependencies": [],
+            "refs": {
+              "plugins": [],
+              "libraries": [],
+              "docs": []
+            }
+          }
+        ]
+      },
+      {
+        "key": "di",
+        "prompt": "Android dependency injection",
+        "recommended": "metro",
+        "options": [
+          {
+            "value": "metro",
+            "generation_value": "metro",
+            "dependencies": [
+              "metro",
+              "metro-compose"
+            ],
+            "refs": {
+              "plugins": [],
+              "libraries": [
+                "dev.zacsweers.metro:metro:{latest}",
+                "dev.zacsweers.metro:metro-compose:{latest}"
+              ],
+              "docs": [
+                "https://github.com/ZacSweers/metro"
+              ]
+            }
+          },
+          {
+            "value": "koin",
+            "generation_value": "koin",
+            "dependencies": [
+              "koin-android",
+              "koin-compose"
+            ],
+            "refs": {
+              "plugins": [],
+              "libraries": [
+                "io.insert-koin:koin-android:{latest}",
+                "io.insert-koin:koin-compose:{latest}"
+              ],
+              "docs": [
+                "https://insert-koin.io/docs/quickstart/android/",
+                "https://insert-koin.io/docs/reference/koin-compose/compose/"
+              ]
+            }
+          },
+          {
+            "value": "hilt",
+            "generation_value": "hilt",
+            "dependencies": [
+              "hilt-android",
+              "hilt-navigation-compose"
+            ],
+            "refs": {
+              "plugins": [
+                "com.google.dagger.hilt.android"
+              ],
+              "libraries": [
+                "com.google.dagger:hilt-android:{latest}",
+                "androidx.hilt:hilt-navigation-compose:{latest}"
+              ],
+              "docs": [
+                "https://developer.android.com/training/dependency-injection/hilt-android",
+                "https://developer.android.com/training/dependency-injection/hilt-jetpack"
+              ]
+            }
+          },
+          {
+            "value": "none",
+            "generation_value": "none",
+            "dependencies": [],
+            "refs": {
+              "plugins": [],
+              "libraries": [],
+              "docs": []
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "web": {
+    "framework": "react",
+    "framework_prompt": "Web UI framework",
+    "framework_options": [
+      "react",
+      "vue",
+      "svelte"
+    ],
+    "language": "typescript",
+    "generation_defaults": {
+      "bundler": "vite",
+      "naming": "framework conventions"
+    },
+    "base_dependencies": [
+      "vite",
+      "typescript"
+    ],
+    "framework_dependencies": {
+      "react": ["react", "react-dom"],
+      "vue": ["vue"],
+      "svelte": ["svelte", "@sveltejs/kit"]
+    },
+    "questions": [
+      {
+        "key": "runtime",
+        "prompt": "Web runtime/server integration",
+        "recommended": "frontend_only",
+        "options": [
+          {
+            "value": "frontend_only",
+            "generation_value": "frontend_only",
+            "dependencies": [],
+            "refs": {
+              "packages": [],
+              "docs": []
+            }
+          },
+          {
+            "value": "next",
+            "generation_value": "next",
+            "framework_filter": ["react"],
+            "dependencies": [],
+            "refs": {
+              "packages": [
+                "next@{latest}"
+              ],
+              "docs": [
+                "https://nextjs.org/docs"
+              ]
+            }
+          },
+          {
+            "value": "hono",
+            "generation_value": "hono",
+            "dependencies": [],
+            "refs": {
+              "packages": [
+                "hono@{latest}"
+              ],
+              "docs": [
+                "https://hono.dev/"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "key": "css",
+        "prompt": "Web CSS approach",
+        "recommended": "tailwind",
+        "options": [
+          {
+            "value": "tailwind",
+            "generation_value": "tailwind",
+            "dependencies": [
+              "tailwindcss"
+            ],
+            "refs": {
+              "packages": [
+                "tailwindcss@{latest}"
+              ],
+              "docs": [
+                "https://tailwindcss.com/docs"
+              ]
+            }
+          },
+          {
+            "value": "css_modules",
+            "generation_value": "css_modules",
+            "dependencies": [],
+            "refs": {
+              "packages": [],
+              "docs": []
+            }
+          },
+          {
+            "value": "custom_css",
+            "generation_value": "custom_css",
+            "dependencies": [],
+            "refs": {
+              "packages": [],
+              "docs": []
+            }
+          }
+        ]
+      },
+      {
+        "key": "routing",
+        "prompt": "Web routing",
+        "recommended": "react_router",
+        "options": [
+          {
+            "value": "react_router",
+            "generation_value": "react_router",
+            "framework_filter": ["react"],
+            "dependencies": [
+              "react-router"
+            ],
+            "refs": {
+              "packages": [
+                "react-router@{latest}"
+              ],
+              "docs": [
+                "https://reactrouter.com/"
+              ]
+            }
+          },
+          {
+            "value": "tanstack_router",
+            "generation_value": "tanstack_router",
+            "framework_filter": ["react"],
+            "dependencies": [
+              "@tanstack/react-router"
+            ],
+            "refs": {
+              "packages": [
+                "@tanstack/react-router@{latest}"
+              ],
+              "docs": [
+                "https://tanstack.com/router/docs"
+              ]
+            }
+          },
+          {
+            "value": "vue_router",
+            "generation_value": "vue_router",
+            "framework_filter": ["vue"],
+            "dependencies": [
+              "vue-router"
+            ],
+            "refs": {
+              "packages": [
+                "vue-router@{latest}"
+              ],
+              "docs": [
+                "https://router.vuejs.org/"
+              ]
+            }
+          },
+          {
+            "value": "sveltekit_routing",
+            "generation_value": "sveltekit_routing",
+            "framework_filter": ["svelte"],
+            "dependencies": [],
+            "refs": {
+              "packages": [],
+              "docs": [
+                "https://svelte.dev/docs/kit/routing"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "key": "state",
+        "prompt": "Web state management",
+        "recommended": "zustand",
+        "options": [
+          {
+            "value": "zustand",
+            "generation_value": "zustand",
+            "framework_filter": ["react"],
+            "dependencies": [
+              "zustand"
+            ],
+            "refs": {
+              "packages": [
+                "zustand@{latest}"
+              ],
+              "docs": [
+                "https://zustand.docs.pmnd.rs/"
+              ]
+            }
+          },
+          {
+            "value": "redux",
+            "generation_value": "redux-toolkit",
+            "framework_filter": ["react"],
+            "dependencies": [
+              "@reduxjs/toolkit",
+              "react-redux"
+            ],
+            "refs": {
+              "packages": [
+                "@reduxjs/toolkit@{latest}",
+                "react-redux@{latest}"
+              ],
+              "docs": [
+                "https://redux-toolkit.js.org/",
+                "https://react-redux.js.org/"
+              ]
+            }
+          },
+          {
+            "value": "query_only",
+            "generation_value": "tanstack-query",
+            "framework_filter": ["react"],
+            "dependencies": [
+              "@tanstack/react-query"
+            ],
+            "refs": {
+              "packages": [
+                "@tanstack/react-query@{latest}"
+              ],
+              "docs": [
+                "https://tanstack.com/query/latest"
+              ]
+            }
+          },
+          {
+            "value": "pinia",
+            "generation_value": "pinia",
+            "framework_filter": ["vue"],
+            "dependencies": [
+              "pinia"
+            ],
+            "refs": {
+              "packages": [
+                "pinia@{latest}"
+              ],
+              "docs": [
+                "https://pinia.vuejs.org/"
+              ]
+            }
+          },
+          {
+            "value": "svelte_stores",
+            "generation_value": "svelte_stores",
+            "framework_filter": ["svelte"],
+            "dependencies": [],
+            "refs": {
+              "packages": [],
+              "docs": [
+                "https://svelte.dev/docs/svelte/stores"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "key": "storage_backend",
+        "prompt": "Web storage/backend integration",
+        "recommended": "none",
+        "options": [
+          {
+            "value": "none",
+            "generation_value": "none",
+            "dependencies": [],
+            "refs": {
+              "packages": [],
+              "docs": []
+            }
+          },
+          {
+            "value": "supabase",
+            "generation_value": "supabase",
+            "dependencies": [
+              "@supabase/supabase-js"
+            ],
+            "refs": {
+              "packages": [
+                "@supabase/supabase-js@{latest}"
+              ],
+              "docs": [
+                "https://supabase.com/docs"
+              ]
+            }
+          },
+          {
+            "value": "firebase",
+            "generation_value": "firebase",
+            "dependencies": [
+              "firebase"
+            ],
+            "refs": {
+              "packages": [
+                "firebase@{latest}"
+              ],
+              "docs": [
+                "https://firebase.google.com/docs/web/setup"
+              ]
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "ios": {
+    "framework": "swiftui",
+    "framework_prompt": "iOS UI framework",
+    "framework_options": [
+      "swiftui"
+    ],
+    "language": "swift",
+    "min_version": "17.0",
+    "generation_defaults": {
+      "imports": [
+        "SwiftUI",
+        "Foundation"
+      ],
+      "naming": "Swift conventions"
+    },
+    "base_dependencies": [],
+    "questions": [
+      {
+        "key": "architecture",
+        "prompt": "iOS state/navigation style",
+        "recommended": "native",
+        "options": [
+          {
+            "value": "native",
+            "generation_value": "native swiftui",
+            "dependencies": [],
+            "extra_generation": {
+              "state": "@Observable / @State"
+            },
+            "refs": {
+              "packages": [],
+              "docs": [
+                "https://developer.apple.com/xcode/swiftui/"
+              ]
+            }
+          },
+          {
+            "value": "tca_style",
+            "generation_value": "tca-style",
+            "dependencies": [
+              "swift-composable-architecture"
+            ],
+            "extra_generation": {
+              "state": "tca"
+            },
+            "refs": {
+              "packages": [
+                "pointfreeco/swift-composable-architecture@{latest}"
+              ],
+              "docs": [
+                "https://github.com/pointfreeco/swift-composable-architecture"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "key": "persistence",
+        "prompt": "iOS persistence",
+        "recommended": "swiftdata",
+        "options": [
+          {
+            "value": "swiftdata",
+            "generation_value": "swiftdata",
+            "dependencies": [
+              "swiftdata"
+            ],
+            "refs": {
+              "packages": [
+                "apple:SwiftData"
+              ],
+              "docs": [
+                "https://developer.apple.com/documentation/swiftdata"
+              ]
+            }
+          },
+          {
+            "value": "sqlite",
+            "generation_value": "sqlite",
+            "dependencies": [
+              "sqlite"
+            ],
+            "refs": {
+              "packages": [
+                "stephencelis/SQLite.swift@{latest}"
+              ],
+              "docs": [
+                "https://www.sqlite.org/docs.html"
+              ]
+            }
+          },
+          {
+            "value": "none",
+            "generation_value": "none",
+            "dependencies": [],
+            "refs": {
+              "packages": [],
+              "docs": []
+            }
+          }
+        ]
+      },
+      {
+        "key": "di",
+        "prompt": "iOS dependency injection",
+        "recommended": "none",
+        "options": [
+          {
+            "value": "none",
+            "generation_value": "none",
+            "dependencies": [],
+            "refs": {
+              "packages": [],
+              "docs": []
+            }
+          },
+          {
+            "value": "factory",
+            "generation_value": "factory",
+            "dependencies": [
+              "factory"
+            ],
+            "refs": {
+              "packages": [
+                "hmlongco/Factory@{latest}"
+              ],
+              "docs": [
+                "https://github.com/hmlongco/Factory"
+              ]
+            }
+          },
+          {
+            "value": "custom",
+            "generation_value": "custom",
+            "dependencies": [
+              "custom-di"
+            ],
+            "refs": {
+              "packages": [
+                "custom"
+              ],
+              "docs": [
+                "https://developer.apple.com/documentation/swift"
+              ]
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

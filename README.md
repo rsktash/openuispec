@@ -53,6 +53,7 @@ openuispec init
 ```
 
 This scaffolds a spec directory, starter tokens, and adds rules to `CLAUDE.md` / `AGENTS.md` so AI assistants track spec changes automatically.
+Use `openuispec init --no-configure-targets` if you want to scaffold first and choose target stacks later.
 
 Then hand your spec to any AI code generator:
 
@@ -117,7 +118,7 @@ openuispec/
 │   └── init.ts                         # Project scaffolding + AI rules
 ├── drift/                               # Drift detection (spec change tracking)
 │   └── index.ts                        # Hash-based drift checker
-├── prepare/                             # AI-ready target work bundle generation
+├── prepare/                             # Target work bundle generation
 │   └── index.ts                        # Baseline-aware target preparation
 ├── LICENSE
 └── README.md
@@ -173,18 +174,33 @@ generation:
     web: "../web-ui/"
     android: "../kmp-ui/"
     ios: "../kmp-ui/iosApp/"
+  code_roots:
+    backend: "../api/"
 ```
 
 Paths are relative to `openuispec.yaml`. The `.openuispec-state.json` file is stored inside each output directory and records spec file hashes plus the git baseline commit metadata captured at snapshot time.
+
+If `api.endpoints` are declared, `generation.code_roots.backend` is required. It should point at the backend folder the AI must inspect when generating API clients or wiring request/response behavior.
 
 `openuispec drift --snapshot --target <target>` requires that target output directory to already exist. If it does not, generate the target code first, then snapshot the accepted baseline.
 
 Use the commands like this:
 - `openuispec validate` checks schema correctness
 - `openuispec validate semantic` checks cross-references such as locale keys, formatters, mappers, contracts, icons, navigation targets, and API endpoints
+- `openuispec init --no-configure-targets` scaffolds the spec project without running the target-stack wizard
+- `openuispec configure-target <t>` records target stack choices in `platform/<target>.yaml` using preset defaults, while still allowing custom framework/library values when the project uses something outside the catalog
 - `openuispec drift --target <t> --explain` explains semantic spec changes since that target's accepted baseline
-- `openuispec prepare --target <t>` turns those changes into an AI-ready target update bundle
+- `openuispec prepare --target <t>` builds the target work bundle for either first-time generation or drift-based updates
 - `openuispec status` shows every target's snapshot state, baseline commit, and whether that target is behind the current spec, still needs a baseline, or has not been generated yet
+
+In first-time generation mode, `prepare` also carries target-specific generation constraints such as native localization requirements, multi-file output rules, target folder layout expectations, and a requirement to refresh current platform/framework setup knowledge before code generation.
+
+When target stack choices come from the preset catalog, `prepare --json` also exposes install-oriented refs for the selected options:
+- Android: Gradle plugin ids and library coordinates
+- Web: npm package specs
+- iOS: package identifiers plus docs links
+
+Those refs are anchors, not a full dependency manifest. The AI is expected to add any supporting build, plugin, repository, annotation-processing, runtime, dev, and test dependencies required by the current platform setup.
 
 If a target snapshot was created before baseline metadata was added, `--explain` and `status` will tell you to re-run `openuispec drift --snapshot --target <target>` for that target.
 
@@ -208,7 +224,7 @@ Meaning:
 - `validate semantic` checks cross-reference integrity
 - `status` shows which targets are up to date, need a baseline, or still need generation
 - `drift --explain` shows semantic spec changes since that target's accepted baseline
-- `prepare` packages those changes into an AI/developer work bundle
+- `prepare` packages the target work bundle for AI/developers. It runs in `bootstrap` mode for first-time generation and `update` mode after a target snapshot exists.
 - `drift --snapshot` accepts the updated state after the target UI has been updated and the target output directory exists
 
 Before picking the next platform to update, run:

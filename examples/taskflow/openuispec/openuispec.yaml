@@ -31,6 +31,8 @@ i18n:
 
 generation:
   targets: [ios, android, web]
+  code_roots:
+    backend: "../backend/"
   output_format:
     ios: { language: swift, framework: swiftui, min_version: "17.0" }
     android: { language: kotlin, framework: compose, min_sdk: 26 }

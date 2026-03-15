@@ -60,3 +60,23 @@ test("semantic validate catches broken cross references", () => {
     rmSync(sandbox, { recursive: true, force: true });
   }
 });
+
+test("semantic validate requires backend code root when api endpoints are declared", () => {
+  const sandbox = mkdtempSync(join(tmpdir(), "openuispec-semantic-backend-root-"));
+
+  try {
+    cpSync(join(repoRoot, "examples", "taskflow"), sandbox, { recursive: true });
+
+    const manifestPath = join(sandbox, "openuispec", "openuispec.yaml");
+    const content = readFileSync(manifestPath, "utf-8").replace(
+      /  code_roots:\n    backend: "\.\.\/backend\/"\n/,
+      ""
+    );
+    writeFileSync(manifestPath, content);
+
+    const output = runValidate(sandbox, ["semantic"], true);
+    assert.match(output, /generation\.code_roots\.backend/);
+  } finally {
+    rmSync(sandbox, { recursive: true, force: true });
+  }
+});

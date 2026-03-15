@@ -29,6 +29,8 @@ generation:
   #   ios: "../ios-app/"                  # relative to this file
   #   android: "../android-app/"
   #   web: "../web-ui/"
+  code_roots:
+    backend: "../backend/"
   output_format:
     ios: { language: swift, framework: swiftui, min_version: "17.0" }
     android: { language: kotlin, framework: compose, min_sdk: 26 }

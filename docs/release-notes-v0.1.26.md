@@ -11,7 +11,7 @@ This release expands OpenUISpec as a spec-management and AI-orchestration tool f
   Drift snapshots now record the git baseline commit and branch for each target.
 
 - `openuispec prepare --target <target>`
-  Produces an AI-ready target update bundle with:
+  Produces the target work bundle with:
   - semantic change summary
   - likely code roots
   - candidate target files

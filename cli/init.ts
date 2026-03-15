@@ -15,12 +15,12 @@ import {
   existsSync,
   appendFileSync,
 } from "node:fs";
-import { join, relative, dirname } from "node:path";
+import { join, relative, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 // ── prompts ──────────────────────────────────────────────────────────
 
-async function ask(
+export async function ask(
   rl: ReturnType<typeof createInterface>,
   question: string,
   fallback?: string
@@ -47,12 +47,32 @@ async function askList(
     .filter((s) => options.includes(s));
 }
 
+export async function askChoice(
+  rl: ReturnType<typeof createInterface>,
+  question: string,
+  options: string[],
+  fallback: string
+): Promise<string> {
+  const answer = (await rl.question(`${question} [${options.join(", ")}] (${fallback}): `))
+    .trim()
+    .toLowerCase();
+  if (!answer) return fallback;
+  return options.includes(answer) ? answer : fallback;
+}
+
+async function askYesNo(
+  rl: ReturnType<typeof createInterface>,
+  question: string,
+  fallback: boolean
+): Promise<boolean> {
+  const answer = await askChoice(rl, question, ["yes", "no"], fallback ? "yes" : "no");
+  return answer === "yes";
+}
+
 // ── scaffold ─────────────────────────────────────────────────────────
 
 function ensureDir(path: string): void {
-  if (!existsSync(path)) {
-    mkdirSync(path, { recursive: true });
-  }
+  mkdirSync(path, { recursive: true });
 }
 
 function writeIfMissing(path: string, content: string): boolean {
@@ -85,7 +105,7 @@ function getPackageVersion(): string {
 function manifestTemplate(
   name: string,
   targets: string[],
-  specDir: string
+  options: { withApi: boolean; backendPath: string | null }
 ): string {
   const targetList = targets.join(", ");
   const outputLines = targets
@@ -126,7 +146,9 @@ generation:
   #   ios: "../ios-app/"                  # relative to this file
   #   android: "../android-app/"
   #   web: "../web-ui/"
-  output_format:
+${options.withApi ? `  code_roots:
+    backend: "${options.backendPath}"                # Required when api.endpoints are declared
+` : ""}  output_format:
 ${outputLines}
 
 data_model: {}
@@ -169,7 +191,7 @@ Do NOT guess the file format — skipping this step will produce invalid YAML th
 3. Online: \`https://openuispec.rsteam.uz/llms-full.txt\` (if not installed)
 
 **Reference files inside the package (read in this order):**
-1. \`README.md\` — schema tables, file format reference, root keys
+1. \`README.md\` — schema tables, file format reference, root wrapper keys
 2. \`spec/openuispec-v0.1.md\` — full specification (contracts, layout, expressions, etc.)
 3. \`examples/taskflow/openuispec/\` — complete working example with all file types
 4. \`schema/\` — JSON Schemas for validation
@@ -180,11 +202,16 @@ Do NOT guess the file format — skipping this step will produce invalid YAML th
 openuispec validate             # Validate spec files against schemas
 openuispec validate semantic    # Run semantic cross-reference linting
 openuispec validate screens     # Validate only screens
+openuispec configure-target ${targets[0]} [--defaults] # Configure target stack defaults
 openuispec status               # Show cross-target baseline/drift status
 openuispec drift --target ${targets[0]} --explain   # Explain semantic spec drift
-openuispec prepare --target ${targets[0]}          # Build an AI-ready target update bundle
+openuispec prepare --target ${targets[0]}          # Build the target work bundle
 openuispec drift --snapshot --target ${targets[0]} # Snapshot current state + git baseline after target output exists
 \`\`\`
+
+The target work bundle has two modes:
+- \`bootstrap\` when no snapshot exists yet, for first-time generation
+- \`update\` after a snapshot exists, for drift-based target updates
 
 ## Learn more
 
@@ -253,7 +280,7 @@ This means the project has existing UI code but hasn't been specced yet. Your jo
        type: scroll_vertical
    \`\`\`
 4. **Extract tokens** — scan for colors, fonts, spacing and create files in \`${specDir}/tokens/\`.
-5. **Update the manifest** — fill in \`data_model\` and \`api.endpoints\` in \`${specDir}/openuispec.yaml\`.
+5. **Update the manifest** — fill in \`data_model\`, \`api.endpoints\`, and \`generation.code_roots.backend\` in \`${specDir}/openuispec.yaml\`.
 
 ## OpenUISpec Source Of Truth
 
@@ -274,7 +301,7 @@ Spec-first workflow:
 4. Run \`openuispec validate\`.
 5. Run \`openuispec validate semantic\`.
 6. Run \`openuispec drift --target <target> --explain\` to inspect semantic changes since that target's baseline.
-7. Run \`openuispec prepare --target <target>\` to build the AI/developer work bundle for that target.
+7. Run \`openuispec prepare --target <target>\` to build the target work bundle for that target. In \`bootstrap\` mode it provides first-generation constraints; in \`update\` mode it provides drift-based update scope.
 8. Verify the affected UI targets build/run if possible.
 9. Only then run \`openuispec drift --snapshot --target <target>\` for affected targets, after that target output directory exists.
 10. Run \`openuispec drift --target <target> --explain\` again to confirm no spec changes remain for that target.
@@ -303,7 +330,7 @@ Platform-first workflow:
 - \`openuispec drift --target <t>\` — check for spec drift
 - \`openuispec drift --target <t> --explain\` — explain semantic spec drift since the target baseline
 - \`openuispec drift --snapshot --target <t>\` — snapshot current state after the target output exists
-- \`openuispec prepare --target <t>\` — build an AI-ready target update bundle
+- \`openuispec prepare --target <t>\` — build the target work bundle
 - \`openuispec status\` — show cross-target baseline/drift status
 - \`openuispec update-rules\` — update AI rules to match installed package version
 - \`openuispec drift --all\` — include stubs in drift check
@@ -400,43 +427,178 @@ export function extractRulesVersion(filePath: string): string | null {
 
 export { getPackageVersion };
 
+interface InitOptions {
+  defaults: boolean;
+  name?: string;
+  specDir?: string;
+  targets?: string[];
+  withApi?: boolean;
+  backendPath?: string;
+  configureTargets?: boolean;
+}
+
+interface InitAnswers {
+  name: string;
+  specDir: string;
+  targets: string[];
+  withApi: boolean;
+  backendPath: string | null;
+  configureTargets: boolean;
+}
+
+function parseTargetsValue(raw: string): string[] {
+  const allowed = new Set(["ios", "android", "web"]);
+  return raw
+    .split(",")
+    .map((value) => value.trim().toLowerCase())
+    .filter((value): value is string => allowed.has(value));
+}
+
+function requireFlagValue(argv: string[], index: number, flag: string): string {
+  const value = argv[index + 1];
+  if (!value || value.startsWith("--")) {
+    console.error(`Error: ${flag} requires a value.`);
+    process.exit(1);
+  }
+  return value;
+}
+
+function parseInitArgs(argv: string[]): InitOptions {
+  const options: InitOptions = { defaults: argv.includes("--defaults") };
+
+  for (let index = 0; index < argv.length; index++) {
+    const arg = argv[index];
+    switch (arg) {
+      case "--defaults":
+        break;
+      case "--name":
+        options.name = requireFlagValue(argv, index, arg);
+        index++;
+        break;
+      case "--spec-dir":
+        options.specDir = requireFlagValue(argv, index, arg);
+        index++;
+        break;
+      case "--targets":
+        options.targets = parseTargetsValue(requireFlagValue(argv, index, arg));
+        index++;
+        break;
+      case "--backend":
+        options.backendPath = requireFlagValue(argv, index, arg);
+        index++;
+        break;
+      case "--with-api":
+        options.withApi = true;
+        break;
+      case "--no-api":
+        options.withApi = false;
+        break;
+      case "--configure-targets":
+        options.configureTargets = true;
+        break;
+      case "--no-configure-targets":
+        options.configureTargets = false;
+        break;
+      default:
+        if (arg.startsWith("--")) {
+          console.error(`Error: Unknown init option: ${arg}`);
+          process.exit(1);
+        }
+    }
+  }
+
+  return options;
+}
+
+function collectDefaults(): InitAnswers {
+  const cwd = process.cwd();
+  const defaultName = cwd.split("/").pop() || "MyApp";
+  return {
+    name: defaultName,
+    specDir: "openuispec",
+    targets: ["ios", "android", "web"],
+    withApi: true,
+    backendPath: "../backend/",
+    configureTargets: true,
+  };
+}
+
+async function collectInteractiveAnswers(rl: ReturnType<typeof createInterface>): Promise<InitAnswers> {
+  const defaults = collectDefaults();
+  const name = await ask(rl, "Project name", defaults.name);
+  const specDir = await ask(rl, "Spec directory", defaults.specDir);
+  const targets = await askList(rl, "\nWhich platforms?", ["ios", "android", "web"], defaults.targets);
+
+  if (targets.length === 0) {
+    console.error("At least one target is required.");
+    process.exit(1);
+  }
+
+  const withApi = await askYesNo(rl, "Will this spec declare API endpoints?", defaults.withApi);
+  const backendPath = withApi
+    ? await ask(rl, "Backend folder path relative to openuispec.yaml", defaults.backendPath ?? "../backend/")
+    : null;
+  const configureTargets = await askYesNo(rl, "Configure target stacks now?", defaults.configureTargets);
+
+  return {
+    name,
+    specDir,
+    targets,
+    withApi,
+    backendPath,
+    configureTargets,
+  };
+}
+
+function collectNonInteractiveAnswers(argv: string[]): InitAnswers {
+  const parsed = parseInitArgs(argv);
+  const defaults = collectDefaults();
+
+  if (!parsed.defaults && argv.length === 0) {
+    console.error(
+      "Error: `openuispec init` needs a TTY for prompts.\n" +
+        "Run with `--defaults` or pass flags such as `--name`, `--targets`, `--with-api`, `--backend`, and `--configure-targets`."
+    );
+    process.exit(1);
+  }
+
+  const targets = parsed.targets && parsed.targets.length > 0 ? parsed.targets : defaults.targets;
+  if (targets.length === 0) {
+    console.error("Error: --targets must include at least one of ios, android, web.");
+    process.exit(1);
+  }
+
+  const withApi = parsed.withApi ?? defaults.withApi;
+  const backendPath = withApi ? parsed.backendPath ?? defaults.backendPath : null;
+
+  return {
+    name: parsed.name ?? defaults.name,
+    specDir: parsed.specDir ?? defaults.specDir,
+    targets,
+    withApi,
+    backendPath,
+    configureTargets: parsed.configureTargets ?? defaults.configureTargets,
+  };
+}
+
 // ── main ─────────────────────────────────────────────────────────────
 
-export async function init(): Promise<void> {
-  const rl = createInterface({ input: stdin, output: stdout });
+export async function init(argv: string[] = []): Promise<void> {
+  const interactive = stdin.isTTY && stdout.isTTY && !argv.includes("--defaults");
+  const rl = interactive ? createInterface({ input: stdin, output: stdout }) : null;
 
   console.log("\nOpenUISpec — Project Setup\n");
 
   try {
-    // 1. Project name (display name in manifest, derived from current folder)
     const cwd = process.cwd();
-    const defaultName = cwd.split("/").pop() || "MyApp";
-    const name = await ask(rl, "Project name", defaultName);
-
-    // 2. Spec directory
-    const specDir = await ask(rl, "Spec directory", "openuispec");
-
-    // 3. Platforms
-    const allTargets = ["ios", "android", "web"];
-    const targets = await askList(
-      rl,
-      "\nWhich platforms?",
-      allTargets,
-      allTargets
-    );
-
-    if (targets.length === 0) {
-      console.error("At least one target is required.");
-      process.exit(1);
-    }
-
-    rl.close();
+    const answers = rl ? await collectInteractiveAnswers(rl) : collectNonInteractiveAnswers(argv);
+    rl?.close();
 
     // ── create folders ─────────────────────────────────────────────
 
     console.log("\nScaffolding...\n");
 
-    const root = join(cwd, specDir);
+    const root = join(cwd, answers.specDir);
     const dirs = [
       "tokens",
       "contracts",
@@ -455,14 +617,17 @@ export async function init(): Promise<void> {
 
     writeIfMissing(
       join(root, "openuispec.yaml"),
-      manifestTemplate(name, targets, specDir)
+      manifestTemplate(answers.name, answers.targets, {
+        withApi: answers.withApi,
+        backendPath: answers.backendPath,
+      })
     );
 
     // ── spec README ──────────────────────────────────────────────
 
     writeIfMissing(
       join(root, "README.md"),
-      specReadmeTemplate(name, targets)
+      specReadmeTemplate(answers.name, answers.targets)
     );
 
     // ── .gitkeep for empty dirs ────────────────────────────────────
@@ -481,9 +646,21 @@ export async function init(): Promise<void> {
       }
     }
 
+    if (answers.withApi && answers.backendPath) {
+      const backendDir = resolve(root, answers.backendPath);
+      const backendExisted = existsSync(backendDir);
+      ensureDir(backendDir);
+      const backendEntries = readdirSync(backendDir).filter((entry) => entry !== ".gitkeep");
+      const backendGitkeep = join(backendDir, ".gitkeep");
+      if ((!backendExisted || backendEntries.length === 0) && !existsSync(backendGitkeep)) {
+        writeFileSync(backendGitkeep, "");
+        console.log(`  create ${relative(cwd, backendGitkeep)}`);
+      }
+    }
+
     // ── AI assistant rules ─────────────────────────────────────────
 
-    const rules = aiRulesBlock(specDir, targets);
+    const rules = aiRulesBlock(answers.specDir, answers.targets);
 
     for (const file of ["CLAUDE.md", "AGENTS.md"]) {
       const filePath = join(cwd, file);
@@ -501,32 +678,41 @@ export async function init(): Promise<void> {
       }
     }
 
+    if (answers.configureTargets) {
+      console.log("\nConfiguring target stacks...\n");
+      const { runConfigureTarget } = await import("./configure-target.js");
+      for (const target of answers.targets) {
+        await runConfigureTarget([target, ...(interactive ? [] : ["--defaults"])]);
+      }
+    }
+
     // ── done ───────────────────────────────────────────────────────
 
     console.log(`
-Done! Your spec project is ready at ./${specDir}/
+Done! Your spec project is ready at ./${answers.specDir}/
 
 Getting started (new project):
-  1. Edit ${specDir}/openuispec.yaml — define your data model and API
-  2. Create screens in ${specDir}/screens/ (one YAML per screen)
-  3. Create flows in ${specDir}/flows/ (multi-step navigation)
+  1. Edit ${answers.specDir}/openuispec.yaml — define your data model and API
+  2. Create screens in ${answers.specDir}/screens/ (one YAML per screen)
+  3. Create flows in ${answers.specDir}/flows/ (multi-step navigation)
   4. Ask AI to generate native code from the spec
-  5. Run \`openuispec drift --snapshot --target ${targets[0]}\` to baseline the first accepted target state after that target output directory exists
+  5. Run \`openuispec drift --snapshot --target ${answers.targets[0]}\` to baseline the first accepted target state after that target output directory exists
 
 Getting started (existing project):
   1. Ask AI to read your existing UI code and generate spec files:
-     "Read src/screens/HomeScreen.swift and create ${specDir}/screens/home.yaml as status: stub"
+     "Read src/screens/HomeScreen.swift and create ${answers.specDir}/screens/home.yaml as status: stub"
   2. Spec screens incrementally: stub → draft → ready
   3. Only ready/draft screens are tracked by drift detection
   4. Run \`openuispec validate\` to check specs against the schema
-  5. Use \`openuispec drift --target ${targets[0]} --explain\` and \`openuispec prepare --target ${targets[0]}\` before asking AI to update a target
+  5. Use \`openuispec prepare --target ${answers.targets[0]}\` before first-time generation, then use \`openuispec drift --target ${answers.targets[0]} --explain\` and \`openuispec prepare --target ${answers.targets[0]}\` before asking AI to update a target
 
 Commands:
   openuispec validate             Validate spec files
   openuispec validate semantic   Check semantic cross-references
+  openuispec configure-target ios [--defaults]   Configure target stack defaults
   openuispec status   Show cross-target baseline/drift status
   openuispec drift --target ios --explain   Explain semantic spec changes
-  openuispec prepare --target ios   Build an AI-ready target update bundle
+  openuispec prepare --target ios   Build the target work bundle
   openuispec drift --snapshot --target ios   Save current state + git baseline after target output exists
 
 AI rules have been added to CLAUDE.md and AGENTS.md.
@@ -534,7 +720,7 @@ AI rules have been added to CLAUDE.md and AGENTS.md.
 Docs: https://openuispec.rsteam.uz
 `);
   } catch (err) {
-    rl.close();
+    rl?.close();
     throw err;
   }
 }

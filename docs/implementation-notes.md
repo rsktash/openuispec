@@ -36,24 +36,57 @@
 
 ## `prepare` command
 
-- `openuispec prepare --target <target>` is the operational bridge between spec drift and AI implementation work.
+- `openuispec prepare --target <target>` is the operational bridge between the spec and AI implementation work.
+- `openuispec configure-target <target>` is the target stack selection step that feeds `prepare`.
+  - it should offer preset defaults for known stacks
+  - it must still allow custom values when the project uses frameworks or libraries outside the catalog
+  - `openuispec init --no-configure-targets` should remain available for users who want to defer target stack decisions until later
+- It should support two modes:
+  1. bootstrap mode when no target snapshot exists yet
+  2. update mode when a target snapshot exists
 - It should be documented as:
-  1. read the target's snapshot baseline
-  2. compute semantic spec changes since that baseline
-  3. produce an AI-ready bundle with likely target scope
+  1. if no snapshot exists, produce a first-time generation bundle from the manifest and current spec files
+  2. if a snapshot exists, compute semantic spec changes since that baseline
+  3. produce the target work bundle with likely target scope
 - Current output includes:
   - project and target
   - output directory
   - likely code roots
-  - baseline commit info
-  - semantic change summary
-  - per-spec-file work items
-  - best-effort candidate target files
+  - mode (`bootstrap` or `update`)
+  - baseline commit info when available
+  - target stack summary from `platform/<target>.yaml`
+  - selected option refs for known preset values
+  - semantic change summary for update mode
+  - per-spec-file work items or first-time generation spec inventory
+  - best-effort candidate target files for update mode
   - next-step guidance
+- Selected option refs should be package-manager oriented, not artifact web pages:
+  - Android: Gradle plugin ids plus `group:artifact:{latest}` library coordinates
+  - Web: npm package specs like `react-router@{latest}`
+  - iOS: package identifiers plus docs links
+- `prepare` must also carry dependency guidance explaining that these refs are anchors only.
+  - AI should add supporting build, plugin, repository, annotation-processing, runtime, dev, and test dependencies required by the chosen stack and current toolchain
+  - AI should resolve exact versions and wiring from current platform docs instead of assuming the preset list is exhaustive
+- Bootstrap mode should surface soft warnings when configured framework/stack values are custom and therefore not covered by preset dependency refs.
+  - these warnings should explain that dependency guidance is incomplete, not silently omit the missing refs
+- Bootstrap mode should also carry explicit generation constraints for the target:
+  - localization rules
+    - use target-native runtime localization resources
+    - forbid in-memory string maps embedded in app code
+  - file structure rules
+    - forbid single-file app output
+    - require separate screen/component/support/resource modules
+  - platform setup rules
+    - refresh current target/framework setup guidance before generation
+    - do not rely on stale memory for project layout, resource wiring, navigation APIs, or packaging conventions
+  - target-specific directory expectations for generated code
+  - backend generation context
+    - if the manifest declares `api.endpoints`, `generation.code_roots.backend` is required
+    - `prepare` should surface the resolved backend root so AI can inspect backend code when generating API clients
 - Important positioning:
   - `prepare` does not generate code
   - `prepare` does not verify code correctness
-  - `prepare` packages the spec delta into scoped implementation work for AI or developers
+  - `prepare` packages either the current spec or the spec delta into scoped implementation work for AI or developers
 
 ## Semantic linting
 

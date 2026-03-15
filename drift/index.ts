@@ -73,7 +73,7 @@ export interface ExplainResult {
 
 // ── helpers ───────────────────────────────────────────────────────────
 
-function listFiles(dir: string, ext: string): string[] {
+export function listFiles(dir: string, ext: string): string[] {
   try {
     return readdirSync(dir)
       .filter((f) => f.endsWith(ext))
@@ -106,7 +106,7 @@ function parseSpecDocument(relPath: string, content: string): unknown {
 }
 
 /** Read the status field from a screen or flow YAML file. */
-function readStatus(filePath: string): string {
+export function readStatus(filePath: string): string {
   try {
     const doc = YAML.parse(readFileSync(filePath, "utf-8"));
     if (doc && typeof doc === "object") {
@@ -123,12 +123,12 @@ function readStatus(filePath: string): string {
 }
 
 /** Returns true if a file is a screen or flow (has status semantics). */
-function hasStatusSemantics(relPath: string): boolean {
+export function hasStatusSemantics(relPath: string): boolean {
   const dir = dirname(relPath);
   return dir === "screens" || dir === "flows";
 }
 
-function discoverSpecFiles(projectDir: string): string[] {
+export function discoverSpecFiles(projectDir: string): string[] {
   const manifest = join(projectDir, "openuispec.yaml");
   if (!existsSync(manifest)) {
     console.error(`Error: No openuispec.yaml found in ${projectDir}`);
@@ -434,11 +434,14 @@ export function findProjectDir(cwd: string): string {
   process.exit(1);
 }
 
+/** Read and parse the manifest YAML. */
+export function readManifest(projectDir: string): Record<string, any> {
+  return YAML.parse(readFileSync(join(projectDir, "openuispec.yaml"), "utf-8"));
+}
+
 /** Read the project name from the manifest. */
 export function readProjectName(projectDir: string): string {
-  const doc = YAML.parse(
-    readFileSync(join(projectDir, "openuispec.yaml"), "utf-8")
-  );
+  const doc = readManifest(projectDir);
   return doc.project?.name ?? basename(projectDir);
 }
 

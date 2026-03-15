@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
@@ -44,6 +44,7 @@ test("drift --explain and prepare describe target work from baseline spec change
     cpSync(join(repoRoot, "examples", "todo-orbit", "openuispec"), join(sandbox, "openuispec"), {
       recursive: true,
     });
+    mkdirSync(join(sandbox, "backend"), { recursive: true });
     cpSync(
       join(repoRoot, "examples", "todo-orbit", "generated", "web", "Todo Orbit"),
       join(sandbox, "generated", "web", "Todo Orbit"),
@@ -79,6 +80,13 @@ test("drift --explain and prepare describe target work from baseline spec change
     const prepareOutput = run(sandbox, nodeBin, tsxArgs(prepareScript, ["--target", "web", "--json"]));
     const prepared = JSON.parse(prepareOutput);
 
+    assert.equal(prepared.mode, "update");
+    assert.equal(prepared.backend_root.endsWith("/backend"), true);
+    assert.equal(prepared.platform_config.framework, "react");
+    assert.equal(prepared.platform_config.language, "typescript");
+    assert.equal(prepared.platform_config.stack.routing, "react_router");
+    assert.equal(prepared.platform_config.stack.state, "zustand");
+    assert.deepEqual(prepared.platform_config.dependencies, []);
     assert.equal(prepared.summary.changed, 1);
     assert.equal(prepared.items[0].spec_file, "screens/task_detail.yaml");
     assert.equal(prepared.items[0].semantic_changes[0].path, "task_detail.title");
@@ -88,26 +96,445 @@ test("drift --explain and prepare describe target work from baseline spec change
   }
 });
 
-test("prepare points users to generation before snapshot when target output is missing", () => {
+test("prepare emits a bootstrap bundle and recommends configure-target when stack choices are missing", () => {
   const sandbox = mkdtempSync(join(tmpdir(), "openuispec-prepare-missing-output-"));
 
   try {
     cpSync(join(repoRoot, "examples", "todo-orbit", "openuispec"), join(sandbox, "openuispec"), {
       recursive: true,
     });
+    mkdirSync(join(sandbox, "backend"), { recursive: true });
 
-    const output = run(
-      sandbox,
-      nodeBin,
-      tsxArgs(prepareScript, ["--target", "web"]),
-      { allowFailure: true }
+    const prepareOutput = run(sandbox, nodeBin, tsxArgs(prepareScript, ["--target", "web", "--json"]));
+    const prepared = JSON.parse(prepareOutput);
+
+    assert.equal(prepared.mode, "bootstrap");
+    assert.equal(prepared.project, "Todo Orbit");
+    assert.equal(prepared.target, "web");
+    assert.equal(prepared.output_dir.endsWith("generated/web/Todo Orbit"), true);
+    assert.equal(prepared.backend_root.endsWith("/backend"), true);
+    assert.equal(prepared.platform_config.framework, "react");
+    assert.equal(prepared.platform_config.language, "typescript");
+    assert.equal(prepared.platform_config.stack.bundler, "vite");
+    assert.equal(prepared.platform_config.stack.routing, "react_router");
+    assert.equal(prepared.platform_config.stack.state, "zustand");
+    assert.equal(prepared.platform_config.dependency_guidance.anchor_refs_only, true);
+    assert.ok(
+      prepared.platform_config.dependency_guidance.notes.some((note: string) =>
+        note.includes("not a complete dependency manifest")
+      )
+    );
+    assert.ok(
+      prepared.platform_config.dependency_guidance.notes.some((note: string) =>
+        note.includes("supporting runtime, build")
+      )
+    );
+    assert.deepEqual(prepared.platform_config.dependencies, []);
+    assert.equal(prepared.bootstrap.output_exists, false);
+    assert.equal(prepared.bootstrap.generation_ready, false);
+    assert.deepEqual(prepared.bootstrap.missing_platform_decisions, ["runtime", "storage_backend"]);
+    assert.deepEqual(prepared.bootstrap.generation_warnings, []);
+    assert.equal(prepared.bootstrap.i18n.default_locale, "en");
+    assert.deepEqual(prepared.bootstrap.i18n.supported_locales, ["en", "ru"]);
+    assert.equal(prepared.bootstrap.output_format.language, "typescript");
+    assert.equal(prepared.bootstrap.output_format.framework, "react");
+    assert.equal(prepared.bootstrap.generation_constraints.localization.must_use_platform_native_i18n, true);
+    assert.equal(prepared.bootstrap.generation_constraints.localization.forbid_in_memory_string_maps, true);
+    assert.ok(
+      prepared.bootstrap.generation_constraints.localization.required_files.includes(
+        "src/i18n.ts or equivalent dedicated i18n module"
+      )
+    );
+    assert.ok(
+      prepared.bootstrap.generation_constraints.localization.lookup_module_guidance.includes(
+        "not a giant in-memory map inside App.tsx"
+      )
+    );
+    assert.equal(prepared.bootstrap.generation_constraints.file_structure.forbid_single_file_output, true);
+    assert.ok(
+      prepared.bootstrap.generation_constraints.file_structure.required_directories.includes("src/screens")
+    );
+    assert.ok(
+      prepared.bootstrap.generation_constraints.file_structure.required_directories.includes("src/components")
+    );
+    assert.ok(
+      prepared.bootstrap.generation_constraints.file_structure.screen_split_rule.includes("src/screens")
+    );
+    assert.ok(
+      prepared.bootstrap.generation_constraints.file_structure.component_split_rule.includes("src/components")
+    );
+    assert.equal(
+      prepared.bootstrap.generation_constraints.platform_setup.refresh_target_platform_knowledge,
+      true
+    );
+    assert.ok(
+      prepared.bootstrap.generation_constraints.platform_setup.notes.some((note: string) =>
+        note.includes("stale memory")
+      )
+    );
+    assert.ok(prepared.bootstrap.spec_files.some((file: any) => file.spec_file === "openuispec.yaml"));
+    assert.ok(prepared.bootstrap.spec_files.some((file: any) => file.spec_file === "screens/home.yaml"));
+    assert.ok(prepared.bootstrap.spec_files.some((file: any) => file.spec_file === "tokens/color.yaml"));
+    assert.ok(prepared.bootstrap.spec_files.some((file: any) => file.spec_file === "platform/web.yaml"));
+    assert.ok(prepared.bootstrap.spec_files.some((file: any) => file.spec_file === "locales/en.json"));
+    assert.ok(
+      prepared.bootstrap.generation_rules.some((rule: string) =>
+        rule.includes("After the first accepted web output exists")
+      )
+    );
+    assert.ok(
+      prepared.bootstrap.reference_examples.some((example: string) =>
+        example.endsWith("/spec/openuispec-v0.1.md")
+      )
+    );
+    assert.ok(
+      prepared.bootstrap.reference_examples.some((example: string) =>
+        example.endsWith("/README.md")
+      )
+    );
+    assert.ok(
+      prepared.next_steps.some((step: string) =>
+        step.includes("openuispec configure-target web")
+      )
+    );
+  } finally {
+    rmSync(sandbox, { recursive: true, force: true });
+  }
+});
+
+test("prepare marks bootstrap generation ready after required platform choices are present", () => {
+  const sandbox = mkdtempSync(join(tmpdir(), "openuispec-prepare-ready-bootstrap-"));
+
+  try {
+    cpSync(join(repoRoot, "examples", "todo-orbit", "openuispec"), join(sandbox, "openuispec"), {
+      recursive: true,
+    });
+    mkdirSync(join(sandbox, "backend"), { recursive: true });
+
+    const platformFile = join(sandbox, "openuispec", "platform", "web.yaml");
+    const updatedPlatform = readFileSync(platformFile, "utf-8").replace(
+      'routing: "react_router"\n    state: "zustand"',
+      'runtime: "frontend_only"\n    routing: "react_router"\n    state: "zustand"\n    storage_backend: "none"'
+    );
+    writeFileSync(platformFile, updatedPlatform);
+
+    const prepareOutput = run(sandbox, nodeBin, tsxArgs(prepareScript, ["--target", "web", "--json"]));
+    const prepared = JSON.parse(prepareOutput);
+
+    assert.equal(prepared.mode, "bootstrap");
+    assert.equal(prepared.platform_config.stack.runtime, "frontend_only");
+    assert.equal(prepared.platform_config.stack.storage_backend, "none");
+    assert.equal(prepared.bootstrap.generation_ready, true);
+    assert.deepEqual(prepared.bootstrap.missing_platform_decisions, []);
+    assert.ok(
+      prepared.next_steps.some((step: string) =>
+        step.includes("Generate the initial web implementation")
+      )
+    );
+    assert.ok(
+      prepared.next_steps.some((step: string) =>
+        step.includes("run `openuispec drift --snapshot --target web` to baseline it")
+      )
+    );
+  } finally {
+    rmSync(sandbox, { recursive: true, force: true });
+  }
+});
+
+test("prepare blocks bootstrap readiness when backend code root is missing for declared api endpoints", () => {
+  const sandbox = mkdtempSync(join(tmpdir(), "openuispec-prepare-missing-backend-"));
+
+  try {
+    cpSync(join(repoRoot, "examples", "todo-orbit", "openuispec"), join(sandbox, "openuispec"), {
+      recursive: true,
+    });
+
+    const platformFile = join(sandbox, "openuispec", "platform", "web.yaml");
+    const updatedPlatform = readFileSync(platformFile, "utf-8").replace(
+      'routing: "react_router"\n    state: "zustand"',
+      'runtime: "frontend_only"\n    routing: "react_router"\n    state: "zustand"\n    storage_backend: "none"'
+    );
+    writeFileSync(platformFile, updatedPlatform);
+
+    const prepareOutput = run(sandbox, nodeBin, tsxArgs(prepareScript, ["--target", "web", "--json"]));
+    const prepared = JSON.parse(prepareOutput);
+
+    assert.equal(prepared.mode, "bootstrap");
+    assert.equal(prepared.bootstrap.generation_ready, false);
+    assert.ok(
+      prepared.next_steps.some((step: string) =>
+        step.includes("generation.code_roots.backend")
+      )
+    );
+  } finally {
+    rmSync(sandbox, { recursive: true, force: true });
+  }
+});
+
+test("prepare includes package-manager install refs for configured target options", () => {
+  const sandbox = mkdtempSync(join(tmpdir(), "openuispec-prepare-dependency-urls-"));
+
+  try {
+    cpSync(join(repoRoot, "examples", "todo-orbit", "openuispec"), join(sandbox, "openuispec"), {
+      recursive: true,
+    });
+    mkdirSync(join(sandbox, "backend"), { recursive: true });
+
+    run(sandbox, nodeBin, tsxArgs(join(repoRoot, "cli", "index.ts"), ["configure-target", "android", "--defaults"]));
+    const platformFile = join(sandbox, "openuispec", "platform", "android.yaml");
+    const updatedPlatform = readFileSync(platformFile, "utf-8").replace(
+      "architecture: MVVM",
+      "architecture: decompose"
+    );
+    writeFileSync(platformFile, updatedPlatform);
+
+    const prepareOutput = run(sandbox, nodeBin, tsxArgs(prepareScript, ["--target", "android", "--json"]));
+    const prepared = JSON.parse(prepareOutput);
+
+    assert.equal(prepared.mode, "bootstrap");
+    assert.equal(
+      prepared.platform_config.selected_option_refs.architecture.value,
+      "decompose"
+    );
+    assert.ok(
+      prepared.platform_config.selected_option_refs.architecture.plugins.includes(
+        "org.jetbrains.kotlin.plugin.compose"
+      )
+    );
+    assert.ok(
+      prepared.platform_config.selected_option_refs.architecture.libraries.includes(
+        "com.arkivanov.decompose:decompose:{latest}"
+      )
+    );
+    assert.equal(
+      prepared.platform_config.selected_option_refs.state.value,
+      "mvikotlin"
+    );
+    assert.ok(
+      prepared.platform_config.selected_option_refs.state.libraries.includes(
+        "com.arkivanov.mvikotlin:mvikotlin:{latest}"
+      )
+    );
+    assert.ok(
+      prepared.platform_config.selected_option_refs.state.docs.includes(
+        "https://github.com/arkivanov/MVIKotlin"
+      )
+    );
+    assert.equal(
+      prepared.platform_config.selected_option_refs.preferences.value,
+      "datastore"
+    );
+    assert.ok(
+      prepared.platform_config.selected_option_refs.preferences.libraries.includes(
+        "androidx.datastore:datastore-preferences:{latest}"
+      )
+    );
+    assert.equal(
+      prepared.platform_config.selected_option_refs.di.value,
+      "metro"
+    );
+    assert.ok(
+      prepared.platform_config.selected_option_refs.di.libraries.includes(
+        "dev.zacsweers.metro:metro:{latest}"
+      )
+    );
+    assert.ok(
+      prepared.platform_config.selected_option_refs.di.docs.includes(
+        "https://github.com/ZacSweers/metro"
+      )
+    );
+  } finally {
+    rmSync(sandbox, { recursive: true, force: true });
+  }
+});
+
+test("prepare exposes npm package specs for configured web target options", () => {
+  const sandbox = mkdtempSync(join(tmpdir(), "openuispec-prepare-web-package-refs-"));
+
+  try {
+    cpSync(join(repoRoot, "examples", "todo-orbit", "openuispec"), join(sandbox, "openuispec"), {
+      recursive: true,
+    });
+    mkdirSync(join(sandbox, "backend"), { recursive: true });
+
+    const platformFile = join(sandbox, "openuispec", "platform", "web.yaml");
+    const updatedPlatform = readFileSync(platformFile, "utf-8").replace(
+      'routing: "react_router"\n    state: "zustand"',
+      'runtime: "frontend_only"\n    routing: "react_router"\n    state: "zustand"\n    storage_backend: "none"'
+    );
+    writeFileSync(platformFile, updatedPlatform);
+
+    const prepareOutput = run(sandbox, nodeBin, tsxArgs(prepareScript, ["--target", "web", "--json"]));
+    const prepared = JSON.parse(prepareOutput);
+
+    assert.equal(prepared.mode, "bootstrap");
+    assert.equal(prepared.platform_config.selected_option_refs.routing.value, "react_router");
+    assert.ok(
+      prepared.platform_config.selected_option_refs.routing.packages.includes("react-router@{latest}")
+    );
+    assert.ok(
+      prepared.platform_config.selected_option_refs.routing.docs.includes("https://reactrouter.com/")
+    );
+    assert.equal(prepared.platform_config.selected_option_refs.state.value, "zustand");
+    assert.ok(
+      prepared.platform_config.selected_option_refs.state.packages.includes("zustand@{latest}")
+    );
+  } finally {
+    rmSync(sandbox, { recursive: true, force: true });
+  }
+});
+
+test("prepare emits warnings and generic web constraints for custom framework stack values", () => {
+  const sandbox = mkdtempSync(join(tmpdir(), "openuispec-prepare-custom-web-warnings-"));
+
+  try {
+    cpSync(join(repoRoot, "examples", "todo-orbit", "openuispec"), join(sandbox, "openuispec"), {
+      recursive: true,
+    });
+    mkdirSync(join(sandbox, "backend"), { recursive: true });
+
+    const platformFile = join(sandbox, "openuispec", "platform", "web.yaml");
+    writeFileSync(
+      platformFile,
+      `web:
+  framework: solidstart
+  language: typescript
+  generation:
+    runtime: frontend_only
+    routing: wouter
+    state: valtio
+    storage_backend: none
+    bundler: vite
+`
     );
 
-    assert.match(output, /No snapshot found for target "web"\./);
-    assert.match(output, /Output directory not found: generated\/web\/Todo Orbit/);
-    assert.match(
-      output,
-      /Run code generation for "web" first, then run: openuispec drift --snapshot --target web/
+    const prepareOutput = run(sandbox, nodeBin, tsxArgs(prepareScript, ["--target", "web", "--json"]));
+    const prepared = JSON.parse(prepareOutput);
+
+    assert.equal(prepared.mode, "bootstrap");
+    assert.equal(prepared.platform_config.selected_option_refs.runtime.value, "frontend_only");
+    assert.equal(prepared.platform_config.selected_option_refs.storage_backend.value, "none");
+    assert.equal(prepared.platform_config.selected_option_refs.routing, undefined);
+    assert.equal(prepared.platform_config.selected_option_refs.state, undefined);
+    assert.ok(
+      prepared.bootstrap.generation_warnings.some((warning: string) =>
+        warning.includes('configured web routing value "wouter"')
+      )
+    );
+    assert.ok(
+      prepared.bootstrap.generation_warnings.some((warning: string) =>
+        warning.includes('configured web framework "solidstart"')
+      )
+    );
+    assert.ok(
+      prepared.bootstrap.generation_constraints.localization.lookup_module_guidance.includes(
+        "root app shell"
+      )
+    );
+    assert.ok(
+      !prepared.bootstrap.generation_constraints.localization.lookup_module_guidance.includes("App.tsx")
+    );
+    assert.ok(
+      prepared.bootstrap.generation_constraints.file_structure.screen_split_rule.includes(
+        "route/screen module"
+      )
+    );
+    assert.ok(
+      !prepared.bootstrap.generation_constraints.file_structure.screen_split_rule.includes("src/screens")
+    );
+  } finally {
+    rmSync(sandbox, { recursive: true, force: true });
+  }
+});
+
+test("prepare recognizes vue as a known web framework with vue-specific constraints", () => {
+  const sandbox = mkdtempSync(join(tmpdir(), "openuispec-prepare-vue-"));
+
+  try {
+    cpSync(join(repoRoot, "examples", "todo-orbit", "openuispec"), join(sandbox, "openuispec"), {
+      recursive: true,
+    });
+    mkdirSync(join(sandbox, "backend"), { recursive: true });
+
+    const platformFile = join(sandbox, "openuispec", "platform", "web.yaml");
+    writeFileSync(
+      platformFile,
+      `web:
+  framework: vue
+  language: typescript
+  generation:
+    runtime: frontend_only
+    routing: vue_router
+    state: pinia
+    storage_backend: none
+    bundler: vite
+`
+    );
+
+    const prepareOutput = run(sandbox, nodeBin, tsxArgs(prepareScript, ["--target", "web", "--json"]));
+    const prepared = JSON.parse(prepareOutput);
+
+    assert.equal(prepared.mode, "bootstrap");
+    assert.equal(prepared.platform_config.framework, "vue");
+    assert.equal(prepared.platform_config.selected_option_refs.routing.value, "vue_router");
+    assert.ok(
+      prepared.platform_config.selected_option_refs.routing.packages.includes("vue-router@{latest}")
+    );
+    assert.equal(prepared.platform_config.selected_option_refs.state.value, "pinia");
+    assert.ok(
+      prepared.platform_config.selected_option_refs.state.packages.includes("pinia@{latest}")
+    );
+    assert.ok(
+      !prepared.bootstrap.generation_warnings.some((warning: string) =>
+        warning.includes("not a built-in preset")
+      )
+    );
+    assert.ok(
+      prepared.bootstrap.generation_constraints.localization.lookup_module_guidance.includes("vue-i18n")
+    );
+    assert.ok(
+      prepared.bootstrap.generation_constraints.file_structure.required_directories.includes("src/views or src/pages")
+    );
+    assert.ok(
+      prepared.bootstrap.generation_constraints.file_structure.screen_split_rule.includes("App.vue")
+    );
+  } finally {
+    rmSync(sandbox, { recursive: true, force: true });
+  }
+});
+
+test("prepare includes tailwind refs when css is configured", () => {
+  const sandbox = mkdtempSync(join(tmpdir(), "openuispec-prepare-tailwind-"));
+
+  try {
+    cpSync(join(repoRoot, "examples", "todo-orbit", "openuispec"), join(sandbox, "openuispec"), {
+      recursive: true,
+    });
+    mkdirSync(join(sandbox, "backend"), { recursive: true });
+
+    const platformFile = join(sandbox, "openuispec", "platform", "web.yaml");
+    writeFileSync(
+      platformFile,
+      `web:
+  framework: react
+  language: typescript
+  generation:
+    runtime: frontend_only
+    css: tailwind
+    routing: react_router
+    state: zustand
+    storage_backend: none
+    bundler: vite
+`
+    );
+
+    const prepareOutput = run(sandbox, nodeBin, tsxArgs(prepareScript, ["--target", "web", "--json"]));
+    const prepared = JSON.parse(prepareOutput);
+
+    assert.equal(prepared.mode, "bootstrap");
+    assert.equal(prepared.platform_config.selected_option_refs.css.value, "tailwind");
+    assert.ok(
+      prepared.platform_config.selected_option_refs.css.packages.includes("tailwindcss@{latest}")
     );
   } finally {
     rmSync(sandbox, { recursive: true, force: true });

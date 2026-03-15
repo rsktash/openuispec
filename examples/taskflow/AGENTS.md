@@ -55,7 +55,7 @@ This means the project has existing UI code but hasn't been specced yet. Your jo
        type: scroll_vertical
    ```
 4. **Extract tokens** — scan for colors, fonts, spacing and create files in `openuispec/tokens/`.
-5. **Update the manifest** — fill in `data_model` and `api.endpoints` in `openuispec/openuispec.yaml`.
+5. **Update the manifest** — fill in `data_model`, `api.endpoints`, and `generation.code_roots.backend` in `openuispec/openuispec.yaml`.
 
 ## OpenUISpec Source Of Truth
 
@@ -76,7 +76,7 @@ Spec-first workflow:
 4. Run `openuispec validate`.
 5. Run `openuispec validate semantic`.
 6. Run `openuispec drift --target <target> --explain` to inspect semantic changes since that target's baseline.
-7. Run `openuispec prepare --target <target>` to build the AI/developer work bundle for that target.
+7. Run `openuispec prepare --target <target>` to build the target work bundle for that target. In `bootstrap` mode it provides first-generation constraints; in `update` mode it provides drift-based update scope.
 8. Verify the affected UI targets build/run if possible.
 9. Only then run `openuispec drift --snapshot --target <target>` for affected targets, after that target output directory exists.
 10. Run `openuispec drift --target <target> --explain` again to confirm no spec changes remain for that target.
@@ -102,10 +102,11 @@ Platform-first workflow:
 - `openuispec init` — scaffold a new spec project
 - `openuispec validate [group...]` — validate spec files against schemas
 - `openuispec validate semantic` — run semantic cross-reference linting
+- `openuispec configure-target <t> [--defaults]` — configure target stack defaults
 - `openuispec drift --target <t>` — check for spec drift
 - `openuispec drift --target <t> --explain` — explain semantic spec drift since the target baseline
 - `openuispec drift --snapshot --target <t>` — snapshot current state after the target output exists
-- `openuispec prepare --target <t>` — build an AI-ready target update bundle
+- `openuispec prepare --target <t>` — build the target work bundle
 - `openuispec status` — show cross-target baseline/drift status
 - `openuispec update-rules` — update AI rules to match installed package version
 - `openuispec drift --all` — include stubs in drift check

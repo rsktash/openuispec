@@ -27,7 +27,7 @@ Do NOT guess the file format — skipping this step will produce invalid YAML th
 3. Online: `https://openuispec.rsteam.uz/llms-full.txt` (if not installed)
 
 **Reference files inside the package (read in this order):**
-1. `README.md` — schema tables, file format reference, root keys
+1. `README.md` — schema tables, file format reference, root wrapper keys
 2. `spec/openuispec-v0.1.md` — full specification (contracts, layout, expressions, etc.)
 3. `examples/taskflow/openuispec/` — complete working example with all file types
 4. `schema/` — JSON Schemas for validation
@@ -38,11 +38,16 @@ Do NOT guess the file format — skipping this step will produce invalid YAML th
 openuispec validate             # Validate spec files against schemas
 openuispec validate semantic    # Check semantic cross-references
 openuispec validate screens     # Validate only screens
+openuispec configure-target ios [--defaults] # Configure target stack defaults
 openuispec status               # Show which targets are behind
 openuispec drift --target ios --explain   # Explain semantic spec drift since ios baseline
-openuispec prepare --target ios           # Build an AI-ready ios update bundle
+openuispec prepare --target ios           # Build the target work bundle
 openuispec drift --snapshot --target ios  # Snapshot current state + git baseline after ios output exists
 ```
+
+The target work bundle has two modes:
+- `bootstrap` when no snapshot exists yet, for first-time generation
+- `update` after a snapshot exists, for drift-based target updates
 
 If a target snapshot was created before baseline metadata was added, `--explain` and `status` will ask you to re-run `openuispec drift --snapshot --target <target>` for that target.
 

@@ -1,6 +1,7 @@
-import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { basename, join, resolve } from "node:path";
 import YAML from "yaml";
+import { listFiles } from "../drift/index.js";
 
 type UnknownRecord = Record<string, unknown>;
 
@@ -19,6 +20,7 @@ export interface UsageLint {
 }
 
 interface SemanticContext {
+  manifest: unknown;
   localeFiles: Map<string, Set<string>>;
   formatterNames: Set<string>;
   mapperNames: Set<string>;
@@ -64,17 +66,6 @@ function loadYaml(filePath: string): unknown {
 
 function loadData(filePath: string): unknown {
   return filePath.endsWith(".json") ? loadJson(filePath) : loadYaml(filePath);
-}
-
-function listFiles(dir: string, ext: string): string[] {
-  try {
-    return readdirSync(dir)
-      .filter((file) => file.endsWith(ext))
-      .sort()
-      .map((file) => join(dir, file));
-  } catch {
-    return [];
-  }
 }
 
 function isRecord(value: unknown): value is UnknownRecord {
@@ -281,6 +272,7 @@ function buildContext(projectDir: string, includes: Includes): SemanticContext {
       : localeFiles.keys().next().value ?? null;
 
   return {
+    manifest,
     localeFiles,
     formatterNames,
     mapperNames,
@@ -552,6 +544,37 @@ function lintLocaleCoverage(context: SemanticContext): UsageLint[] {
   return errors;
 }
 
+function lintManifestGenerationContext(projectDir: string, manifest: unknown): UsageLint[] {
+  if (!isRecord(manifest)) return [];
+
+  const hasApiEndpoints =
+    isRecord(manifest.api) &&
+    isRecord(manifest.api.endpoints) &&
+    Object.keys(manifest.api.endpoints).length > 0;
+  if (!hasApiEndpoints) return [];
+
+  const generation = isRecord(manifest.generation) ? manifest.generation : {};
+  const codeRoots = isRecord(generation.code_roots) ? generation.code_roots : null;
+  const backendRoot = codeRoots && typeof codeRoots.backend === "string" ? codeRoots.backend.trim() : "";
+
+  if (!backendRoot) {
+    return [{
+      path: "openuispec.yaml",
+      message: 'api endpoints require generation.code_roots.backend to point at the backend folder',
+    }];
+  }
+
+  const resolvedBackendRoot = resolve(projectDir, backendRoot);
+  if (!existsSync(resolvedBackendRoot)) {
+    return [{
+      path: "openuispec.yaml",
+      message: `generation.code_roots.backend points to a missing folder: ${backendRoot}`,
+    }];
+  }
+
+  return [];
+}
+
 function printSemanticErrors(label: string, errors: UsageLint[]): number {
   if (errors.length === 0) return 0;
   const previewLimit = 10;
@@ -572,6 +595,7 @@ export function runSemanticLint(projectDir: string, includes: Includes): number 
   const contractsDir = resolve(projectDir, includes.contracts);
 
   total += printSemanticErrors("locales", lintLocaleCoverage(context));
+  total += printSemanticErrors("openuispec.yaml", lintManifestGenerationContext(projectDir, context.manifest));
 
   const files = [
     join(projectDir, "openuispec.yaml"),
