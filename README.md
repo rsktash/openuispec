@@ -138,6 +138,7 @@ See the examples for reference:
 
 - [TaskFlow](./examples/taskflow/openuispec/) — compact reference spec covering all 7 contract families
 - [Todo Orbit](./examples/todo-orbit/openuispec/) — bilingual task app with localization, custom contracts, and generated native/web targets
+- [Social App](./examples/social-app/openuispec/) — trilingual social app with feeds, messaging, profiles, and generated Android/web targets
 
 ## Repository structure
 
@@ -175,6 +176,7 @@ openuispec/
 │   │   ├── generated/                   # Generated iOS, Android, and web apps
 │   │   ├── README.md                    # Sample overview and structure
 │   │   └── AGENTS.md / CLAUDE.md        # AI rules generated from the package
+│   ├── social-app/                       # Social app sample (trilingual, Android + Web)
 │   └── todo-orbit/                      # Full showcase sample
 │       ├── openuispec/                  # Source OpenUISpec project
 │       ├── generated/                   # Generated iOS, Android, and web apps
@@ -345,7 +347,7 @@ to see which targets are already up to date and which ones still need to catch u
 
 ## Status
 
-**v0.1 — Draft**. The spec covers all foundational layers. TaskFlow provides a compact reference app, and Todo Orbit extends coverage with localization, recurring-rule flows, custom contracts, and generated native/web targets.
+**v0.1 — Draft**. The spec covers all foundational layers. TaskFlow provides a compact reference app, Todo Orbit extends coverage with localization, recurring-rule flows, custom contracts, and generated native/web targets, and Social App demonstrates a trilingual social feed app with generated Android and web targets.
 
 ### Roadmap
 
@@ -364,7 +366,8 @@ to see which targets are already up to date and which ones still need to catch u
 - [x] CLI tool (`openuispec init` for project scaffolding + AI rules)
 - [x] MCP server for AI tool integration (`openuispec-mcp`)
 - [x] Multi-platform showcase app (`examples/todo-orbit/`)
-- [ ] More example apps (e-commerce, social, dashboard)
+- [x] Social app example (`examples/social-app/`)
+- [ ] More example apps (e-commerce, dashboard)
 
 ## Contributing
 
