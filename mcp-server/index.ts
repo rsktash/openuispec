@@ -91,6 +91,12 @@ POST-GENERATION (do this EVERY TIME after writing UI code):
    - Navigation targets match flow definitions
    Report any real gaps found and fix them before finishing.
 
+CREATING NEW SPEC FILES:
+When you need to create or edit spec files and are unsure of the format:
+1. Call openuispec_spec_types to discover available spec types.
+2. Call openuispec_spec_schema with the specific type to get the full JSON schema.
+3. Write the spec file following the schema exactly.
+
 Skip these tools ONLY when the request is purely non-UI (API logic, database, infrastructure, etc.)
 or explicitly platform-specific polish that doesn't affect shared UI semantics.`,
   }
@@ -357,6 +363,69 @@ server.registerTool(
     try {
       const { result } = loadTargetDrift(projectCwd, target, false, explain);
       return toolResult(result);
+    } catch (err) {
+      return toolError(err);
+    }
+  }
+);
+
+// ── schema type catalog ─────────────────────────────────────────
+
+const SCHEMA_CATALOG: Record<string, { file: string; title: string; description: string }> = {
+  manifest:         { file: "openuispec.schema.json",            title: "Root Manifest",    description: "Root manifest (openuispec.yaml): project info, includes, generation targets, data model, API endpoints, formatters, mappers" },
+  screen:           { file: "screen.schema.json",                title: "Screen",           description: "Screen composition: layout, sections, navigation, surfaces, data/state bindings, adaptive breakpoints" },
+  flow:             { file: "flow.schema.json",                  title: "Flow",             description: "Navigation flow definitions: steps, transitions, guards, and entry points" },
+  platform:         { file: "platform.schema.json",              title: "Platform",         description: "Platform-specific generation config: architecture, naming, CSS framework, component mapping" },
+  contract:         { file: "contract.schema.json",              title: "Contract",         description: "Built-in UI contract definitions: variants, props, must_handle states, generation hints" },
+  "custom-contract":{ file: "custom-contract.schema.json",       title: "Custom Contract",  description: "User-defined UI contract definitions (x_ prefixed)" },
+  locale:           { file: "locale.schema.json",                title: "Locale",           description: "Locale translation files: flat key-value string maps" },
+  "tokens/color":       { file: "tokens/color.schema.json",       title: "Color Tokens",       description: "Color tokens: brand, surface, text, semantic, border groups with HSL ranges and contrast" },
+  "tokens/typography":  { file: "tokens/typography.schema.json",   title: "Typography Tokens",  description: "Typography tokens: font families, sizes, weights, line heights, letter spacing" },
+  "tokens/spacing":     { file: "tokens/spacing.schema.json",     title: "Spacing Tokens",     description: "Spacing tokens: named spacing scale values" },
+  "tokens/elevation":   { file: "tokens/elevation.schema.json",   title: "Elevation Tokens",   description: "Elevation tokens: shadow definitions per level" },
+  "tokens/motion":      { file: "tokens/motion.schema.json",      title: "Motion Tokens",      description: "Motion tokens: animation duration and easing curves" },
+  "tokens/layout":      { file: "tokens/layout.schema.json",      title: "Layout Tokens",      description: "Layout tokens: radii, breakpoints, max widths, grid columns" },
+  "tokens/themes":      { file: "tokens/themes.schema.json",      title: "Theme Tokens",       description: "Theme definitions: token overrides per theme (e.g. dark mode)" },
+  "tokens/icons":       { file: "tokens/icons.schema.json",       title: "Icon Tokens",        description: "Icon tokens: icon set, size scale, default size" },
+};
+
+// ── tool: openuispec_spec_types ──────────────────────────────────
+
+server.registerTool(
+  "openuispec_spec_types",
+  {
+    description: "List all available OpenUISpec spec types with brief descriptions. Use this to discover what kinds of spec files can be created and what schema format each one follows. Call openuispec_spec_schema with a specific type to get the full JSON schema.",
+  },
+  async () => {
+    const types = Object.entries(SCHEMA_CATALOG).map(([type, info]) => ({
+      type,
+      title: info.title,
+      description: info.description,
+    }));
+    return toolResult(types);
+  }
+);
+
+// ── tool: openuispec_spec_schema ─────────────────────────────────
+
+server.registerTool(
+  "openuispec_spec_schema",
+  {
+    description: "Get the full JSON schema for a specific OpenUISpec spec type. Returns the complete schema definition so you know the exact format when creating or editing spec files. Call openuispec_spec_types first to see available types.",
+    inputSchema: {
+      type: z.string().describe("Spec type to get schema for (e.g. 'screen', 'tokens/color', 'contract'). Use openuispec_spec_types to list all available types."),
+    },
+  },
+  async ({ type }) => {
+    const entry = SCHEMA_CATALOG[type];
+    if (!entry) {
+      return toolError(`Unknown spec type "${type}". Call openuispec_spec_types to see available types.`);
+    }
+    try {
+      const __dirname = dirname(fileURLToPath(import.meta.url));
+      const schemaPath = join(__dirname, "..", "schema", entry.file);
+      const schema = JSON.parse(readFileSync(schemaPath, "utf-8"));
+      return toolResult({ type, title: entry.title, schema });
     } catch (err) {
       return toolError(err);
     }

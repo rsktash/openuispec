@@ -268,11 +268,14 @@ When the openuispec MCP server is configured, AI assistants should use these too
 
 | Tool | When to use |
 |------|-------------|
+| \`openuispec_spec_types\` | Discover available spec types and their descriptions. |
+| \`openuispec_spec_schema\` | Get the full JSON schema for a specific spec type — exact structure, required fields, allowed values. |
 | \`openuispec_prepare\` | **Before any UI code generation.** Returns spec context, platform config, and constraints. |
+| \`openuispec_read_specs\` | Load spec file contents — the authoritative source for tokens, screens, contracts. |
 | \`openuispec_check\` | After editing spec files. Validates schema + semantics + readiness. |
-| \`openuispec_status\` | To understand cross-target state (baselines, drift, next steps). |
 | \`openuispec_validate\` | Schema-only validation, optionally by group. |
 | \`openuispec_drift\` | Detect spec changes since last snapshot. |
+| \`openuispec_status\` | To understand cross-target state (baselines, drift, next steps). |
 
 ## CLI commands
 
@@ -336,6 +339,11 @@ Call these MCP tools directly. They return structured JSON with everything you n
    - Locale keys match \`$t:\` references
    - Navigation targets match flow definitions
 8. Report any real gaps found and fix them before finishing.
+
+**Creating new spec files:**
+- Call \`openuispec_spec_types\` to discover available spec types.
+- Call \`openuispec_spec_schema\` with the specific type to get the full JSON schema.
+- Write the spec file following the schema exactly.
 
 **Other tools:**
 - \`openuispec_status\` — cross-target summary, good starting point

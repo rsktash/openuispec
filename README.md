@@ -66,9 +66,10 @@ openuispec init → configures MCP for your agent → AI calls tools automatical
 
 When you ask your AI to "add a settings page" or "update the home feed," the MCP server:
 
-1. **Before generation** — `openuispec_prepare` gives the AI your spec context, platform config, and constraints
-2. **During generation** — `openuispec_read_specs` feeds the AI the actual spec file contents as the authoritative source
-3. **After generation** — `openuispec_check` returns a concrete audit checklist derived from your spec (every contract `must_handle` item, every screen section, every locale key) and the AI verifies its code matches
+1. **Schema reference** — `openuispec_spec_types` and `openuispec_spec_schema` give the AI the exact format for any spec file it needs to create or edit
+2. **Before generation** — `openuispec_prepare` gives the AI your spec context, platform config, and constraints
+3. **During generation** — `openuispec_read_specs` feeds the AI the actual spec file contents as the authoritative source
+4. **After generation** — `openuispec_check` returns a concrete audit checklist derived from your spec (every contract `must_handle` item, every screen section, every locale key) and the AI verifies its code matches
 
 This replaces the old approach of writing instructions in CLAUDE.md and hoping the AI follows them. MCP tools are called reliably because they're part of the AI's tool-calling loop, not a text instruction it can skip.
 
@@ -109,12 +110,14 @@ Or run directly: `openuispec mcp`
 
 | Tool | When | What it does |
 |------|------|-------------|
+| `openuispec_spec_types` | Before creating spec files | Lists all available spec types with descriptions — discover what kinds of spec files exist |
+| `openuispec_spec_schema` | Before creating/editing spec files | Returns the full JSON schema for a specific spec type — exact structure, required fields, allowed values |
 | `openuispec_prepare` | Before UI code generation | Returns spec context, platform config, generation constraints |
 | `openuispec_read_specs` | Before and after generation | Loads spec file contents — the authoritative source for tokens, screens, contracts |
 | `openuispec_check` | After generation | Schema validation + concrete audit checklist from your spec |
-| `openuispec_status` | Anytime | Cross-target summary: baselines, drift, next steps |
 | `openuispec_validate` | After spec edits | Schema-only validation, optionally filtered by group |
 | `openuispec_drift` | Before updates | Detect spec drift since last snapshot, with semantic explanation |
+| `openuispec_status` | Anytime | Cross-target summary: baselines, drift, next steps |
 
 The server includes **protocol-level instructions** that trigger on UI-related requests independently of CLAUDE.md rules — so even if CLAUDE.md is buried under other project rules, the MCP enforcement still works.
 
@@ -180,7 +183,7 @@ openuispec/
 │   ├── index.ts                        # Entry point
 │   └── init.ts                         # Project scaffolding + AI rules
 ├── mcp-server/                          # MCP server (openuispec-mcp)
-│   └── index.ts                        # Stdio transport, 5 tools
+│   └── index.ts                        # Stdio transport, 8 tools
 ├── check/                               # Composite validation command
 │   └── index.ts                        # Schema + semantic + readiness
 ├── drift/                               # Drift detection (spec change tracking)
