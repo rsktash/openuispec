@@ -14,6 +14,7 @@ import {
   readdirSync,
   existsSync,
   appendFileSync,
+  unlinkSync,
 } from "node:fs";
 import { join, relative, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -263,7 +264,7 @@ Do NOT guess the file format — skipping this step will produce invalid YAML th
 
 ## MCP Tools (recommended for AI assistants)
 
-When the openuispec MCP server is configured (see \`.claude.json\`), AI assistants should use these tools instead of CLI commands:
+When the openuispec MCP server is configured, AI assistants should use these tools instead of CLI commands:
 
 | Tool | When to use |
 |------|-------------|
@@ -481,35 +482,72 @@ const EXPECTED_MCP_CONFIG = {
   args: ["mcp"],
 };
 
+/**
+ * MCP config files by agent:
+ *   .mcp.json              — Claude Code (project scope)
+ *   .vscode/mcp.json       — VS Code / Copilot Chat
+ *
+ * All use the same { mcpServers: { openuispec: { command, args } } } shape.
+ */
+const MCP_CONFIG_PATHS = [
+  ".mcp.json",
+  join(".vscode", "mcp.json"),
+];
+
 function configureMcp(cwd: string, showRestart: boolean, quiet: boolean = false): void {
-  const claudeJsonPath = join(cwd, ".claude.json");
+  for (const relPath of MCP_CONFIG_PATHS) {
+    const configPath = join(cwd, relPath);
 
-  try {
-    let claudeJson: Record<string, any> = {};
+    // .vscode/mcp.json: only write if .vscode/ already exists
+    if (relPath.startsWith(".vscode") && !existsSync(join(cwd, ".vscode"))) continue;
+
     try {
-      claudeJson = JSON.parse(readFileSync(claudeJsonPath, "utf-8"));
+      let config: Record<string, any> = {};
+      try {
+        config = JSON.parse(readFileSync(configPath, "utf-8"));
+      } catch {
+        // file doesn't exist or isn't valid JSON — start fresh
+      }
+
+      if (!config.mcpServers) config.mcpServers = {};
+
+      const existing = config.mcpServers.openuispec;
+      const needsUpdate =
+        !existing ||
+        existing.command !== EXPECTED_MCP_CONFIG.command ||
+        JSON.stringify(existing.args) !== JSON.stringify(EXPECTED_MCP_CONFIG.args);
+
+      if (needsUpdate) {
+        config.mcpServers.openuispec = { ...EXPECTED_MCP_CONFIG };
+        writeFileSync(configPath, JSON.stringify(config, null, 2) + "\n");
+        if (!quiet) console.log(`  ${existing ? "update" : "create"} ${relPath} (MCP server configured)`);
+      } else {
+        if (!quiet) console.log(`  skip ${relPath} (openuispec MCP already configured)`);
+      }
     } catch {
-      // file doesn't exist or isn't valid JSON — start fresh
+      if (!quiet) console.log(`  skip ${relPath} (could not configure MCP server)`);
     }
+  }
 
-    if (!claudeJson.mcpServers) claudeJson.mcpServers = {};
+  if (showRestart) console.log(`\n  Restart your AI coding agent to activate the MCP server.`);
 
-    const existing = claudeJson.mcpServers.openuispec;
-    const needsUpdate =
-      !existing ||
-      existing.command !== EXPECTED_MCP_CONFIG.command ||
-      JSON.stringify(existing.args) !== JSON.stringify(EXPECTED_MCP_CONFIG.args);
-
-    if (needsUpdate) {
-      claudeJson.mcpServers.openuispec = { ...EXPECTED_MCP_CONFIG };
-      writeFileSync(claudeJsonPath, JSON.stringify(claudeJson, null, 2) + "\n");
-      if (!quiet) console.log(`  ${existing ? "update" : "create"} .claude.json (MCP server configured)`);
-      if (showRestart) console.log(`\n  Restart Claude Code to activate the MCP server.`);
-    } else {
-      if (!quiet) console.log(`  skip .claude.json (openuispec MCP already configured)`);
+  // Clean up stale .claude.json MCP config from older versions
+  const claudeJsonPath = join(cwd, ".claude.json");
+  try {
+    const claudeJson = JSON.parse(readFileSync(claudeJsonPath, "utf-8"));
+    if (claudeJson.mcpServers?.openuispec) {
+      delete claudeJson.mcpServers.openuispec;
+      if (Object.keys(claudeJson.mcpServers).length === 0) delete claudeJson.mcpServers;
+      if (Object.keys(claudeJson).length === 0) {
+        unlinkSync(claudeJsonPath);
+        if (!quiet) console.log(`  remove .claude.json (migrated MCP config)`);
+      } else {
+        writeFileSync(claudeJsonPath, JSON.stringify(claudeJson, null, 2) + "\n");
+        if (!quiet) console.log(`  update .claude.json (removed stale MCP config)`);
+      }
     }
   } catch {
-    if (!quiet) console.log(`  skip .claude.json (could not configure MCP server)`);
+    // .claude.json doesn't exist or not parseable — nothing to clean up
   }
 }
 
@@ -825,7 +863,7 @@ Commands:
   openuispec drift --snapshot --target ios   Save current state + git baseline after target output exists
 
 AI rules have been added to CLAUDE.md and AGENTS.md.
-MCP server configured in .claude.json (AI assistants will use openuispec tools automatically).
+MCP server configured (AI assistants will use openuispec tools automatically).
 
 Docs: https://openuispec.rsteam.uz
 `);

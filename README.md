@@ -52,7 +52,7 @@ cd your-project
 openuispec init
 ```
 
-This scaffolds a spec directory, starter tokens, adds rules to `CLAUDE.md` / `AGENTS.md`, and configures the MCP server in `.claude.json` so AI assistants track spec changes automatically.
+This scaffolds a spec directory, starter tokens, adds rules to `CLAUDE.md` / `AGENTS.md`, and configures the MCP server so AI assistants track spec changes automatically.
 Use `openuispec init --no-configure-targets` if you want to scaffold first and choose target stacks later.
 
 Then hand your spec to any AI code generator:
@@ -251,8 +251,9 @@ OpenUISpec includes an MCP (Model Context Protocol) server that exposes CLI comm
 
 ### Setup
 
-`openuispec init` automatically configures the MCP server in `.claude.json`. For existing projects, add it manually:
+`openuispec init` automatically configures the MCP server for your coding agent. For existing projects, run `openuispec update-rules` or add the config manually:
 
+**Claude Code** (`.mcp.json`), **VS Code / Copilot** (`.vscode/mcp.json`):
 ```json
 {
   "mcpServers": {
