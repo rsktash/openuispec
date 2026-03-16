@@ -68,7 +68,10 @@ Spec files (YAML) are the single source of truth for all UI across platforms.
 
 MANDATORY WORKFLOW for any UI-related request (screens, navigation, layout, tokens, flows, localization):
 1. BEFORE writing or modifying any UI code, call openuispec_prepare with the target platform.
-   This returns the spec context, platform config, and generation constraints you must follow.
+   This returns the spec context, platform config, generation constraints, AND the full contents
+   of every spec file (tokens, screens, flows, contracts, locales, platform overrides).
+   Use the spec_contents field as the authoritative source — do NOT paraphrase from memory.
+   Cross-reference exact token values, contract must_handle lists, and locale keys from the inline content.
 2. If the request requires spec changes, update the spec files FIRST, then call openuispec_check to validate.
 3. Only then generate or update the platform UI code based on the prepare output.
 
@@ -82,7 +85,7 @@ or explicitly platform-specific polish that doesn't affect shared UI semantics.`
 server.registerTool(
   "openuispec_prepare",
   {
-    description: "Build AI-ready work bundle for a target platform. REQUIRED before any UI code generation. Returns spec context, platform config, semantic changes, and generation constraints.",
+    description: "Build AI-ready work bundle for a target platform. REQUIRED before any UI code generation. Returns spec context, platform config, semantic changes, generation constraints, AND the full contents of every spec file inline. Use spec_contents as the authoritative source for tokens, screens, contracts, and locales — do not paraphrase from memory.",
     inputSchema: { target: targetSchema },
   },
   async ({ target }) => {

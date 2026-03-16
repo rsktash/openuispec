@@ -116,6 +116,12 @@ interface PrepareBootstrapBundle {
   reference_examples: string[];
 }
 
+interface SpecFileContent {
+  path: string;
+  category: string;
+  content: string;
+}
+
 export interface PrepareResult {
   mode: "bootstrap" | "update";
   project: string;
@@ -138,6 +144,7 @@ export interface PrepareResult {
   explanation_note?: string;
   items: PrepareItem[];
   bootstrap?: PrepareBootstrapBundle;
+  spec_contents: SpecFileContent[];
   next_steps: string[];
 }
 
@@ -842,6 +849,17 @@ function generationWarnings(target: string, platformConfig: PreparePlatformConfi
   return warnings;
 }
 
+function readAllSpecContents(projectDir: string): SpecFileContent[] {
+  return discoverSpecFiles(projectDir).map((filePath) => {
+    const relPath = relative(projectDir, filePath);
+    return {
+      path: relPath,
+      category: categorizeSpecFile(relPath),
+      content: readFileSync(filePath, "utf-8"),
+    };
+  });
+}
+
 function bootstrapSpecFiles(projectDir: string, target: string): BootstrapSpecFile[] {
   return discoverSpecFiles(projectDir)
     .map((filePath) => {
@@ -1106,6 +1124,7 @@ function buildBootstrapPrepareResult(cwd: string, target: string): PrepareResult
     changes_available: false,
     explanation_note: "No snapshot exists yet. This is a first-time generation bundle.",
     items: [],
+    spec_contents: readAllSpecContents(projectDir),
     bootstrap: {
       output_exists: existsSync(outputDir),
       generation_ready: missingDecisions.length === 0 && backendContextReady && !pendingUserConfirmation,
@@ -1176,6 +1195,7 @@ function buildUpdatePrepareResult(cwd: string, target: string): PrepareResult {
     changes_available: result.explanation?.available ?? false,
     explanation_note: result.explanation?.note,
     items,
+    spec_contents: readAllSpecContents(projectDir),
     next_steps: nextSteps,
   };
 }

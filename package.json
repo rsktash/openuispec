@@ -1,6 +1,6 @@
 {
   "name": "openuispec",
-  "version": "0.1.39",
+  "version": "0.1.40",
   "license": "MIT",
   "type": "module",
   "description": "A semantic UI specification format for AI-native, platform-native app development",
