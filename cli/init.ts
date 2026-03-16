@@ -763,8 +763,8 @@ export async function init(argv: string[] = []): Promise<void> {
 
     const claudeJsonPath = join(cwd, ".claude.json");
     const mcpConfig = {
-      command: "npx",
-      args: ["openuispec-mcp"],
+      command: "openuispec",
+      args: ["mcp"],
     };
 
     try {

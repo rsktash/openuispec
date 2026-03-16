@@ -172,12 +172,19 @@ server.registerTool(
 
 // ── start server ─────────────────────────────────────────────────────
 
-async function main() {
+export async function startMcpServer() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
 }
 
-main().catch((err) => {
-  console.error("Failed to start OpenUISpec MCP server:", err);
-  process.exit(1);
-});
+// Direct execution (npx openuispec-mcp)
+const isDirectRun =
+  process.argv[1]?.endsWith("mcp-server/index.ts") ||
+  process.argv[1]?.endsWith("mcp-server/index.js");
+
+if (isDirectRun) {
+  startMcpServer().catch((err) => {
+    console.error("Failed to start OpenUISpec MCP server:", err);
+    process.exit(1);
+  });
+}

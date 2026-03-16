@@ -257,14 +257,14 @@ OpenUISpec includes an MCP (Model Context Protocol) server that exposes CLI comm
 {
   "mcpServers": {
     "openuispec": {
-      "command": "npx",
-      "args": ["openuispec-mcp"]
+      "command": "openuispec",
+      "args": ["mcp"]
     }
   }
 }
 ```
 
-Or run directly: `npx openuispec-mcp`
+Or run directly: `openuispec mcp`
 
 Set `OPENUISPEC_PROJECT_DIR` to override the working directory.
 

@@ -94,6 +94,12 @@ async function main(): Promise<void> {
       break;
     }
 
+    case "mcp": {
+      const { startMcpServer } = await import("../mcp-server/index.js");
+      await startMcpServer();
+      break;
+    }
+
     case undefined:
     case "--help":
     case "-h":
@@ -117,6 +123,7 @@ Usage:
   openuispec check --target <t> [--json]    Composite validation + prepare readiness
   openuispec validate [group...] [--json]   Validate spec files
   openuispec validate semantic --json       Semantic validation as JSON
+  openuispec mcp                           Start MCP server (stdio transport)
 
 Validate groups: manifest, tokens, screens, flows, platform, locales, contracts, semantic
 
