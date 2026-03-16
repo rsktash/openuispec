@@ -52,25 +52,88 @@ cd your-project
 openuispec init
 ```
 
-This scaffolds a spec directory, starter tokens, adds rules to `CLAUDE.md` / `AGENTS.md`, and configures the MCP server so AI assistants track spec changes automatically.
-Use `openuispec init --no-configure-targets` if you want to scaffold first and choose target stacks later.
+This scaffolds a spec directory, starter tokens, and **configures the MCP server** for your AI coding agent (Claude Code, VS Code/Copilot, Codex). Use `openuispec init --no-configure-targets` to scaffold first and choose target stacks later.
 
-Then hand your spec to any AI code generator:
+## AI integration (MCP)
+
+OpenUISpec is designed to be used by AI coding agents. The package includes an **MCP server** that exposes tools AI assistants call automatically during UI work — no manual prompting needed.
+
+### How it works
+
+```
+openuispec init → configures MCP for your agent → AI calls tools automatically
+```
+
+When you ask your AI to "add a settings page" or "update the home feed," the MCP server:
+
+1. **Before generation** — `openuispec_prepare` gives the AI your spec context, platform config, and constraints
+2. **During generation** — `openuispec_read_specs` feeds the AI the actual spec file contents as the authoritative source
+3. **After generation** — `openuispec_check` returns a concrete audit checklist derived from your spec (every contract `must_handle` item, every screen section, every locale key) and the AI verifies its code matches
+
+This replaces the old approach of writing instructions in CLAUDE.md and hoping the AI follows them. MCP tools are called reliably because they're part of the AI's tool-calling loop, not a text instruction it can skip.
+
+### Setup
+
+`openuispec init` and `openuispec update-rules` automatically configure MCP for all supported agents:
+
+| Agent | Config file | Created automatically |
+|-------|------------|----------------------|
+| **Claude Code** | `.mcp.json` | Always |
+| **Codex** | `.codex/config.toml` | Always |
+| **VS Code / Copilot** | `.vscode/mcp.json` | If `.vscode/` exists |
+
+Manual setup (if needed):
+
+**Claude Code** (`.mcp.json`), **VS Code / Copilot** (`.vscode/mcp.json`):
+```json
+{
+  "mcpServers": {
+    "openuispec": {
+      "command": "openuispec",
+      "args": ["mcp"]
+    }
+  }
+}
+```
+
+**Codex** (`.codex/config.toml`):
+```toml
+[mcp_servers.openuispec]
+command = "openuispec"
+args = ["mcp"]
+```
+
+Or run directly: `openuispec mcp`
+
+### Tools
+
+| Tool | When | What it does |
+|------|------|-------------|
+| `openuispec_prepare` | Before UI code generation | Returns spec context, platform config, generation constraints |
+| `openuispec_read_specs` | Before and after generation | Loads spec file contents — the authoritative source for tokens, screens, contracts |
+| `openuispec_check` | After generation | Schema validation + concrete audit checklist from your spec |
+| `openuispec_status` | Anytime | Cross-target summary: baselines, drift, next steps |
+| `openuispec_validate` | After spec edits | Schema-only validation, optionally filtered by group |
+| `openuispec_drift` | Before updates | Detect spec drift since last snapshot, with semantic explanation |
+
+The server includes **protocol-level instructions** that trigger on UI-related requests independently of CLAUDE.md rules — so even if CLAUDE.md is buried under other project rules, the MCP enforcement still works.
+
+## Using without MCP
+
+You can also use OpenUISpec with any AI by providing context manually:
 
 > Generate a native iOS app from this OpenUISpec. Follow all contract state machines, apply token ranges for iOS, and implement navigation flows as defined. Use `platform/ios.yaml` for SwiftUI-specific overrides.
 
-Before platform code generation, the AI should refresh its understanding of the current target toolchain and platform conventions instead of relying on stale memory. This matters most for project formats, resource wiring, navigation APIs, packaging rules, and other implementation details that change across toolchain versions.
-
 For platform generation, treat these as hard output constraints:
 
-- Generate a valid native project or target that actually bundles every required runtime resource. Converting spec inputs into platform-native resource files is insufficient unless those files are attached to the final app target and resolve at runtime.
-- Do not ship unresolved resource identifiers in the UI. Raw localization keys, token references, asset names, or placeholder paths mean the generated output is incomplete.
-- Do not use a container or navigation primitive without defining its behavior for every supported size class and form factor. Master-detail patterns must provide a non-empty compact fallback instead of assuming large-screen behavior.
+- Generate a valid native project that bundles every required runtime resource
+- Do not ship unresolved resource identifiers (raw locale keys, token refs, placeholder paths)
+- Define behavior for every supported size class and form factor
 
-See the examples for concrete reference projects:
+See the examples for reference:
 
-- [TaskFlow](./examples/taskflow/openuispec/) for a compact reference spec covering all 7 contract families, with generated iOS, Android, and web targets under `examples/taskflow/generated/`
-- [Todo Orbit](./examples/todo-orbit/openuispec/) for a bilingual task app with generated iOS, Android, and web targets under `examples/todo-orbit/generated/`
+- [TaskFlow](./examples/taskflow/openuispec/) — compact reference spec covering all 7 contract families
+- [Todo Orbit](./examples/todo-orbit/openuispec/) — bilingual task app with localization, custom contracts, and generated native/web targets
 
 ## Repository structure
 
@@ -244,49 +307,6 @@ openuispec status
 to see which targets are already up to date and which ones still need to catch up with shared spec changes.
 
 `drift --snapshot` is bookkeeping. It does not prove that the target code matches the spec, and it will not create a missing target output directory for you.
-
-## MCP server
-
-OpenUISpec includes an MCP (Model Context Protocol) server that exposes CLI commands as tools for AI assistants. This is the recommended way to integrate with Claude Code and other MCP-compatible clients — tools are called more reliably than CLAUDE.md instructions.
-
-### Setup
-
-`openuispec init` automatically configures the MCP server for your coding agent. For existing projects, run `openuispec update-rules` or add the config manually:
-
-**Claude Code** (`.mcp.json`), **VS Code / Copilot** (`.vscode/mcp.json`):
-```json
-{
-  "mcpServers": {
-    "openuispec": {
-      "command": "openuispec",
-      "args": ["mcp"]
-    }
-  }
-}
-```
-
-**Codex** (`.codex/config.toml`):
-```toml
-[mcp_servers.openuispec]
-command = "openuispec"
-args = ["mcp"]
-```
-
-Or run directly: `openuispec mcp`
-
-Set `OPENUISPEC_PROJECT_DIR` to override the working directory.
-
-### Tools
-
-| Tool | Description |
-|------|-------------|
-| `openuispec_prepare` | Build AI-ready work bundle for a target. **Call before any UI code generation.** |
-| `openuispec_check` | Schema validation + semantic lint + prepare readiness. Call after spec edits. |
-| `openuispec_status` | Cross-target summary: baselines, drift, next steps. |
-| `openuispec_validate` | Schema-only validation, optionally filtered by group. |
-| `openuispec_drift` | Detect spec drift since last snapshot, with optional semantic explanation. |
-
-All tools return structured JSON. The server includes protocol-level instructions that tell AI assistants to call `openuispec_prepare` before any UI work — this works independently of CLAUDE.md rules.
 
 ## Spec at a glance
 
