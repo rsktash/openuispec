@@ -471,11 +471,18 @@ export function updateRules(): void {
   }
 
   // Ensure MCP server is configured
+  configureMcp(cwd, true);
+}
+
+// ── shared MCP config ───────────────────────────────────────────────
+
+const EXPECTED_MCP_CONFIG = {
+  command: "openuispec",
+  args: ["mcp"],
+};
+
+function configureMcp(cwd: string, showRestart: boolean, quiet: boolean = false): void {
   const claudeJsonPath = join(cwd, ".claude.json");
-  const mcpConfig = {
-    command: "npx",
-    args: ["openuispec-mcp"],
-  };
 
   try {
     let claudeJson: Record<string, any> = {};
@@ -484,15 +491,25 @@ export function updateRules(): void {
     } catch {
       // file doesn't exist or isn't valid JSON — start fresh
     }
+
     if (!claudeJson.mcpServers) claudeJson.mcpServers = {};
-    if (!claudeJson.mcpServers.openuispec) {
-      claudeJson.mcpServers.openuispec = mcpConfig;
+
+    const existing = claudeJson.mcpServers.openuispec;
+    const needsUpdate =
+      !existing ||
+      existing.command !== EXPECTED_MCP_CONFIG.command ||
+      JSON.stringify(existing.args) !== JSON.stringify(EXPECTED_MCP_CONFIG.args);
+
+    if (needsUpdate) {
+      claudeJson.mcpServers.openuispec = { ...EXPECTED_MCP_CONFIG };
       writeFileSync(claudeJsonPath, JSON.stringify(claudeJson, null, 2) + "\n");
-      console.log(`  create .claude.json (MCP server configured)`);
-      console.log(`\n  Restart Claude Code to activate the MCP server.`);
+      if (!quiet) console.log(`  ${existing ? "update" : "create"} .claude.json (MCP server configured)`);
+      if (showRestart) console.log(`\n  Restart Claude Code to activate the MCP server.`);
+    } else {
+      if (!quiet) console.log(`  skip .claude.json (openuispec MCP already configured)`);
     }
   } catch {
-    // non-critical — skip silently
+    if (!quiet) console.log(`  skip .claude.json (could not configure MCP server)`);
   }
 }
 
@@ -761,30 +778,7 @@ export async function init(argv: string[] = []): Promise<void> {
 
     // ── MCP server configuration ────────────────────────────────────
 
-    const claudeJsonPath = join(cwd, ".claude.json");
-    const mcpConfig = {
-      command: "openuispec",
-      args: ["mcp"],
-    };
-
-    try {
-      let claudeJson: Record<string, any> = {};
-      try {
-        claudeJson = JSON.parse(readFileSync(claudeJsonPath, "utf-8"));
-      } catch {
-        // file doesn't exist or isn't valid JSON — start fresh
-      }
-      if (!claudeJson.mcpServers) claudeJson.mcpServers = {};
-      if (!claudeJson.mcpServers.openuispec) {
-        claudeJson.mcpServers.openuispec = mcpConfig;
-        writeFileSync(claudeJsonPath, JSON.stringify(claudeJson, null, 2) + "\n");
-        if (!quiet) console.log(`  create .claude.json (MCP server configured)`);
-      } else {
-        if (!quiet) console.log(`  skip .claude.json (openuispec MCP already configured)`);
-      }
-    } catch {
-      if (!quiet) console.log(`  skip .claude.json (could not configure MCP server)`);
-    }
+    configureMcp(cwd, false, quiet);
 
     if (answers.configureTargets) {
       if (!quiet) console.log("\nConfiguring target stacks...\n");
