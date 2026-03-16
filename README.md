@@ -265,6 +265,13 @@ OpenUISpec includes an MCP (Model Context Protocol) server that exposes CLI comm
 }
 ```
 
+**Codex** (`.codex/config.toml`):
+```toml
+[mcp_servers.openuispec]
+command = "openuispec"
+args = ["mcp"]
+```
+
 Or run directly: `openuispec mcp`
 
 Set `OPENUISPEC_PROJECT_DIR` to override the working directory.

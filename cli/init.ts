@@ -489,13 +489,42 @@ const EXPECTED_MCP_CONFIG = {
  *
  * All use the same { mcpServers: { openuispec: { command, args } } } shape.
  */
-const MCP_CONFIG_PATHS = [
+const JSON_MCP_PATHS = [
   ".mcp.json",
   join(".vscode", "mcp.json"),
 ];
 
+/** Codex uses TOML: .codex/config.toml */
+const CODEX_CONFIG_PATH = join(".codex", "config.toml");
+const CODEX_MCP_BLOCK = `\n[mcp_servers.openuispec]\ncommand = "openuispec"\nargs = ["mcp"]\n`;
+
+function configureCodexMcp(cwd: string, quiet: boolean): void {
+  const codexDir = join(cwd, ".codex");
+  if (!existsSync(codexDir)) return;
+
+  const configPath = join(codexDir, "config.toml");
+  try {
+    let content = "";
+    try {
+      content = readFileSync(configPath, "utf-8");
+    } catch {
+      // file doesn't exist — will create
+    }
+
+    if (content.includes("[mcp_servers.openuispec]")) {
+      if (!quiet) console.log(`  skip ${CODEX_CONFIG_PATH} (openuispec MCP already configured)`);
+      return;
+    }
+
+    writeFileSync(configPath, content + CODEX_MCP_BLOCK);
+    if (!quiet) console.log(`  ${content ? "update" : "create"} ${CODEX_CONFIG_PATH} (MCP server configured)`);
+  } catch {
+    if (!quiet) console.log(`  skip ${CODEX_CONFIG_PATH} (could not configure MCP server)`);
+  }
+}
+
 function configureMcp(cwd: string, showRestart: boolean, quiet: boolean = false): void {
-  for (const relPath of MCP_CONFIG_PATHS) {
+  for (const relPath of JSON_MCP_PATHS) {
     const configPath = join(cwd, relPath);
 
     // .vscode/mcp.json: only write if .vscode/ already exists
@@ -528,6 +557,9 @@ function configureMcp(cwd: string, showRestart: boolean, quiet: boolean = false)
       if (!quiet) console.log(`  skip ${relPath} (could not configure MCP server)`);
     }
   }
+
+  // Codex: .codex/config.toml (TOML format)
+  configureCodexMcp(cwd, quiet);
 
   if (showRestart) console.log(`\n  Restart your AI coding agent to activate the MCP server.`);
 
