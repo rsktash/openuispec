@@ -46,7 +46,7 @@ interface CheckPrepare {
   warnings: string[];
 }
 
-interface CheckResult {
+export interface CheckResult {
   target: string;
   validation: CheckValidation;
   semantic: CheckSemantic;
@@ -159,21 +159,10 @@ function determinePrepare(
   return { mode, ready, missing, warnings };
 }
 
-// ── main ──────────────────────────────────────────────────────────────
+// ── core (importable, no process.exit) ───────────────────────────────
 
-export function runCheck(argv: string[]): void {
-  const isJson = argv.includes("--json");
-  const targetIdx = argv.indexOf("--target");
-  const target =
-    targetIdx !== -1 && argv[targetIdx + 1] ? argv[targetIdx + 1] : null;
-
-  if (!target) {
-    console.error("Error: --target is required for check");
-    console.error("Usage: openuispec check --target <target> [--json]");
-    process.exit(1);
-  }
-
-  const projectDir = findProjectDir(process.cwd());
+export function buildCheckResult(target: string, cwd: string = process.cwd()): CheckResult {
+  const projectDir = findProjectDir(cwd);
   const projectName = readProjectName(projectDir);
   const includes = readIncludes(projectDir);
   const ajv = buildAjv();
@@ -204,7 +193,24 @@ export function runCheck(argv: string[]): void {
   // 3. Prepare readiness
   const prepare = determinePrepare(projectDir, projectName, target);
 
-  const result: CheckResult = { target, validation, semantic, prepare };
+  return { target, validation, semantic, prepare };
+}
+
+// ── main ──────────────────────────────────────────────────────────────
+
+export function runCheck(argv: string[]): void {
+  const isJson = argv.includes("--json");
+  const targetIdx = argv.indexOf("--target");
+  const target =
+    targetIdx !== -1 && argv[targetIdx + 1] ? argv[targetIdx + 1] : null;
+
+  if (!target) {
+    console.error("Error: --target is required for check");
+    console.error("Usage: openuispec check --target <target> [--json]");
+    process.exit(1);
+  }
+
+  const result = buildCheckResult(target);
 
   if (isJson) {
     console.log(JSON.stringify(result, null, 2));
@@ -213,11 +219,11 @@ export function runCheck(argv: string[]): void {
   }
 
   // Exit codes: 0 = clean + ready, 2 = validation errors, 1 = config error
-  const totalErrors = validation.total_errors + semantic.total_errors;
+  const totalErrors = result.validation.total_errors + result.semantic.total_errors;
   if (totalErrors > 0) {
     process.exit(2);
   }
-  if (!prepare.ready) {
+  if (!result.prepare.ready) {
     process.exit(2);
   }
   process.exit(0);

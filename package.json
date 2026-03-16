@@ -1,6 +1,6 @@
 {
   "name": "openuispec",
-  "version": "0.1.34",
+  "version": "0.1.35",
   "license": "MIT",
   "type": "module",
   "description": "A semantic UI specification format for AI-native, platform-native app development",
@@ -11,7 +11,9 @@
   },
   "files": [
     "cli/",
+    "check/",
     "drift/",
+    "mcp-server/",
     "prepare/",
     "status/",
     "schema/",
@@ -22,7 +24,8 @@
     "LICENSE"
   ],
   "bin": {
-    "openuispec": "./cli/index.ts"
+    "openuispec": "./cli/index.ts",
+    "openuispec-mcp": "./mcp-server/index.ts"
   },
   "scripts": {
     "test": "node --import tsx --test tests/*.test.ts",
@@ -40,6 +43,7 @@
     "postinstall": "echo \"\\n  ✓ openuispec installed — if upgrading, run: openuispec update-rules\\n\""
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.27.1",
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
     "tsx": "^4.19.4",

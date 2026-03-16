@@ -52,7 +52,7 @@ cd your-project
 openuispec init
 ```
 
-This scaffolds a spec directory, starter tokens, and adds rules to `CLAUDE.md` / `AGENTS.md` so AI assistants track spec changes automatically.
+This scaffolds a spec directory, starter tokens, adds rules to `CLAUDE.md` / `AGENTS.md`, and configures the MCP server in `.claude.json` so AI assistants track spec changes automatically.
 Use `openuispec init --no-configure-targets` if you want to scaffold first and choose target stacks later.
 
 Then hand your spec to any AI code generator:
@@ -116,10 +116,16 @@ openuispec/
 ├── cli/                                 # CLI tool (openuispec init, drift, prepare, validate)
 │   ├── index.ts                        # Entry point
 │   └── init.ts                         # Project scaffolding + AI rules
+├── mcp-server/                          # MCP server (openuispec-mcp)
+│   └── index.ts                        # Stdio transport, 5 tools
+├── check/                               # Composite validation command
+│   └── index.ts                        # Schema + semantic + readiness
 ├── drift/                               # Drift detection (spec change tracking)
 │   └── index.ts                        # Hash-based drift checker
 ├── prepare/                             # Target work bundle generation
 │   └── index.ts                        # Baseline-aware target preparation
+├── status/                              # Cross-target status summary
+│   └── index.ts                        # Baseline/drift overview
 ├── LICENSE
 └── README.md
 ```
@@ -239,6 +245,41 @@ to see which targets are already up to date and which ones still need to catch u
 
 `drift --snapshot` is bookkeeping. It does not prove that the target code matches the spec, and it will not create a missing target output directory for you.
 
+## MCP server
+
+OpenUISpec includes an MCP (Model Context Protocol) server that exposes CLI commands as tools for AI assistants. This is the recommended way to integrate with Claude Code and other MCP-compatible clients — tools are called more reliably than CLAUDE.md instructions.
+
+### Setup
+
+`openuispec init` automatically configures the MCP server in `.claude.json`. For existing projects, add it manually:
+
+```json
+{
+  "mcpServers": {
+    "openuispec": {
+      "command": "npx",
+      "args": ["openuispec-mcp"]
+    }
+  }
+}
+```
+
+Or run directly: `npx openuispec-mcp`
+
+Set `OPENUISPEC_PROJECT_DIR` to override the working directory.
+
+### Tools
+
+| Tool | Description |
+|------|-------------|
+| `openuispec_prepare` | Build AI-ready work bundle for a target. **Call before any UI code generation.** |
+| `openuispec_check` | Schema validation + semantic lint + prepare readiness. Call after spec edits. |
+| `openuispec_status` | Cross-target summary: baselines, drift, next steps. |
+| `openuispec_validate` | Schema-only validation, optionally filtered by group. |
+| `openuispec_drift` | Detect spec drift since last snapshot, with optional semantic explanation. |
+
+All tools return structured JSON. The server includes protocol-level instructions that tell AI assistants to call `openuispec_prepare` before any UI work — this works independently of CLAUDE.md rules.
+
 ## Spec at a glance
 
 | Section | What it defines |
@@ -289,6 +330,7 @@ to see which targets are already up to date and which ones still need to catch u
 - [x] Form system (validation rules, field dependencies)
 - [x] Drift detection (spec change tracking per platform)
 - [x] CLI tool (`openuispec init` for project scaffolding + AI rules)
+- [x] MCP server for AI tool integration (`openuispec-mcp`)
 - [x] Multi-platform showcase app (`examples/todo-orbit/`)
 - [ ] More example apps (e-commerce, social, dashboard)
 

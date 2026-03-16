@@ -45,7 +45,7 @@ interface TargetStatus {
   note?: string;
 }
 
-interface StatusResult {
+export interface StatusResult {
   project: string;
   targets: TargetStatus[];
 }
@@ -141,8 +141,7 @@ function buildTargetStatus(cwd: string, projectDir: string, projectName: string,
   };
 }
 
-function buildStatusResult(): StatusResult {
-  const cwd = process.cwd();
+export function buildStatusResult(cwd: string = process.cwd()): StatusResult {
   const projectDir = findProjectDir(cwd);
   const projectName = readProjectName(projectDir);
   const targets = allTargets(projectDir, projectName).map((target) =>
@@ -187,7 +186,7 @@ function printReport(result: StatusResult): void {
 
 export function runStatus(argv: string[]): void {
   const isJson = argv.includes("--json");
-  const result = buildStatusResult();
+  const result = buildStatusResult(process.cwd());
 
   if (isJson) {
     console.log(JSON.stringify(result, null, 2));

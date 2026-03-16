@@ -137,8 +137,7 @@ export function hasStatusSemantics(relPath: string): boolean {
 export function discoverSpecFiles(projectDir: string): string[] {
   const manifest = join(projectDir, "openuispec.yaml");
   if (!existsSync(manifest)) {
-    console.error(`Error: No openuispec.yaml found in ${projectDir}`);
-    process.exit(1);
+    throw new Error(`No openuispec.yaml found in ${projectDir}`);
   }
 
   const doc = YAML.parse(readFileSync(manifest, "utf-8"));
@@ -433,11 +432,10 @@ export function findProjectDir(cwd: string): string {
       return dir;
     }
   }
-  console.error(
-    "Error: No openuispec.yaml found.\n" +
+  throw new Error(
+    "No openuispec.yaml found. " +
       "Run from a directory containing openuispec.yaml or an openuispec/ subdirectory."
   );
-  process.exit(1);
 }
 
 /** Read and parse the manifest YAML. */
@@ -655,8 +653,7 @@ export function loadTargetDrift(
   const projectName = readProjectName(projectDir);
   const statePath = stateFilePath(projectDir, projectName, target);
   if (!existsSync(statePath)) {
-    console.error(missingSnapshotMessage(cwd, projectDir, projectName, target));
-    process.exit(1);
+    throw new Error(missingSnapshotMessage(cwd, projectDir, projectName, target));
   }
 
   const state: StateFile = JSON.parse(readFileSync(statePath, "utf-8"));

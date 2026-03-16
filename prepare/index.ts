@@ -116,7 +116,7 @@ interface PrepareBootstrapBundle {
   reference_examples: string[];
 }
 
-interface PrepareResult {
+export interface PrepareResult {
   mode: "bootstrap" | "update";
   project: string;
   target: string;
@@ -1180,8 +1180,7 @@ function buildUpdatePrepareResult(cwd: string, target: string): PrepareResult {
   };
 }
 
-function buildPrepareResult(target: string): PrepareResult {
-  const cwd = process.cwd();
+export function buildPrepareResult(target: string, cwd: string = process.cwd()): PrepareResult {
   const projectDir = findProjectDir(cwd);
   const projectName = readProjectName(projectDir);
   const outputDir = resolveOutputDir(projectDir, projectName, target);

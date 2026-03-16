@@ -1,0 +1,183 @@
+#!/usr/bin/env -S npx tsx
+/**
+ * OpenUISpec MCP Server
+ *
+ * Exposes OpenUISpec CLI commands as MCP tools so AI assistants
+ * can call them directly instead of relying on CLAUDE.md instructions.
+ *
+ * Usage:
+ *   npx openuispec-mcp                           # stdio transport
+ *   OPENUISPEC_PROJECT_DIR=/path npx openuispec-mcp  # explicit project dir
+ */
+
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { z } from "zod";
+import { readFileSync } from "node:fs";
+import { join, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+import { SUPPORTED_TARGETS } from "../drift/index.js";
+import { buildPrepareResult } from "../prepare/index.js";
+import { buildCheckResult } from "../check/index.js";
+import { buildStatusResult } from "../status/index.js";
+import { buildValidateResult } from "../schema/validate.js";
+import { loadTargetDrift } from "../drift/index.js";
+
+// ── resolve project cwd ──────────────────────────────────────────────
+
+const projectCwd = process.env.OPENUISPEC_PROJECT_DIR || process.cwd();
+
+// ── read package version ─────────────────────────────────────────────
+
+function getPackageVersion(): string {
+  try {
+    const __dirname = dirname(fileURLToPath(import.meta.url));
+    const pkg = JSON.parse(readFileSync(join(__dirname, "..", "package.json"), "utf-8"));
+    return pkg.version ?? "unknown";
+  } catch {
+    return "unknown";
+  }
+}
+
+// ── shared tool helpers ──────────────────────────────────────────────
+
+const targetSchema = z.enum(SUPPORTED_TARGETS).describe("Target platform");
+
+function formatError(err: unknown): string {
+  return err instanceof Error ? err.message : String(err);
+}
+
+function toolResult(data: unknown): { content: [{ type: "text"; text: string }] } {
+  return { content: [{ type: "text" as const, text: JSON.stringify(data, null, 2) }] };
+}
+
+function toolError(err: unknown): { content: [{ type: "text"; text: string }]; isError: true } {
+  return { content: [{ type: "text" as const, text: `Error: ${formatError(err)}` }], isError: true };
+}
+
+// ── create server ────────────────────────────────────────────────────
+
+const server = new McpServer(
+  {
+    name: "openuispec",
+    version: getPackageVersion(),
+  },
+  {
+    instructions: `This project uses OpenUISpec — a semantic UI specification format.
+Spec files (YAML) are the single source of truth for all UI across platforms.
+
+MANDATORY WORKFLOW for any UI-related request (screens, navigation, layout, tokens, flows, localization):
+1. BEFORE writing or modifying any UI code, call openuispec_prepare with the target platform.
+   This returns the spec context, platform config, and generation constraints you must follow.
+2. If the request requires spec changes, update the spec files FIRST, then call openuispec_check to validate.
+3. Only then generate or update the platform UI code based on the prepare output.
+
+Skip these tools ONLY when the request is purely non-UI (API logic, database, infrastructure, etc.)
+or explicitly platform-specific polish that doesn't affect shared UI semantics.`,
+  }
+);
+
+// ── tool: openuispec_prepare ─────────────────────────────────────────
+
+server.registerTool(
+  "openuispec_prepare",
+  {
+    description: "Build AI-ready work bundle for a target platform. REQUIRED before any UI code generation. Returns spec context, platform config, semantic changes, and generation constraints.",
+    inputSchema: { target: targetSchema },
+  },
+  async ({ target }) => {
+    try {
+      return toolResult(buildPrepareResult(target, projectCwd));
+    } catch (err) {
+      return toolError(err);
+    }
+  }
+);
+
+// ── tool: openuispec_check ───────────────────────────────────────────
+
+server.registerTool(
+  "openuispec_check",
+  {
+    description: "Run composite validation: schema validation, semantic linting, and prepare readiness check. Call after spec edits to verify correctness.",
+    inputSchema: { target: targetSchema },
+  },
+  async ({ target }) => {
+    try {
+      return toolResult(buildCheckResult(target, projectCwd));
+    } catch (err) {
+      return toolError(err);
+    }
+  }
+);
+
+// ── tool: openuispec_status ──────────────────────────────────────────
+
+server.registerTool(
+  "openuispec_status",
+  {
+    description: "Show cross-target status summary: baseline, drift, and recommended next steps for all configured targets. Good starting point to understand project state.",
+  },
+  async () => {
+    try {
+      return toolResult(buildStatusResult(projectCwd));
+    } catch (err) {
+      return toolError(err);
+    }
+  }
+);
+
+// ── tool: openuispec_validate ────────────────────────────────────────
+
+server.registerTool(
+  "openuispec_validate",
+  {
+    description: "Validate spec files against JSON schemas. Returns validation errors grouped by type (manifest, tokens, screens, flows, platform, locales, contracts, semantic).",
+    inputSchema: {
+      groups: z
+        .array(z.enum(["manifest", "tokens", "screens", "flows", "platform", "locales", "contracts", "semantic"]))
+        .optional()
+        .describe("Specific groups to validate. If omitted, validates all groups."),
+    },
+  },
+  async ({ groups }) => {
+    try {
+      return toolResult(buildValidateResult(groups, projectCwd));
+    } catch (err) {
+      return toolError(err);
+    }
+  }
+);
+
+// ── tool: openuispec_drift ───────────────────────────────────────────
+
+server.registerTool(
+  "openuispec_drift",
+  {
+    description: "Detect spec drift since last snapshot. Shows which spec files changed, were added, or removed. Use explain to see property-level changes.",
+    inputSchema: {
+      target: targetSchema,
+      explain: z.boolean().optional().default(false).describe("Include semantic explanation of changes"),
+    },
+  },
+  async ({ target, explain }) => {
+    try {
+      const { result } = loadTargetDrift(projectCwd, target, false, explain);
+      return toolResult(result);
+    } catch (err) {
+      return toolError(err);
+    }
+  }
+);
+
+// ── start server ─────────────────────────────────────────────────────
+
+async function main() {
+  const transport = new StdioServerTransport();
+  await server.connect(transport);
+}
+
+main().catch((err) => {
+  console.error("Failed to start OpenUISpec MCP server:", err);
+  process.exit(1);
+});

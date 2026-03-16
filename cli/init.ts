@@ -261,12 +261,23 @@ Do NOT guess the file format — skipping this step will produce invalid YAML th
 3. \`examples/taskflow/openuispec/\` — complete working example with all file types
 4. \`schema/\` — JSON Schemas for validation
 
+## MCP Tools (recommended for AI assistants)
+
+When the openuispec MCP server is configured (see \`.claude.json\`), AI assistants should use these tools instead of CLI commands:
+
+| Tool | When to use |
+|------|-------------|
+| \`openuispec_prepare\` | **Before any UI code generation.** Returns spec context, platform config, and constraints. |
+| \`openuispec_check\` | After editing spec files. Validates schema + semantics + readiness. |
+| \`openuispec_status\` | To understand cross-target state (baselines, drift, next steps). |
+| \`openuispec_validate\` | Schema-only validation, optionally by group. |
+| \`openuispec_drift\` | Detect spec changes since last snapshot. |
+
 ## CLI commands
 
 \`\`\`bash
 openuispec validate             # Validate spec files against schemas
 openuispec validate semantic    # Run semantic cross-reference linting
-openuispec validate screens     # Validate only screens
 openuispec configure-target ${targets[0]} [--defaults] # Configure target stack; --defaults stays unconfirmed
 openuispec status               # Show cross-target baseline/drift status
 openuispec drift --target ${targets[0]} --explain   # Explain semantic spec drift
@@ -298,113 +309,90 @@ ${RULES_START_MARKER}
 # Spec files are the single source of truth for all UI across platforms.
 # Targets: ${targetList}
 
-## IMPORTANT — Read the specification before working with spec files
+## MANDATORY — UI work requires OpenUISpec tools
 
-The spec format, file schemas, and generation rules are defined in the installed \`openuispec\` package.
-You MUST read the reference files listed below before creating, editing, or generating from any spec file.
-Do NOT guess the file format — skipping this step will produce invalid YAML that fails validation.
+When the user's request involves UI — screens, navigation, layout, tokens, flows, localization,
+or any visual/structural change — you MUST use the OpenUISpec tools before writing any code.
 
-**Find the package in this order:**
-1. \`node_modules/openuispec/\` (project dependency)
-2. Run \`npm root -g\` → \`<prefix>/openuispec/\` (global install)
-3. Online: \`https://openuispec.rsteam.uz/llms-full.txt\` (if not installed)
+### MCP Tools (use these when available)
 
-**Reference files inside the package (read in this order):**
-1. \`README.md\` — schema tables, file format reference, root wrapper keys
-2. \`spec/openuispec-v0.1.md\` — full specification (contracts, layout, expressions, adaptive, etc.)
-3. \`examples/taskflow/openuispec/\` — complete working example with all file types
+Call these MCP tools directly. They return structured JSON with everything you need.
+
+1. **Before ANY UI code generation or modification:**
+   Call \`openuispec_prepare\` with the target platform. This returns the spec context,
+   platform config, generation constraints, and semantic changes. Do not skip this step.
+
+2. **After editing spec files:**
+   Call \`openuispec_check\` to validate schema + semantic lint + prepare readiness.
+
+3. **To understand project state:**
+   Call \`openuispec_status\` for cross-target summary.
+
+4. **To detect what changed:**
+   Call \`openuispec_drift\` with \`explain: true\` to see property-level spec changes.
+
+5. **For schema validation only:**
+   Call \`openuispec_validate\` optionally with specific groups.
+
+### CLI fallback (when MCP is not available)
+
+If MCP tools are not available, use these CLI commands with \`--json\` flag:
+- \`openuispec prepare --target <t> --json\` — build AI-ready work bundle
+- \`openuispec check --target <t> --json\` — composite validation
+- \`openuispec status --json\` — cross-target status
+- \`openuispec drift --target <t> --explain --json\` — semantic drift
+- \`openuispec validate [group...] --json\` — schema validation
+
+### Other CLI commands
+- \`openuispec init\` — scaffold a new spec project
+- \`openuispec drift --snapshot --target <t>\` — snapshot current state (only after UI code is updated)
+- \`openuispec configure-target <t>\` — configure target platform stack
+- \`openuispec update-rules\` — update AI rules to match installed package version
+
+## Spec format reference
+
+The spec format, schemas, and generation rules are in the installed \`openuispec\` package.
+You MUST read the reference files before creating or editing spec files — do NOT guess the format.
+
+**Find the package:** \`node_modules/openuispec/\` or run \`npm root -g\` → \`<prefix>/openuispec/\`.
+**Online fallback:** \`https://openuispec.rsteam.uz/llms-full.txt\`
+
+**Reference files (read in order):**
+1. \`README.md\` — schema tables, file format, root wrapper keys
+2. \`spec/openuispec-v0.1.md\` — full specification
+3. \`examples/taskflow/openuispec/\` — complete working example
 4. \`schema/\` — JSON Schemas for every file type
 
-These files are updated with each package version. Always read from the installed package,
-not from cached or memorized content, to ensure you use the latest spec.
-
-## What is OpenUISpec
-OpenUISpec is a YAML-based spec format that describes an app's UI semantically — tokens, screens, flows, and platform overrides. AI reads the spec and generates native code (SwiftUI, Compose, React). AI reads native code and updates the spec. The spec is the sync layer between platforms.
-
 ## Spec location
-- Spec root: \`${specDir}/\`
-- Manifest: \`${specDir}/openuispec.yaml\` — always read this first.
-- Tokens: \`${specDir}/tokens/\`
-- Screens: \`${specDir}/screens/\`
-- Flows: \`${specDir}/flows/\`
-- Contracts: \`${specDir}/contracts/\`
-- Platform: \`${specDir}/platform/\`
-- Locales: \`${specDir}/locales/\`
+- Spec root: \`${specDir}/\` — read \`${specDir}/openuispec.yaml\` first for actual paths.
+- Default dirs: tokens/, screens/, flows/, contracts/, platform/, locales/
 
-**Note:** These are the default paths. Actual paths are in \`includes:\` in \`openuispec.yaml\` and may use relative paths. Always read \`openuispec.yaml\` to find the real directories.
+## When to start from spec vs platform code
+
+**Spec-first** (use \`openuispec_prepare\` or \`openuispec prepare\`):
+- Screen structure, navigation, fields, actions, validation, data binding changes
+- Token, variant, contract, flow, or localization changes
+- Changes affecting multiple platforms
+- Requests in product/UI terms
+
+**Platform-first** (skip spec tools):
+- Platform-specific polish (iOS-only, Android-only, web-only)
+- Local bug fixes that don't alter shared semantic behavior
 
 ## If spec directories are empty (first-time setup)
-This means the project has existing UI code but hasn't been specced yet. Your job:
 
-1. **Read the spec first** — find and read \`spec/openuispec-v0.1.md\` from the installed package.
-2. **Find existing screens** — scan the codebase for UI screen files.
-3. **Create stubs** — for each screen, create \`${specDir}/screens/<name>.yaml\` with:
-   \`\`\`yaml
-   screen_name:
-     semantic: "Brief description of what this screen does"
-     status: stub
-     layout:
-       type: scroll_vertical
-   \`\`\`
-4. **Extract tokens** — scan for colors, fonts, spacing and create files in \`${specDir}/tokens/\`.
-5. **Create contract extensions** — define visual variants for the 7 built-in contracts (action_trigger, data_display, input_field, collection, nav_container, feedback, surface) in \`${specDir}/contracts/\`. These encode the design system's visual identity (shapes, token overrides, platform mappings). Read \`schema/contract.schema.json\` and examples in the package for the format.
-6. **Create locale files** — for each locale in \`i18n.supported_locales\`, create \`${specDir}/locales/<locale>.json\` with all \`$t:\` keys used in screens and flows.
-7. **Update the manifest** — fill in \`data_model\`, \`api.endpoints\` in \`${specDir}/openuispec.yaml\`.
+Read \`spec/openuispec-v0.1.md\` from the package first, then:
+1. Scan codebase for UI screens → create \`${specDir}/screens/<name>.yaml\` as \`status: stub\`
+2. Extract tokens (colors, fonts, spacing) → \`${specDir}/tokens/\`
+3. Create contract extensions → \`${specDir}/contracts/\`
+4. Create locale files → \`${specDir}/locales/<locale>.json\`
+5. Fill in \`data_model\`, \`api.endpoints\` in \`${specDir}/openuispec.yaml\`
 
-## OpenUISpec Source Of Truth
-
-OpenUISpec spec files are the primary source of truth for UI behavior across platforms.
-
-### Start from spec when:
-- the request changes screen structure
-- the request changes navigation
-- the request changes fields, actions, validation, or data binding
-- the request changes tokens, variants, contracts, flows, or localization
-- the request affects more than one platform
-- the request is phrased in product/UI terms rather than platform-code terms
-
-Spec-first workflow:
-1. Read \`${specDir}/openuispec.yaml\` and the relevant spec files first.
-2. Update the spec first.
-3. Update the affected generated/native UI code to match the spec.
-4. Run \`openuispec validate\`.
-5. Run \`openuispec validate semantic\`.
-6. Run \`openuispec drift --target <target> --explain\` to inspect semantic changes since that target's baseline.
-7. Run \`openuispec prepare --target <target>\` to build the target work bundle for that target. In \`bootstrap\` mode it provides first-generation constraints; in \`update\` mode it provides drift-based update scope.
-   If the target stack was filled from defaults, stop and ask the user to confirm or change it before implementation.
-8. Verify the affected UI targets build/run if possible.
-9. Only then run \`openuispec drift --snapshot --target <target>\` for affected targets, after that target output directory exists.
-10. Run \`openuispec drift --target <target> --explain\` again to confirm no spec changes remain for that target.
-11. Use \`openuispec status\` to see which other targets are still behind the updated spec.
-
-### Start from platform code when:
-- the change is platform-specific polish
-- the change is a local bug fix that does not alter shared semantic behavior
-- the request explicitly asks for an iOS-only, Android-only, or web-only adjustment
-
-Platform-first workflow:
-1. Update native/platform code.
-2. If the change affects shared semantics, sync the spec afterward.
-3. If the change is intentionally platform-specific, document it in \`platform/*.yaml\` when appropriate.
-
-### Never do this:
-- Do not snapshot drift immediately after changing spec unless the UI code has also been updated.
-- Do not treat \`openuispec drift\` as proof that generated UI matches the spec.
-- Do not skip \`--explain\` / \`prepare\` when another platform needs to catch up with shared spec changes.
+## Rules
+- Do not snapshot drift unless the UI code has also been updated.
 - Do not modify generated UI without checking whether the spec must change first.
-- Do not use \`configure-target --defaults\` as silent approval for implementation. Ask the user to confirm the stack first.
-
-## CLI commands
-- \`openuispec init\` — scaffold a new spec project
-- \`openuispec validate [group...]\` — validate spec files against schemas
-- \`openuispec validate semantic\` — run semantic cross-reference linting
-- \`openuispec drift --target <t>\` — check for spec drift
-- \`openuispec drift --target <t> --explain\` — explain semantic spec drift since the target baseline
-- \`openuispec drift --snapshot --target <t>\` — snapshot current state after the target output exists
-- \`openuispec prepare --target <t>\` — build the target work bundle and check whether stack confirmation is still pending
-- \`openuispec status\` — show cross-target baseline/drift status
-- \`openuispec update-rules\` — update AI rules to match installed package version
-- \`openuispec drift --all\` — include stubs in drift check
+- Do not use \`configure-target --defaults\` as silent approval — ask the user to confirm.
+- Always read spec format from the installed package, not from cached/memorized content.
 ${RULES_END_MARKER}
 `;
 }
@@ -480,6 +468,30 @@ export function updateRules(): void {
     );
   } else {
     console.log(`\nAI rules updated to v${version}`);
+  }
+
+  // Ensure MCP server is configured
+  const claudeJsonPath = join(cwd, ".claude.json");
+  const mcpConfig = {
+    command: "npx",
+    args: ["openuispec-mcp"],
+  };
+
+  try {
+    let claudeJson: Record<string, any> = {};
+    try {
+      claudeJson = JSON.parse(readFileSync(claudeJsonPath, "utf-8"));
+    } catch {
+      // file doesn't exist or isn't valid JSON — start fresh
+    }
+    if (!claudeJson.mcpServers) claudeJson.mcpServers = {};
+    if (!claudeJson.mcpServers.openuispec) {
+      claudeJson.mcpServers.openuispec = mcpConfig;
+      writeFileSync(claudeJsonPath, JSON.stringify(claudeJson, null, 2) + "\n");
+      console.log(`  create .claude.json (MCP server configured)`);
+    }
+  } catch {
+    // non-critical — skip silently
   }
 }
 
@@ -746,6 +758,33 @@ export async function init(argv: string[] = []): Promise<void> {
       }
     }
 
+    // ── MCP server configuration ────────────────────────────────────
+
+    const claudeJsonPath = join(cwd, ".claude.json");
+    const mcpConfig = {
+      command: "npx",
+      args: ["openuispec-mcp"],
+    };
+
+    try {
+      let claudeJson: Record<string, any> = {};
+      try {
+        claudeJson = JSON.parse(readFileSync(claudeJsonPath, "utf-8"));
+      } catch {
+        // file doesn't exist or isn't valid JSON — start fresh
+      }
+      if (!claudeJson.mcpServers) claudeJson.mcpServers = {};
+      if (!claudeJson.mcpServers.openuispec) {
+        claudeJson.mcpServers.openuispec = mcpConfig;
+        writeFileSync(claudeJsonPath, JSON.stringify(claudeJson, null, 2) + "\n");
+        if (!quiet) console.log(`  create .claude.json (MCP server configured)`);
+      } else {
+        if (!quiet) console.log(`  skip .claude.json (openuispec MCP already configured)`);
+      }
+    } catch {
+      if (!quiet) console.log(`  skip .claude.json (could not configure MCP server)`);
+    }
+
     if (answers.configureTargets) {
       if (!quiet) console.log("\nConfiguring target stacks...\n");
       const { runConfigureTarget } = await import("./configure-target.js");
@@ -791,6 +830,7 @@ Commands:
   openuispec drift --snapshot --target ios   Save current state + git baseline after target output exists
 
 AI rules have been added to CLAUDE.md and AGENTS.md.
+MCP server configured in .claude.json (AI assistants will use openuispec tools automatically).
 
 Docs: https://openuispec.rsteam.uz
 `);

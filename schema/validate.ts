@@ -755,6 +755,36 @@ function findProjectDir(cwd: string): string {
 export { buildAjv, readIncludes, GROUPS };
 export type { JsonGroupResult, JsonError };
 
+interface ValidateResult {
+  total_errors: number;
+  groups: JsonGroupResult[];
+}
+
+export function buildValidateResult(
+  groups?: string[],
+  cwd: string = process.cwd(),
+): ValidateResult {
+  const projectDir = findProjectDir(cwd);
+  const includes = readIncludes(projectDir);
+  const ajv = buildAjv();
+
+  const keys =
+    groups && groups.length > 0
+      ? groups.filter((k) => k in GROUPS)
+      : Object.keys(GROUPS);
+
+  const results: JsonGroupResult[] = [];
+  let totalErrors = 0;
+
+  for (const key of keys) {
+    const result = GROUPS[key].collectJson(ajv, projectDir, includes, key);
+    results.push(result);
+    totalErrors += result.errors.length;
+  }
+
+  return { total_errors: totalErrors, groups: results };
+}
+
 export function runValidate(argv: string[]): void {
   const jsonMode = argv.includes("--json");
   const filteredArgs = argv.filter((a) => a !== "--json");
