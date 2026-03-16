@@ -319,21 +319,28 @@ or any visual/structural change — you MUST use the OpenUISpec tools before wri
 
 Call these MCP tools directly. They return structured JSON with everything you need.
 
-1. **Before ANY UI code generation or modification:**
-   Call \`openuispec_prepare\` with the target platform. This returns the spec context,
-   platform config, generation constraints, and semantic changes. Do not skip this step.
+**Pre-generation:**
+1. Call \`openuispec_prepare\` with the target platform — returns spec context, platform config, constraints.
+2. Call \`openuispec_read_specs\` to load spec file contents. Use these as the AUTHORITATIVE source.
+3. If spec changes are needed, update spec files FIRST, then call \`openuispec_check\`.
+4. Generate or update the platform UI code based on the spec contents.
 
-2. **After editing spec files:**
-   Call \`openuispec_check\` to validate schema + semantic lint + prepare readiness.
+**Post-generation (EVERY TIME after writing UI code):**
+5. Call \`openuispec_check\` to validate spec integrity.
+6. Call \`openuispec_read_specs\` for the screens/contracts you just generated code for.
+7. Audit your generated code against the spec. For each screen, verify:
+   - Every field/action in the spec has a corresponding UI element
+   - Token values (colors, spacing, radii) match exactly — no approximations
+   - Contract \`must_handle\` states are all implemented (loading, error, empty, etc.)
+   - Adaptive breakpoints match the spec's \`size_classes\`
+   - Locale keys match \`$t:\` references
+   - Navigation targets match flow definitions
+8. Report any real gaps found and fix them before finishing.
 
-3. **To understand project state:**
-   Call \`openuispec_status\` for cross-target summary.
-
-4. **To detect what changed:**
-   Call \`openuispec_drift\` with \`explain: true\` to see property-level spec changes.
-
-5. **For schema validation only:**
-   Call \`openuispec_validate\` optionally with specific groups.
+**Other tools:**
+- \`openuispec_status\` — cross-target summary, good starting point
+- \`openuispec_drift\` with \`explain: true\` — property-level spec changes
+- \`openuispec_validate\` — schema-only validation by group
 
 ### CLI fallback (when MCP is not available)
 
