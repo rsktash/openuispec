@@ -507,7 +507,6 @@ const CODEX_MCP_BLOCK = `\n[mcp_servers.openuispec]\ncommand = "openuispec"\narg
 
 function configureCodexMcp(cwd: string, quiet: boolean): void {
   const codexDir = join(cwd, ".codex");
-  if (!existsSync(codexDir)) return;
 
   const configPath = join(codexDir, "config.toml");
   try {
@@ -523,6 +522,7 @@ function configureCodexMcp(cwd: string, quiet: boolean): void {
       return;
     }
 
+    if (!existsSync(codexDir)) mkdirSync(codexDir);
     writeFileSync(configPath, content + CODEX_MCP_BLOCK);
     if (!quiet) console.log(`  ${content ? "update" : "create"} ${CODEX_CONFIG_PATH} (MCP server configured)`);
   } catch {
