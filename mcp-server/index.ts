@@ -16,12 +16,14 @@ import { z } from "zod";
 import { readFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { SUPPORTED_TARGETS } from "../drift/index.js";
+import { SUPPORTED_TARGETS, findProjectDir, discoverSpecFiles } from "../drift/index.js";
 import { buildPrepareResult } from "../prepare/index.js";
 import { buildCheckResult } from "../check/index.js";
 import { buildStatusResult } from "../status/index.js";
 import { buildValidateResult } from "../schema/validate.js";
 import { loadTargetDrift } from "../drift/index.js";
+import { readFileSync as fsReadFileSync } from "node:fs";
+import { relative } from "node:path";
 
 // ── resolve project cwd ──────────────────────────────────────────────
 
@@ -68,12 +70,13 @@ Spec files (YAML) are the single source of truth for all UI across platforms.
 
 MANDATORY WORKFLOW for any UI-related request (screens, navigation, layout, tokens, flows, localization):
 1. BEFORE writing or modifying any UI code, call openuispec_prepare with the target platform.
-   This returns the spec context, platform config, generation constraints, AND the full contents
-   of every spec file (tokens, screens, flows, contracts, locales, platform overrides).
-   Use the spec_contents field as the authoritative source — do NOT paraphrase from memory.
-   Cross-reference exact token values, contract must_handle lists, and locale keys from the inline content.
-2. If the request requires spec changes, update the spec files FIRST, then call openuispec_check to validate.
-3. Only then generate or update the platform UI code based on the prepare output.
+   This returns the spec context, platform config, generation constraints, and the list of spec files.
+2. Then call openuispec_read_specs to load the spec file contents you need for the task.
+   Pass specific paths for targeted work, or omit paths to load everything.
+   Use the returned contents as the AUTHORITATIVE source — do NOT paraphrase from memory.
+   Cross-reference exact token values, contract must_handle lists, and locale keys from the content.
+3. If the request requires spec changes, update the spec files FIRST, then call openuispec_check to validate.
+4. Only then generate or update the platform UI code based on the spec contents.
 
 Skip these tools ONLY when the request is purely non-UI (API logic, database, infrastructure, etc.)
 or explicitly platform-specific polish that doesn't affect shared UI semantics.`,
@@ -85,7 +88,7 @@ or explicitly platform-specific polish that doesn't affect shared UI semantics.`
 server.registerTool(
   "openuispec_prepare",
   {
-    description: "Build AI-ready work bundle for a target platform. REQUIRED before any UI code generation. Returns spec context, platform config, semantic changes, generation constraints, AND the full contents of every spec file inline. Use spec_contents as the authoritative source for tokens, screens, contracts, and locales — do not paraphrase from memory.",
+    description: "Build AI-ready work bundle for a target platform. REQUIRED before any UI code generation. Returns spec context, platform config, semantic changes, and generation constraints. Call openuispec_read_specs afterward to load the actual spec file contents you need for generation.",
     inputSchema: { target: targetSchema },
   },
   async ({ target }) => {
@@ -146,6 +149,42 @@ server.registerTool(
   async ({ groups }) => {
     try {
       return toolResult(buildValidateResult(groups, projectCwd));
+    } catch (err) {
+      return toolError(err);
+    }
+  }
+);
+
+// ── tool: openuispec_read_specs ───────────────────────────────────────
+
+server.registerTool(
+  "openuispec_read_specs",
+  {
+    description: "Read the full contents of spec files. Call after openuispec_prepare to load the actual YAML/JSON content. Pass specific file paths from the prepare output, or omit to read all spec files. Use these contents as the authoritative source — do NOT paraphrase from memory.",
+    inputSchema: {
+      paths: z
+        .array(z.string())
+        .optional()
+        .describe("Specific spec file paths to read (relative to spec root, e.g. 'screens/home.yaml'). If omitted, reads all spec files."),
+    },
+  },
+  async ({ paths }) => {
+    try {
+      const projectDir = findProjectDir(projectCwd);
+      const allFiles = discoverSpecFiles(projectDir);
+      const filesToRead = paths && paths.length > 0
+        ? allFiles.filter((f) => {
+            const rel = relative(projectDir, f);
+            return paths.some((p) => rel === p || rel.endsWith(p));
+          })
+        : allFiles;
+
+      const contents = filesToRead.map((f) => ({
+        path: relative(projectDir, f),
+        content: fsReadFileSync(f, "utf-8"),
+      }));
+
+      return toolResult(contents);
     } catch (err) {
       return toolError(err);
     }

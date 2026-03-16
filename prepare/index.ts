@@ -144,7 +144,7 @@ export interface PrepareResult {
   explanation_note?: string;
   items: PrepareItem[];
   bootstrap?: PrepareBootstrapBundle;
-  spec_contents: SpecFileContent[];
+  spec_contents?: SpecFileContent[];
   next_steps: string[];
 }
 
@@ -1057,7 +1057,7 @@ function printReport(result: PrepareResult): void {
   }
 }
 
-function buildBootstrapPrepareResult(cwd: string, target: string): PrepareResult {
+function buildBootstrapPrepareResult(cwd: string, target: string, includeContents: boolean = false): PrepareResult {
   const projectDir = findProjectDir(cwd);
   const projectName = readProjectName(projectDir);
   const outputDir = resolveOutputDir(projectDir, projectName, target);
@@ -1124,7 +1124,7 @@ function buildBootstrapPrepareResult(cwd: string, target: string): PrepareResult
     changes_available: false,
     explanation_note: "No snapshot exists yet. This is a first-time generation bundle.",
     items: [],
-    spec_contents: readAllSpecContents(projectDir),
+    ...(includeContents ? { spec_contents: readAllSpecContents(projectDir) } : {}),
     bootstrap: {
       output_exists: existsSync(outputDir),
       generation_ready: missingDecisions.length === 0 && backendContextReady && !pendingUserConfirmation,
@@ -1150,7 +1150,7 @@ function buildBootstrapPrepareResult(cwd: string, target: string): PrepareResult
   };
 }
 
-function buildUpdatePrepareResult(cwd: string, target: string): PrepareResult {
+function buildUpdatePrepareResult(cwd: string, target: string, includeContents: boolean = false): PrepareResult {
   const { projectDir, projectName, result } = loadTargetDrift(cwd, target, false, true);
   const outputDir = resolveOutputDir(projectDir, projectName, target);
   const codeRoots = suggestCodeRoots(target, outputDir);
@@ -1195,20 +1195,20 @@ function buildUpdatePrepareResult(cwd: string, target: string): PrepareResult {
     changes_available: result.explanation?.available ?? false,
     explanation_note: result.explanation?.note,
     items,
-    spec_contents: readAllSpecContents(projectDir),
+    ...(includeContents ? { spec_contents: readAllSpecContents(projectDir) } : {}),
     next_steps: nextSteps,
   };
 }
 
-export function buildPrepareResult(target: string, cwd: string = process.cwd()): PrepareResult {
+export function buildPrepareResult(target: string, cwd: string = process.cwd(), includeContents: boolean = false): PrepareResult {
   const projectDir = findProjectDir(cwd);
   const projectName = readProjectName(projectDir);
   const outputDir = resolveOutputDir(projectDir, projectName, target);
   const statePath = join(outputDir, ".openuispec-state.json");
   if (!existsSync(statePath)) {
-    return buildBootstrapPrepareResult(cwd, target);
+    return buildBootstrapPrepareResult(cwd, target, includeContents);
   }
-  return buildUpdatePrepareResult(cwd, target);
+  return buildUpdatePrepareResult(cwd, target, includeContents);
 }
 
 export function runPrepare(argv: string[]): void {
