@@ -22,8 +22,9 @@ import { buildCheckResult } from "../check/index.js";
 import { buildStatusResult } from "../status/index.js";
 import { buildValidateResult } from "../schema/validate.js";
 import { loadTargetDrift } from "../drift/index.js";
-import { readFileSync as fsReadFileSync } from "node:fs";
-import { relative } from "node:path";
+import { readFileSync as fsReadFileSync, existsSync, readdirSync } from "node:fs";
+import { relative, resolve } from "node:path";
+import YAML from "yaml";
 
 // ── resolve project cwd ──────────────────────────────────────────────
 
@@ -114,15 +115,153 @@ server.registerTool(
 
 // ── tool: openuispec_check ───────────────────────────────────────────
 
+function buildAuditChecklist(projectDir: string, target: string): string {
+  const lines: string[] = [
+    "POST-GENERATION AUDIT — verify your code against these concrete spec requirements:",
+    "",
+    "HOW TO AUDIT: For each item below, READ the generated component/screen file,",
+    "find the code that implements it, and confirm the values match exactly.",
+    "If you cannot find the implementation, it is a REAL GAP — fix it.",
+    "",
+  ];
+
+  // Extract must_handle from contracts
+  const manifest = YAML.parse(fsReadFileSync(join(projectDir, "openuispec.yaml"), "utf-8"));
+  const contractsDir = resolve(projectDir, manifest.includes?.contracts ?? "./contracts/");
+
+  if (existsSync(contractsDir)) {
+    lines.push("## Contract must_handle requirements");
+    for (const file of readdirSync(contractsDir).filter(f => f.endsWith(".yaml")).sort()) {
+      try {
+        const content = YAML.parse(fsReadFileSync(join(contractsDir, file), "utf-8"));
+        const contractName = Object.keys(content)[0];
+        const contract = content[contractName];
+        if (!contract?.variants) continue;
+
+        for (const [variantName, variant] of Object.entries(contract.variants as Record<string, any>)) {
+          const mustHandle = variant?.generation?.must_handle;
+          if (mustHandle?.length) {
+            lines.push(`\n### ${contractName}.${variantName}`);
+            for (const item of mustHandle) {
+              lines.push(`- [ ] ${item}`);
+            }
+          }
+        }
+
+        // Top-level generation.must_handle
+        const topMustHandle = contract?.generation?.must_handle;
+        if (topMustHandle?.length) {
+          lines.push(`\n### ${contractName} (global)`);
+          for (const item of topMustHandle) {
+            lines.push(`- [ ] ${item}`);
+          }
+        }
+      } catch { /* skip unparseable files */ }
+    }
+    lines.push("");
+  }
+
+  // Extract screens and their sections
+  const screensDir = resolve(projectDir, manifest.includes?.screens ?? "./screens/");
+  if (existsSync(screensDir)) {
+    lines.push("## Screens — verify all sections exist in generated code");
+    for (const file of readdirSync(screensDir).filter(f => f.endsWith(".yaml")).sort()) {
+      try {
+        const content = YAML.parse(fsReadFileSync(join(screensDir, file), "utf-8"));
+        const screenName = Object.keys(content)[0];
+        const screen = content[screenName];
+        if (screen?.status === "stub") continue;
+
+        const sections: string[] = [];
+        const collectSections = (node: any, prefix = "") => {
+          if (!node || typeof node !== "object") return;
+          if (node.contract) sections.push(`${prefix}${node.contract}${node.variant ? `.${node.variant}` : ""}`);
+          if (node.sections) {
+            for (const [key, child] of Object.entries(node.sections)) {
+              collectSections(child, `${prefix}${key}/`);
+            }
+          }
+          if (node.children && Array.isArray(node.children)) {
+            for (const child of node.children) {
+              collectSections(child, prefix);
+            }
+          }
+        };
+        collectSections(screen?.layout);
+
+        if (sections.length > 0) {
+          lines.push(`\n### ${screenName} (${file})`);
+          for (const section of sections) {
+            lines.push(`- [ ] ${section}`);
+          }
+        }
+
+        // Adaptive layout
+        if (screen?.layout?.adaptive || screen?.adaptive) {
+          lines.push(`- [ ] Adaptive breakpoints implemented`);
+        }
+      } catch { /* skip */ }
+    }
+    lines.push("");
+  }
+
+  // Locale keys count
+  const localesDir = resolve(projectDir, manifest.includes?.locales ?? "./locales/");
+  if (existsSync(localesDir)) {
+    const localeFiles = readdirSync(localesDir).filter(f => f.endsWith(".json"));
+    if (localeFiles.length > 0) {
+      lines.push("## Locales — verify all locale files are wired");
+      for (const file of localeFiles) {
+        try {
+          const keys = Object.keys(JSON.parse(fsReadFileSync(join(localesDir, file), "utf-8")));
+          lines.push(`- [ ] ${file}: ${keys.length} keys loaded at runtime`);
+        } catch { /* skip */ }
+      }
+      lines.push("");
+    }
+  }
+
+  // Platform-specific checks
+  const platformDir = resolve(projectDir, manifest.includes?.platform ?? "./platform/");
+  const platformPath = join(platformDir, `${target}.yaml`);
+  if (existsSync(platformPath)) {
+    try {
+      const platformDoc = YAML.parse(fsReadFileSync(platformPath, "utf-8"));
+      const platformDef = platformDoc?.[target];
+      if (platformDef?.generation) {
+        lines.push("## Platform generation requirements");
+        const gen = platformDef.generation;
+        if (gen.architecture) lines.push(`- [ ] Architecture: ${gen.architecture}`);
+        if (gen.naming) lines.push(`- [ ] Naming convention: ${gen.naming}`);
+        if (gen.css) lines.push(`- [ ] CSS framework: ${gen.css}`);
+      }
+    } catch { /* skip */ }
+  }
+
+  lines.push("FOR EACH UNCHECKED ITEM: Read the generated file, search for the implementation,");
+  lines.push("and either confirm it matches or fix it. Do not mark items as 'intentionally skipped'");
+  lines.push("unless the user explicitly requested to skip them.");
+
+  return lines.join("\n");
+}
+
 server.registerTool(
   "openuispec_check",
   {
-    description: "Run composite validation: schema validation, semantic linting, and prepare readiness check. Call after spec edits to verify correctness.",
+    description: "Run composite validation + post-generation audit. Returns schema validation results AND a concrete audit checklist derived from your spec files — listing every contract must_handle item, every screen section, and every locale file that must exist in your generated code. Verify each item.",
     inputSchema: { target: targetSchema },
   },
   async ({ target }) => {
     try {
-      return toolResult(buildCheckResult(target, projectCwd));
+      const result = buildCheckResult(target, projectCwd);
+      const projectDir = findProjectDir(projectCwd);
+      const audit = buildAuditChecklist(projectDir, target);
+      return {
+        content: [
+          { type: "text" as const, text: JSON.stringify(result, null, 2) },
+          { type: "text" as const, text: audit },
+        ],
+      };
     } catch (err) {
       return toolError(err);
     }
