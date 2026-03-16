@@ -1,0 +1,76 @@
+color:
+  brand:
+    primary:
+      semantic: "Main brand identity — warm ink tone"
+      reference: "#1C1B1A"
+      range:
+        hue: [30, 40]
+        saturation: [5, 15]
+        lightness: [8, 14]
+      on_color:
+        reference: "#FFFFFF"
+        contrast_min: 7.0
+    accent:
+      semantic: "Accent highlights — muted indigo"
+      reference: "#5B52A3"
+      range:
+        hue: [250, 260]
+        saturation: [30, 45]
+        lightness: [45, 55]
+      on_color:
+        reference: "#FFFFFF"
+        contrast_min: 4.5
+
+  surface:
+    primary:
+      semantic: "Main content background — warm off-white"
+      reference: "#FAF8F5"
+    secondary:
+      semantic: "Card and grouped backgrounds — warm cream"
+      reference: "#F3F0EB"
+    tertiary:
+      semantic: "Elevated surfaces — soft beige"
+      reference: "#EBE7E0"
+
+  text:
+    primary:
+      semantic: "Headings, body text"
+      reference: "#1C1B1A"
+      contrast_min: 7.0
+    secondary:
+      semantic: "Supporting text, captions"
+      reference: "#6B6966"
+      contrast_min: 4.5
+    tertiary:
+      semantic: "Placeholder text, disabled labels"
+      reference: "#9E9A95"
+
+  semantic:
+    success:
+      reference: "#2D9D5E"
+      on_color:
+        reference: "#FFFFFF"
+        contrast_min: 4.5
+    warning:
+      reference: "#D4920E"
+      on_color:
+        reference: "#1C1B1A"
+        contrast_min: 4.5
+    danger:
+      reference: "#D43B3B"
+      on_color:
+        reference: "#FFFFFF"
+        contrast_min: 4.5
+    info:
+      reference: "#3B82D4"
+      on_color:
+        reference: "#FFFFFF"
+        contrast_min: 4.5
+
+  border:
+    default:
+      semantic: "Default borders and dividers"
+      reference: "#E0DCD6"
+    strong:
+      semantic: "Emphasized borders"
+      reference: "#C5C0B8"

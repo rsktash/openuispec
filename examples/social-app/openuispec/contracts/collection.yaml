@@ -1,0 +1,43 @@
+# collection contract extension
+# Base definition: spec Section 4.7
+
+collection:
+  variants:
+    list:
+      semantic: "Vertical list — items use card shape from data_display"
+      tokens:
+        gap: "spacing.sm"
+      generation:
+        must_handle:
+          - "Vertical stack with consistent gap between items"
+          - "Item cards use rounded cap shape from data_display.card variant"
+
+    horizontal_scroll:
+      semantic: "Horizontal scrolling row — stories bar, creator cards"
+      tokens:
+        gap: "spacing.sm"
+        padding: "spacing.md"
+      generation:
+        must_handle:
+          - "Horizontal scroll with snap behavior"
+          - "Items maintain rounded cap shape"
+
+    chip_row:
+      semantic: "Horizontal chip row — filter toggles with rounded cap diagonal"
+      tokens:
+        gap: "spacing.xs"
+      generation:
+        must_handle:
+          - "Horizontal scrolling chip row"
+          - "Chips use rounded cap primary diagonal, not pill shape"
+          - "Selected chip uses accent fill, unselected uses border"
+
+    chat_thread:
+      semantic: "Chat message list — alternating alignment with rounded cap bubbles"
+      tokens:
+        gap: "spacing.xs"
+      generation:
+        must_handle:
+          - "Sent messages align right with primary diagonal, received align left with alternate diagonal"
+          - "Sent bubbles use brand primary, received use surface secondary"
+          - "The diagonal alternation creates visual rhythm between sent and received"

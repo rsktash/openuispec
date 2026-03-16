@@ -1,0 +1,23 @@
+web:
+  framework: react
+  generation:
+    bundler: vite
+    naming: framework conventions
+    runtime: frontend_only
+    css: tailwind
+    routing: react_router
+    state: zustand
+    storage_backend: none
+    dependencies:
+      - vite
+      - typescript
+      - react
+      - react-dom
+      - tailwindcss
+      - react-router
+      - zustand
+    stack_confirmation:
+      status: confirmed
+      source: user
+      confirmed_at: 2026-03-15T15:22:42.766Z
+  language: typescript

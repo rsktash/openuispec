@@ -1,0 +1,147 @@
+icons:
+  sizes:
+    sm:
+      semantic: "Small icons — tab bar, inline"
+      value: 20
+    md:
+      semantic: "Default icon size"
+      value: 24
+    lg:
+      semantic: "Large icons — hero, empty state"
+      value: 32
+
+  variants:
+    default: "outline"
+    suffixes:
+      _fill: "filled"
+
+  fallback:
+    strategy: "name_passthrough"
+    missing_icon: "questionmark.circle"
+
+  registry:
+    navigation:
+      home:
+        semantic: "Home feed tab"
+        platform:
+          ios: "house"
+          android: "home"
+          web: "home"
+      discover:
+        semantic: "Discover tab"
+        platform:
+          ios: "compass"
+          android: "explore"
+          web: "explore"
+      notifications:
+        semantic: "Notifications tab"
+        platform:
+          ios: "bell"
+          android: "notifications"
+          web: "notifications"
+      messages:
+        semantic: "Messages tab"
+        platform:
+          ios: "message"
+          android: "chat"
+          web: "chat"
+      profile:
+        semantic: "Profile tab"
+        platform:
+          ios: "person.circle"
+          android: "account_circle"
+          web: "account_circle"
+    actions:
+      search:
+        semantic: "Search action"
+        platform:
+          ios: "magnifyingglass"
+          android: "search"
+          web: "search"
+      create_post:
+        semantic: "Create new post"
+        platform:
+          ios: "plus.circle.fill"
+          android: "add_circle"
+          web: "add_circle"
+      like:
+        semantic: "Like action"
+        variants: [_fill]
+        platform:
+          ios: "heart"
+          android: "favorite_border"
+          web: "favorite_border"
+      comment:
+        semantic: "Comment action"
+        platform:
+          ios: "bubble.right"
+          android: "chat_bubble_outline"
+          web: "chat_bubble_outline"
+      share:
+        semantic: "Share action"
+        platform:
+          ios: "square.and.arrow.up"
+          android: "share"
+          web: "share"
+      bookmark:
+        semantic: "Save/bookmark"
+        variants: [_fill]
+        platform:
+          ios: "bookmark"
+          android: "bookmark_border"
+          web: "bookmark_border"
+      more:
+        semantic: "More options"
+        platform:
+          ios: "ellipsis"
+          android: "more_vert"
+          web: "more_vert"
+      send:
+        semantic: "Send message"
+        platform:
+          ios: "paperplane.fill"
+          android: "send"
+          web: "send"
+      camera:
+        semantic: "Camera/photo"
+        platform:
+          ios: "camera"
+          android: "photo_camera"
+          web: "photo_camera"
+      image:
+        semantic: "Image attachment"
+        platform:
+          ios: "photo"
+          android: "image"
+          web: "image"
+      edit:
+        semantic: "Edit action"
+        platform:
+          ios: "pencil"
+          android: "edit"
+          web: "edit"
+      check:
+        semantic: "Confirm/done"
+        platform:
+          ios: "checkmark"
+          android: "check"
+          web: "check"
+    chrome:
+      back:
+        semantic: "Navigate back"
+        platform:
+          ios: "chevron.left"
+          android: "arrow_back"
+          web: "arrow_back"
+      close:
+        semantic: "Close/dismiss"
+        platform:
+          ios: "xmark"
+          android: "close"
+          web: "close"
+      settings:
+        semantic: "Settings"
+        platform:
+          ios: "gearshape"
+          android: "settings"
+          web: "settings"

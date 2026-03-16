@@ -1,0 +1,66 @@
+create_post:
+  semantic: "Single-step flow to compose and publish a new post"
+  entry: "compose"
+
+  screens:
+    compose:
+      screen_inline:
+        semantic: "Post composition form with text, media, and audience selection"
+
+        state:
+          body: { type: string, default: "" }
+          media: { type: string, default: "" }
+          audience: { type: string, default: "public" }
+
+        layout:
+          type: scroll_vertical
+          sections:
+            - id: form
+              form_id: "post_form"
+              children:
+                - contract: input_field
+                  input_type: text
+                  props:
+                    label: "$t:create_post.body_placeholder"
+                    value: "state.body"
+                    multiline: true
+                    max_length: 4000
+                  data_binding: "form.body"
+
+                - contract: input_field
+                  input_type: select
+                  props:
+                    label: "$t:create_post.audience"
+                    value: "state.audience"
+                    options:
+                      - { value: "public", label: "$t:create_post.audience_public" }
+                      - { value: "followers", label: "$t:create_post.audience_followers" }
+                  data_binding: "form.audience"
+
+            - id: media_bar
+              contract: action_trigger
+              variant: secondary
+              props:
+                label: "$t:create_post.add_image"
+                icon: "image"
+              action:
+                type: share
+                content: "media_picker"
+
+            - id: publish_button
+              contract: action_trigger
+              variant: primary
+              props:
+                label: "$t:create_post.publish"
+                full_width: true
+              action:
+                type: sequence
+                actions:
+                  - type: api_call
+                    endpoint: "api.posts.create"
+                    body:
+                      body: "form.body"
+                      media: "form.media"
+                      audience: "form.audience"
+                  - { type: feedback, variant: toast, message: "$t:create_post.success" }
+                  - { type: dismiss }

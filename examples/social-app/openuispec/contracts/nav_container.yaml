@@ -1,0 +1,34 @@
+# nav_container contract extension
+# Base definition: spec Section 4.4
+
+nav_container:
+  variants:
+    tab_bar:
+      semantic: "Bottom tab bar — standard platform tab bar with badge support"
+      tokens:
+        background: "color.surface.primary"
+        tint_active: "color.brand.primary"
+        tint_inactive: "color.text.tertiary"
+      platform_mapping:
+        ios: { uses_system_tab_bar: true, height: 49 }
+        android: { component: "NavigationBar" }
+        web: { style: "fixed bottom bar, border-top" }
+      generation:
+        must_handle:
+          - "Use platform-native tab bar component"
+          - "Active icon uses brand primary tint"
+
+    sidebar:
+      semantic: "Side navigation — expanded layout for tablets and desktop"
+      tokens:
+        background: "color.surface.secondary"
+        width: 280
+      platform_mapping:
+        ios: { style: "sidebar" }
+        android: { component: "NavigationRail" }
+        web: { style: "fixed left sidebar" }
+      generation:
+        must_handle:
+          - "Visible on expanded size class only"
+          - "Active item highlighted with rounded cap primary diagonal background"
+          - "Collapses to tab_bar on compact size class"

@@ -1,0 +1,214 @@
+# social-app — OpenUISpec v0.1
+spec_version: "0.1"
+
+project:
+  name: "social-app"
+  description: ""
+
+includes:
+  tokens: "./tokens/"
+  contracts: "./contracts/"
+  screens: "./screens/"
+  flows: "./flows/"
+  platform: "./platform/"
+  locales: "./locales/"
+
+i18n:
+  default_locale: "en"
+  supported_locales: [en, ru, uz]
+  fallback_strategy: "default"
+
+generation:
+  targets: [ios, android, web]
+  # output_dir:                          # Optional: map targets to code directories
+  #   ios: "../ios-app/"                  # relative to this file
+  #   android: "../android-app/"
+  #   web: "../web-ui/"
+  code_roots:
+    backend: "../backend/"                # Required when api.endpoints are declared
+  output_format:
+    ios: { language: swift, framework: swiftui, min_version: "17.0" }
+    android: { language: kotlin, framework: compose, min_sdk: 26 }
+    web: { language: typescript, framework: react, bundler: vite }
+
+data_model:
+  user:
+    id: { type: string, required: true }
+    handle: { type: string, required: true }
+    display_name: { type: string, required: true }
+    avatar_url: { type: string }
+    bio: { type: string }
+
+  post:
+    id: { type: string, required: true }
+    author_id: { type: string, required: true }
+    body: { type: string, required: true, max_length: 4000 }
+    media_url: { type: string }
+    media_type: { type: string, values: [image, video] }
+    like_count: { type: integer, default: 0 }
+    comment_count: { type: integer, default: 0 }
+    published_at: { type: string, format: date-time, required: true }
+
+  comment:
+    id: { type: string, required: true }
+    post_id: { type: string, required: true }
+    author_id: { type: string, required: true }
+    body: { type: string, required: true, max_length: 1200 }
+    created_at: { type: string, format: date-time, required: true }
+
+  story:
+    id: { type: string, required: true }
+    author_id: { type: string, required: true }
+    preview_url: { type: string }
+    active: { type: boolean, default: true }
+
+  conversation:
+    id: { type: string, required: true }
+    title: { type: string }
+    unread_count: { type: integer, default: 0 }
+
+  notification:
+    id: { type: string, required: true }
+    type: { type: string, required: true }
+    actor_id: { type: string }
+    post_id: { type: string }
+    created_at: { type: string, format: date-time, required: true }
+
+  preference:
+    theme: { type: string, values: [system, light, dark], default: system }
+    push_notifications: { type: boolean, default: true }
+    message_previews: { type: boolean, default: true }
+    auto_translate: { type: boolean, default: false }
+
+api:
+  base_url: "/api/v1"
+  auth: "bearer_token"
+  endpoints:
+    feed:
+      list:
+        method: GET
+        path: "/feed"
+        params: [filter, search, cursor]
+      stories:
+        method: GET
+        path: "/feed/stories"
+      summary:
+        method: GET
+        path: "/feed/summary"
+
+    discover:
+      creators:
+        method: GET
+        path: "/discover/creators"
+      trends:
+        method: GET
+        path: "/discover/trends"
+      tags:
+        method: GET
+        path: "/discover/tags"
+      search:
+        method: GET
+        path: "/search"
+        params: [query, tab]
+
+    posts:
+      getById:
+        method: GET
+        path: "/posts/:id"
+        params: [id]
+      comments:
+        method: GET
+        path: "/posts/:id/comments"
+        params: [id]
+      create:
+        method: POST
+        path: "/posts"
+        body:
+          body: string
+          media: string
+          audience: string
+          tags: array
+      toggleLike:
+        method: POST
+        path: "/posts/:id/likes/toggle"
+        params: [id]
+      save:
+        method: POST
+        path: "/posts/:id/save"
+        params: [id]
+
+    notifications:
+      unreadCount:
+        method: GET
+        path: "/notifications/unread-count"
+      list:
+        method: GET
+        path: "/notifications"
+      markRead:
+        method: POST
+        path: "/notifications/:id/read"
+        params: [id]
+
+    profiles:
+      me:
+        method: GET
+        path: "/profiles/me"
+      getById:
+        method: GET
+        path: "/profiles/:id"
+        params: [id]
+      posts:
+        method: GET
+        path: "/profiles/:id/posts"
+        params: [id]
+      myPosts:
+        method: GET
+        path: "/profiles/me/posts"
+      follow:
+        method: POST
+        path: "/profiles/:id/follow"
+        params: [id]
+      updateMe:
+        method: PATCH
+        path: "/profiles/me"
+        body:
+          display_name: string
+          handle: string
+          bio: string
+          website: string
+
+    messages:
+      list:
+        method: GET
+        path: "/messages/conversations"
+        params: [search]
+      getById:
+        method: GET
+        path: "/messages/conversations/:id"
+        params: [id]
+      thread:
+        method: GET
+        path: "/messages/conversations/:id/messages"
+        params: [id]
+      send:
+        method: POST
+        path: "/messages/conversations/:id/messages"
+        params: [id]
+        body:
+          body: string
+      start:
+        method: POST
+        path: "/messages/conversations"
+        body:
+          user_id: string
+
+    preferences:
+      get:
+        method: GET
+        path: "/preferences"
+      update:
+        method: PATCH
+        path: "/preferences"
+        body:
+          key: string
+          value: string

@@ -1,0 +1,94 @@
+settings:
+  semantic: "App settings for theme, notifications, privacy, and account preferences"
+  status: draft
+
+  data:
+    preferences:
+      source: "api.preferences.get"
+
+  layout:
+    type: scroll_vertical
+    sections:
+      - id: appearance
+        header: "$t:settings.appearance"
+        children:
+          - contract: input_field
+            input_type: select
+            props:
+              label: "$t:settings.theme"
+              value: "{preferences.theme}"
+              options:
+                - { value: "system", label: "$t:settings.theme_system" }
+                - { value: "light", label: "$t:settings.theme_light" }
+                - { value: "dark", label: "$t:settings.theme_dark" }
+            action:
+              type: api_call
+              endpoint: "api.preferences.update"
+              body: { key: "theme", value: "{selected}" }
+
+      - id: notifications_section
+        header: "$t:settings.notifications"
+        children:
+          - contract: input_field
+            input_type: toggle
+            props:
+              label: "$t:settings.push_notifications"
+              value: "{preferences.push_notifications}"
+            action:
+              type: api_call
+              endpoint: "api.preferences.update"
+              body: { key: "push_notifications", value: "{toggled}" }
+
+          - contract: input_field
+            input_type: toggle
+            props:
+              label: "$t:settings.message_previews"
+              value: "{preferences.message_previews}"
+            action:
+              type: api_call
+              endpoint: "api.preferences.update"
+              body: { key: "message_previews", value: "{toggled}" }
+
+      - id: language
+        header: "$t:settings.language"
+        children:
+          - contract: input_field
+            input_type: toggle
+            props:
+              label: "$t:settings.auto_translate"
+              value: "{preferences.auto_translate}"
+            action:
+              type: api_call
+              endpoint: "api.preferences.update"
+              body: { key: "auto_translate", value: "{toggled}" }
+
+      - id: account
+        header: "$t:settings.account"
+        children:
+          - contract: action_trigger
+            variant: secondary
+            props:
+              label: "$t:settings.edit_profile"
+              icon: "edit"
+            action:
+              type: navigate
+              destination: "screens/edit_profile"
+
+          - contract: action_trigger
+            variant: destructive
+            props:
+              label: "$t:settings.logout"
+            action:
+              type: confirm
+              confirmation:
+                contract: feedback
+                variant: dialog
+                props:
+                  title: "$t:settings.logout"
+                  message: "$t:settings.logout_confirm"
+                  actions:
+                    - label: "$t:common.cancel"
+                      action: { type: dismiss }
+                    - label: "$t:settings.logout"
+                      variant: destructive
+                      action: { type: dismiss }

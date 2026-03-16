@@ -1,0 +1,79 @@
+<resources>
+    <string name="nav_home">Главная</string>
+    <string name="nav_discover">Обзор</string>
+    <string name="nav_create">Создать</string>
+    <string name="nav_notifications">Уведомления</string>
+    <string name="nav_profile">Профиль</string>
+    <string name="nav_messages">Сообщения</string>
+    <string name="nav_settings">Настройки</string>
+
+    <string name="home_filter_all">Все</string>
+    <string name="home_filter_following">Подписки</string>
+    <string name="home_filter_popular">Популярное</string>
+    <string name="home_empty_feed">Пока нет записей. Подпишитесь на людей, чтобы видеть их публикации здесь.</string>
+
+    <string name="discover_search_placeholder">Поиск записей, людей, тегов…</string>
+    <string name="discover_trending">В тренде</string>
+    <string name="discover_popular_tags">Популярные теги</string>
+    <string name="discover_suggested_creators">Рекомендуемые авторы</string>
+
+    <string name="search_placeholder">Поиск…</string>
+    <string name="search_tab_posts">Записи</string>
+    <string name="search_tab_people">Люди</string>
+    <string name="search_tab_tags">Теги</string>
+    <string name="search_no_results">Ничего не найдено.</string>
+
+    <string name="post_comments_header">Комментарии</string>
+    <string name="post_no_comments">Пока нет комментариев. Будьте первым.</string>
+    <string name="post_comment_placeholder">Написать комментарий…</string>
+    <string name="post_comment_sent">Комментарий опубликован.</string>
+    <string name="post_like_action">Нравится</string>
+
+    <string name="profile_edit_button">Редактировать профиль</string>
+    <string name="profile_follow_button">Подписаться</string>
+    <string name="profile_following">Подписки</string>
+    <string name="profile_posts_header">Записи</string>
+    <string name="profile_no_posts_self">У вас пока нет записей.</string>
+    <string name="profile_no_posts_user">У этого пользователя пока нет записей.</string>
+
+    <string name="edit_profile_avatar">Фото профиля</string>
+    <string name="edit_profile_display_name">Имя</string>
+    <string name="edit_profile_handle">Имя пользователя</string>
+    <string name="edit_profile_bio">О себе</string>
+    <string name="edit_profile_website">Сайт</string>
+    <string name="edit_profile_save">Сохранить</string>
+    <string name="edit_profile_saved">Профиль обновлен.</string>
+
+    <string name="notifications_empty">Пока нет уведомлений.</string>
+
+    <string name="messages_search_placeholder">Поиск переписок…</string>
+    <string name="messages_empty_inbox">Пока нет переписок.</string>
+    <string name="chat_message_placeholder">Написать сообщение…</string>
+    <string name="chat_empty_thread">Начните разговор.</string>
+
+    <string name="create_post_body_placeholder">Что у вас нового?</string>
+    <string name="create_post_audience">Аудитория</string>
+    <string name="create_post_audience_public">Все</string>
+    <string name="create_post_audience_followers">Только подписчики</string>
+    <string name="create_post_add_image">Добавить фото</string>
+    <string name="create_post_take_photo">Сделать фото</string>
+    <string name="create_post_publish">Опубликовать</string>
+    <string name="create_post_success">Запись опубликована!</string>
+
+    <string name="settings_appearance">Оформление</string>
+    <string name="settings_theme">Тема</string>
+    <string name="settings_theme_system">Системная</string>
+    <string name="settings_theme_light">Светлая</string>
+    <string name="settings_theme_dark">Темная</string>
+    <string name="settings_notifications">Уведомления</string>
+    <string name="settings_push_notifications">Push-уведомления</string>
+    <string name="settings_message_previews">Превью сообщений</string>
+    <string name="settings_language">Язык</string>
+    <string name="settings_auto_translate">Автоперевод записей</string>
+    <string name="settings_account">Аккаунт</string>
+    <string name="settings_edit_profile">Редактировать профиль</string>
+    <string name="settings_logout">Выйти</string>
+    <string name="settings_logout_confirm">Вы уверены, что хотите выйти?</string>
+
+    <string name="common_cancel">Отмена</string>
+</resources>

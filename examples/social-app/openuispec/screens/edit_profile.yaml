@@ -1,0 +1,78 @@
+edit_profile:
+  semantic: "Edit current user's profile fields"
+  status: draft
+
+  data:
+    profile:
+      source: "api.profiles.me"
+
+  state:
+    display_name: { type: string, default: "{profile.display_name}" }
+    handle: { type: string, default: "{profile.handle}" }
+    bio: { type: string, default: "{profile.bio}" }
+    website: { type: string, default: "{profile.website}" }
+
+  layout:
+    type: scroll_vertical
+    sections:
+      - id: avatar_section
+        contract: data_display
+        variant: card
+        props:
+          title: "$t:edit_profile.avatar"
+          media: "{profile.avatar_url}"
+
+      - id: form
+        form_id: "profile_form"
+        children:
+          - contract: input_field
+            input_type: text
+            props:
+              label: "$t:edit_profile.display_name"
+              value: "state.display_name"
+              required: true
+            data_binding: "form.display_name"
+
+          - contract: input_field
+            input_type: text
+            props:
+              label: "$t:edit_profile.handle"
+              value: "state.handle"
+              required: true
+            data_binding: "form.handle"
+
+          - contract: input_field
+            input_type: text
+            props:
+              label: "$t:edit_profile.bio"
+              value: "state.bio"
+              multiline: true
+              max_length: 160
+            data_binding: "form.bio"
+
+          - contract: input_field
+            input_type: text
+            props:
+              label: "$t:edit_profile.website"
+              value: "state.website"
+              keyboard: url
+            data_binding: "form.website"
+
+      - id: save_button
+        contract: action_trigger
+        variant: primary
+        props:
+          label: "$t:edit_profile.save"
+          full_width: true
+        action:
+          type: sequence
+          actions:
+            - type: api_call
+              endpoint: "api.profiles.updateMe"
+              body:
+                display_name: "state.display_name"
+                handle: "state.handle"
+                bio: "state.bio"
+                website: "state.website"
+            - { type: feedback, variant: toast, message: "$t:edit_profile.saved" }
+            - { type: dismiss }

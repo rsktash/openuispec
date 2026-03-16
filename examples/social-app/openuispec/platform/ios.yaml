@@ -1,0 +1,19 @@
+ios:
+  framework: swiftui
+  generation:
+    imports:
+      - SwiftUI
+      - Foundation
+    naming: Swift conventions
+    architecture: native swiftui
+    state: "@Observable / @State"
+    persistence: swiftdata
+    di: none
+    dependencies:
+      - swiftdata
+    stack_confirmation:
+      status: confirmed
+      source: user
+      confirmed_at: 2026-03-15T15:22:39.936Z
+  language: swift
+  min_version: "17.0"

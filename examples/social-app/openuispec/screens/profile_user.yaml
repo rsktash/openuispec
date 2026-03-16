@@ -1,0 +1,60 @@
+profile_user:
+  semantic: "Another user's profile with their posts and follow action"
+  status: draft
+
+  params:
+    user_id: { type: string, required: true }
+
+  data:
+    profile:
+      source: "api.profiles.getById"
+      params: { id: "params.user_id" }
+      loading: { skeleton: true }
+    posts:
+      source: "api.profiles.posts"
+      params: { id: "params.user_id" }
+      loading: { skeleton: true, count: 3 }
+      empty: { message: "$t:profile.no_posts_user" }
+
+  layout:
+    type: scroll_vertical
+    sections:
+      - id: profile_header
+        contract: data_display
+        variant: hero
+        props:
+          title: "{profile.display_name}"
+          subtitle: "@{profile.handle}"
+          body: "{profile.bio}"
+          leading: "{profile.avatar_url}"
+          trailing:
+            contract: action_trigger
+            variant: primary
+            props:
+              label: "$t:profile.follow_button"
+            action:
+              type: api_call
+              endpoint: "api.profiles.follow"
+              params: { id: "params.user_id" }
+
+      - id: user_posts
+        header: "$t:profile.posts_header"
+        contract: collection
+        variant: list
+        props:
+          data: "posts"
+          item_contract: data_display
+          item_props_map:
+            title: "item.author.display_name"
+            subtitle: "@{item.author.handle}"
+            body: "item.body"
+            media: "item.media_url"
+            leading: "item.author.avatar_url"
+            metadata:
+              like_count: "{item.like_count | format:number}"
+              comment_count: "{item.comment_count | format:number}"
+              timestamp: "{item.published_at | format:date_relative}"
+        action:
+          type: navigate
+          destination: "screens/post_detail"
+          params: { post_id: "{item.id}" }

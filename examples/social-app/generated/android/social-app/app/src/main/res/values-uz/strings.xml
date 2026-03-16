@@ -1,0 +1,79 @@
+<resources>
+    <string name="nav_home">Bosh sahifa</string>
+    <string name="nav_discover">Kashfiyot</string>
+    <string name="nav_create">Yaratish</string>
+    <string name="nav_notifications">Bildirishnomalar</string>
+    <string name="nav_profile">Profil</string>
+    <string name="nav_messages">Xabarlar</string>
+    <string name="nav_settings">Sozlamalar</string>
+
+    <string name="home_filter_all">Hammasi</string>
+    <string name="home_filter_following">Obunalar</string>
+    <string name="home_filter_popular">Ommabop</string>
+    <string name="home_empty_feed">Hozircha postlar yoʻq. Postlarini koʻrish uchun odamlarga obuna boʻling.</string>
+
+    <string name="discover_search_placeholder">Postlar, odamlar, teglar qidirish…</string>
+    <string name="discover_trending">Trendda</string>
+    <string name="discover_popular_tags">Ommabop teglar</string>
+    <string name="discover_suggested_creators">Tavsiya etilgan mualliflar</string>
+
+    <string name="search_placeholder">Qidirish…</string>
+    <string name="search_tab_posts">Postlar</string>
+    <string name="search_tab_people">Odamlar</string>
+    <string name="search_tab_tags">Teglar</string>
+    <string name="search_no_results">Hech narsa topilmadi.</string>
+
+    <string name="post_comments_header">Izohlar</string>
+    <string name="post_no_comments">Hozircha izohlar yoʻq. Birinchi boʻling.</string>
+    <string name="post_comment_placeholder">Izoh yozish…</string>
+    <string name="post_comment_sent">Izoh joʻnatildi.</string>
+    <string name="post_like_action">Yoqtirish</string>
+
+    <string name="profile_edit_button">Profilni tahrirlash</string>
+    <string name="profile_follow_button">Obuna boʻlish</string>
+    <string name="profile_following">Obuna qilingan</string>
+    <string name="profile_posts_header">Postlar</string>
+    <string name="profile_no_posts_self">Sizda hozircha postlar yoʻq.</string>
+    <string name="profile_no_posts_user">Bu foydalanuvchida hozircha postlar yoʻq.</string>
+
+    <string name="edit_profile_avatar">Profil rasmi</string>
+    <string name="edit_profile_display_name">Ism</string>
+    <string name="edit_profile_handle">Foydalanuvchi nomi</string>
+    <string name="edit_profile_bio">Bio</string>
+    <string name="edit_profile_website">Veb-sayt</string>
+    <string name="edit_profile_save">Saqlash</string>
+    <string name="edit_profile_saved">Profil yangilandi.</string>
+
+    <string name="notifications_empty">Hozircha bildirishnomalar yoʻq.</string>
+
+    <string name="messages_search_placeholder">Suhbatlarni qidirish…</string>
+    <string name="messages_empty_inbox">Hozircha suhbatlar yoʻq.</string>
+    <string name="chat_message_placeholder">Xabar yozish…</string>
+    <string name="chat_empty_thread">Suhbatni boshlang.</string>
+
+    <string name="create_post_body_placeholder">Nima yangiliklar?</string>
+    <string name="create_post_audience">Auditoriya</string>
+    <string name="create_post_audience_public">Hamma</string>
+    <string name="create_post_audience_followers">Faqat obunachilar</string>
+    <string name="create_post_add_image">Rasm qoʻshish</string>
+    <string name="create_post_take_photo">Suratga olish</string>
+    <string name="create_post_publish">Eʼlon qilish</string>
+    <string name="create_post_success">Post eʼlon qilindi!</string>
+
+    <string name="settings_appearance">Koʻrinish</string>
+    <string name="settings_theme">Mavzu</string>
+    <string name="settings_theme_system">Tizim</string>
+    <string name="settings_theme_light">Yorugʻ</string>
+    <string name="settings_theme_dark">Qorongʻu</string>
+    <string name="settings_notifications">Bildirishnomalar</string>
+    <string name="settings_push_notifications">Push-bildirishnomalar</string>
+    <string name="settings_message_previews">Xabar koʻrinishi</string>
+    <string name="settings_language">Til</string>
+    <string name="settings_auto_translate">Postlarni avtotarjima qilish</string>
+    <string name="settings_account">Hisob</string>
+    <string name="settings_edit_profile">Profilni tahrirlash</string>
+    <string name="settings_logout">Chiqish</string>
+    <string name="settings_logout_confirm">Chiqishga ishonchingiz komilmi?</string>
+
+    <string name="common_cancel">Bekor qilish</string>
+</resources>

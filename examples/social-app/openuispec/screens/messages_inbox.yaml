@@ -1,0 +1,43 @@
+messages_inbox:
+  semantic: "Conversations list with search and unread indicators"
+  status: draft
+
+  data:
+    conversations:
+      source: "api.messages.list"
+      params:
+        search: "state.search_query"
+      loading: { skeleton: true, count: 6 }
+      empty: { message: "$t:messages.empty_inbox" }
+
+  state:
+    search_query: { type: string, default: "" }
+
+  layout:
+    type: scroll_vertical
+    sections:
+      - id: search
+        contract: input_field
+        input_type: text
+        props:
+          label: "$t:messages.search_placeholder"
+          value: "state.search_query"
+          icon: "search"
+
+      - id: conversation_list
+        contract: collection
+        variant: list
+        props:
+          data: "conversations"
+          item_contract: data_display
+          item_props_map:
+            title: "item.participant.display_name"
+            subtitle: "item.last_message.body"
+            leading: "item.participant.avatar_url"
+            metadata:
+              timestamp: "{item.last_message.created_at | format:date_relative}"
+              unread_count: "{item.unread_count}"
+        action:
+          type: navigate
+          destination: "screens/chat_detail"
+          params: { conversation_id: "{item.id}" }

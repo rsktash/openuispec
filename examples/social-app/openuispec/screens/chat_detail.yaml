@@ -1,0 +1,53 @@
+chat_detail:
+  semantic: "Single conversation thread with message input"
+  status: draft
+
+  params:
+    conversation_id: { type: string, required: true }
+
+  data:
+    conversation:
+      source: "api.messages.getById"
+      params: { id: "params.conversation_id" }
+    messages:
+      source: "api.messages.thread"
+      params: { id: "params.conversation_id" }
+      loading: { skeleton: true, count: 10 }
+      empty: { message: "$t:chat.empty_thread" }
+
+  state:
+    message_text: { type: string, default: "" }
+
+  layout:
+    type: scroll_vertical
+    sections:
+      - id: message_list
+        contract: collection
+        variant: chat_thread
+        props:
+          data: "messages"
+          item_contract: data_display
+          item_props_map:
+            title: "item.sender.display_name"
+            body: "item.body"
+            metadata:
+              timestamp: "{item.created_at | format:time}"
+              is_mine: "{item.is_mine}"
+
+      - id: message_input
+        contract: input_field
+        input_type: text
+        props:
+          label: "$t:chat.message_placeholder"
+          value: "state.message_text"
+          multiline: true
+          trailing_action:
+            icon: "send"
+            action:
+              type: sequence
+              actions:
+                - type: api_call
+                  endpoint: "api.messages.send"
+                  params: { id: "params.conversation_id" }
+                  body: { body: "state.message_text" }
+                - { type: set_state, key: "message_text", value: "" }

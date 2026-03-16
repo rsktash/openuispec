@@ -1,0 +1,41 @@
+# surface contract extension
+# Base definition: spec Section 4.6
+# Rounded Cap: surfaces use 3px 24px 3px 24px (primary diagonal, largest scale)
+
+surface:
+  tokens:
+    shape: "3px 24px 3px 24px"
+    background: "color.surface.secondary"
+    padding: "spacing.lg"
+
+  variants:
+    sheet:
+      semantic: "Bottom sheet — rounded top corners, drag indicator"
+      tokens:
+        elevation: "elevation.lg"
+      platform_mapping:
+        ios: { detents: ["medium", "large"], drag_indicator: true }
+        android: { shape: "RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)" }
+        web: { style: "border-radius: 24px 24px 0 0" }
+      generation:
+        must_handle:
+          - "Rounded top corners only for sheets (not diagonal cap)"
+          - "Drag indicator centered at top"
+
+    modal:
+      semantic: "Modal dialog — centered, rounded cap primary diagonal"
+      tokens:
+        shape: "3px 24px 3px 24px"
+        elevation: "elevation.lg"
+        background: "color.surface.primary"
+      platform_mapping:
+        ios: { shape: "RoundedCapShape(diagonal: .primary, radius: 24)" }
+        android: { shape: "RoundedCapShape(diagonal = Primary, radius = 24.dp)" }
+        web: { style: "border-radius: 3px 24px 3px 24px" }
+
+    panel:
+      semantic: "Content panel — rounded cap primary diagonal, filled background"
+      tokens:
+        shape: "3px 24px 3px 24px"
+        background: "color.surface.tertiary"
+        padding: "spacing.md"

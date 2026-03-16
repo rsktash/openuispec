@@ -501,12 +501,14 @@ const EXPECTED_MCP_CONFIG = {
  * MCP config files by agent:
  *   .mcp.json              — Claude Code (project scope)
  *   .vscode/mcp.json       — VS Code / Copilot Chat
+ *   .gemini/settings.json  — Gemini CLI (if .gemini/ exists)
  *
  * All use the same { mcpServers: { openuispec: { command, args } } } shape.
  */
 const JSON_MCP_PATHS = [
   ".mcp.json",
   join(".vscode", "mcp.json"),
+  join(".gemini", "settings.json"),
 ];
 
 /** Codex uses TOML: .codex/config.toml */
@@ -542,8 +544,9 @@ function configureMcp(cwd: string, showRestart: boolean, quiet: boolean = false)
   for (const relPath of JSON_MCP_PATHS) {
     const configPath = join(cwd, relPath);
 
-    // .vscode/mcp.json: only write if .vscode/ already exists
-    if (relPath.startsWith(".vscode") && !existsSync(join(cwd, ".vscode"))) continue;
+    // Optional dirs: only write config if the parent directory already exists
+    const optionalParent = [".vscode", ".gemini"].find((d) => relPath.startsWith(d));
+    if (optionalParent && !existsSync(join(cwd, optionalParent))) continue;
 
     try {
       let config: Record<string, any> = {};

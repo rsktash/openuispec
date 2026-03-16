@@ -1,0 +1,30 @@
+android:
+  framework: compose
+  generation:
+    naming: Kotlin conventions
+    architecture: decompose
+    state: mvikotlin
+    preferences: datastore
+    database: none
+    di: metro
+    dependencies:
+      - material3
+      - activity-compose
+      - decompose
+      - decompose-compose
+      - essenty-lifecycle
+      - essenty-instance-keeper
+      - mvikotlin
+      - mvikotlin-main
+      - mvikotlin-logging
+      - datastore-preferences
+      - datastore-core
+      - metro
+      - metro-compose
+    stack_confirmation:
+      status: confirmed
+      source: user
+      confirmed_at: 2026-03-15T15:22:41.488Z
+  language: kotlin
+  min_sdk: 26
+  target_sdk: 35

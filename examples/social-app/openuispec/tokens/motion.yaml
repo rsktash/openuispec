@@ -1,0 +1,28 @@
+motion:
+  duration:
+    instant: 100
+    quick: 200
+    normal: 300
+    slow: 500
+
+  easing:
+    default: "ease-out"
+    enter: "ease-out"
+    exit: "ease-in"
+    emphasis: "cubic-bezier(0.2, 0, 0, 1)"
+
+  reduced_motion: "respect-system"
+
+  patterns:
+    press_feedback:
+      duration: "instant"
+      easing: "default"
+      property: "transform"
+    slide_up:
+      duration: "normal"
+      easing: "enter"
+      property: "transform"
+    fade:
+      duration: "quick"
+      easing: "default"
+      property: "opacity"

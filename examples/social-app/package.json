@@ -1,0 +1,12 @@
+{
+  "name": "social-app",
+  "private": true,
+  "version": "0.0.0",
+  "description": "OpenUISpec test project wired to the local ../openuispec checkout",
+  "scripts": {
+    "openuispec": "node --import ./../openuispec/node_modules/tsx/dist/loader.mjs ./../openuispec/cli/index.ts",
+    "validate": "node --import ./../openuispec/node_modules/tsx/dist/loader.mjs ./../openuispec/cli/index.ts validate",
+    "validate:semantic": "node --import ./../openuispec/node_modules/tsx/dist/loader.mjs ./../openuispec/cli/index.ts validate semantic",
+    "status": "node --import ./../openuispec/node_modules/tsx/dist/loader.mjs ./../openuispec/cli/index.ts status"
+  }
+}

@@ -1,0 +1,53 @@
+profile_self:
+  semantic: "Current user's own profile with posts, stats, and edit action"
+  status: draft
+
+  data:
+    profile:
+      source: "api.profiles.me"
+      loading: { skeleton: true }
+    posts:
+      source: "api.profiles.myPosts"
+      loading: { skeleton: true, count: 3 }
+      empty: { message: "$t:profile.no_posts_self" }
+
+  layout:
+    type: scroll_vertical
+    sections:
+      - id: profile_header
+        contract: data_display
+        variant: hero
+        props:
+          title: "{profile.display_name}"
+          subtitle: "@{profile.handle}"
+          body: "{profile.bio}"
+          leading: "{profile.avatar_url}"
+          trailing:
+            contract: action_trigger
+            variant: secondary
+            props:
+              label: "$t:profile.edit_button"
+              icon: "edit"
+            action:
+              type: navigate
+              destination: "screens/edit_profile"
+
+      - id: user_posts
+        header: "$t:profile.posts_header"
+        contract: collection
+        variant: list
+        props:
+          data: "posts"
+          item_contract: data_display
+          item_props_map:
+            title: "item.author.display_name"
+            body: "item.body"
+            media: "item.media_url"
+            metadata:
+              like_count: "{item.like_count | format:number}"
+              comment_count: "{item.comment_count | format:number}"
+              timestamp: "{item.published_at | format:date_relative}"
+        action:
+          type: navigate
+          destination: "screens/post_detail"
+          params: { post_id: "{item.id}" }

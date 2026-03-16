@@ -1,0 +1,41 @@
+# input_field contract extension
+# Base definition: spec Section 4.3
+# Rounded Cap: inputs match button diagonal (primary: 2px 24px 2px 24px)
+
+input_field:
+  tokens:
+    shape: "2px 24px 2px 24px"
+    background: "color.surface.primary"
+    border: { color: "color.border.default", width: 1 }
+    border_focus: { color: "color.brand.primary", width: 2 }
+    text: "color.text.primary"
+    placeholder: "color.text.tertiary"
+    label: "color.text.secondary"
+    padding: "spacing.md"
+
+  variants:
+    text:
+      semantic: "Text input — rounded cap primary diagonal, focus highlight"
+      platform_mapping:
+        ios: { shape: "RoundedCapShape(diagonal: .primary)" }
+        android: { shape: "RoundedCapShape(diagonal = Primary)" }
+        web: { style: "border-radius: 2px 24px 2px 24px" }
+      generation:
+        must_handle:
+          - "Rounded cap primary diagonal matching surrounding context"
+          - "Border color changes to brand primary on focus"
+          - "Placeholder text uses tertiary color"
+
+    select:
+      semantic: "Dropdown select — rounded cap primary diagonal with chevron"
+      platform_mapping:
+        ios: { shape: "RoundedCapShape(diagonal: .primary)", picker: "menu" }
+        android: { shape: "RoundedCapShape(diagonal = Primary)", picker: "ExposedDropdownMenuBox" }
+        web: { style: "border-radius: 2px 24px 2px 24px" }
+
+    toggle:
+      semantic: "Toggle switch — standard platform toggle, no rounded cap"
+      generation:
+        must_handle:
+          - "Use platform-native toggle/switch control"
+          - "Label on the left, toggle on the right"

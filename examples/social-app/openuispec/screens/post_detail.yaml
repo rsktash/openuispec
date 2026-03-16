@@ -1,0 +1,86 @@
+post_detail:
+  semantic: "Full post view with comments thread and interaction actions"
+  status: draft
+
+  params:
+    post_id: { type: string, required: true }
+
+  data:
+    post:
+      source: "api.posts.getById"
+      params: { id: "params.post_id" }
+      loading: { skeleton: true }
+    comments:
+      source: "api.posts.comments"
+      params: { id: "params.post_id" }
+      loading: { skeleton: true, count: 3 }
+      empty: { message: "$t:post.no_comments" }
+
+  state:
+    comment_text: { type: string, default: "" }
+
+  layout:
+    type: scroll_vertical
+    sections:
+      - id: post_content
+        contract: data_display
+        variant: hero
+        props:
+          title: "{post.author.display_name}"
+          subtitle: "@{post.author.handle}"
+          body: "{post.body}"
+          media: "{post.media_url}"
+          leading: "{post.author.avatar_url}"
+          metadata:
+            like_count: "{post.like_count | format:number}"
+            comment_count: "{post.comment_count | format:number}"
+            timestamp: "{post.published_at | format:date}"
+        action:
+          type: navigate
+          destination: "screens/profile_user"
+          params: { user_id: "{post.author_id}" }
+
+      - id: post_actions
+        contract: action_trigger
+        variant: secondary
+        props:
+          label: "$t:post.like_action"
+          icon: "like"
+        action:
+          type: api_call
+          endpoint: "api.posts.toggleLike"
+          params: { id: "params.post_id" }
+
+      - id: comments_list
+        header: "$t:post.comments_header"
+        contract: collection
+        variant: list
+        props:
+          data: "comments"
+          item_contract: data_display
+          item_props_map:
+            title: "item.author.display_name"
+            body: "item.body"
+            leading: "item.author.avatar_url"
+            metadata:
+              timestamp: "{item.created_at | format:date_relative}"
+        action:
+          type: navigate
+          destination: "screens/profile_user"
+          params: { user_id: "{item.author_id}" }
+
+      - id: comment_input
+        contract: input_field
+        input_type: text
+        props:
+          label: "$t:post.comment_placeholder"
+          value: "state.comment_text"
+          multiline: true
+          trailing_action:
+            icon: "send"
+            action:
+              type: sequence
+              actions:
+                - { type: api_call, endpoint: "api.posts.comments", method: POST, body: { body: "state.comment_text", post_id: "params.post_id" } }
+                - { type: set_state, key: "comment_text", value: "" }
+                - { type: feedback, variant: toast, message: "$t:post.comment_sent" }

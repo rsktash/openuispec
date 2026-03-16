@@ -1,0 +1,49 @@
+# feedback contract extension
+# Base definition: spec Section 4.5
+# Rounded Cap: toasts and dialogs use primary diagonal
+
+feedback:
+  variants:
+    toast:
+      semantic: "Toast notification — rounded cap primary diagonal, auto-dismiss"
+      tokens:
+        shape: "2px 24px 2px 24px"
+        background: "color.brand.primary"
+        text: "color.brand.primary.on_color"
+        elevation: "elevation.md"
+        padding: "spacing.md"
+      platform_mapping:
+        ios: { position: "top", swipe_to_dismiss: true }
+        android: { component: "Snackbar" }
+        web: { style: "border-radius: 2px 24px 2px 24px; position: top-center" }
+      generation:
+        must_handle:
+          - "Rounded cap primary diagonal"
+          - "Auto-dismiss after 3 seconds"
+          - "Dark background with white text"
+
+    dialog:
+      semantic: "Confirmation dialog — rounded cap primary diagonal at surface scale"
+      tokens:
+        shape: "3px 24px 3px 24px"
+        background: "color.surface.primary"
+        elevation: "elevation.lg"
+      platform_mapping:
+        ios: { style: "alert" }
+        android: { component: "AlertDialog" }
+        web: { style: "border-radius: 3px 24px 3px 24px" }
+      generation:
+        must_handle:
+          - "Rounded cap primary diagonal at surface scale"
+          - "Action buttons inside use rounded cap shapes"
+
+    banner:
+      semantic: "Persistent banner — full-width, informational"
+      tokens:
+        background: "color.surface.tertiary"
+        text: "color.text.primary"
+        padding: "spacing.md"
+      generation:
+        must_handle:
+          - "Full width, no rounded cap (rectangular)"
+          - "Dismissible with close icon"

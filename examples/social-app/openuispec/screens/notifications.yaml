@@ -1,0 +1,29 @@
+notifications:
+  semantic: "Notification list with mark-as-read"
+  status: draft
+
+  data:
+    notifications:
+      source: "api.notifications.list"
+      loading: { skeleton: true, count: 8 }
+      empty: { message: "$t:notifications.empty" }
+
+  layout:
+    type: scroll_vertical
+    sections:
+      - id: notification_list
+        contract: collection
+        variant: list
+        props:
+          data: "notifications"
+          item_contract: data_display
+          item_props_map:
+            title: "item.actor.display_name"
+            subtitle: "item.message"
+            leading: "item.actor.avatar_url"
+            metadata:
+              timestamp: "{item.created_at | format:date_relative}"
+        action:
+          type: api_call
+          endpoint: "api.notifications.markRead"
+          params: { id: "{item.id}" }

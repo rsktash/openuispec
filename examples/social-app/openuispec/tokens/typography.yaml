@@ -1,0 +1,50 @@
+typography:
+  font_family:
+    primary:
+      semantic: "All UI text"
+      value: "DM Sans"
+      platform:
+        ios: { system_alternative: "SF Pro" }
+        android: { system_alternative: "Google Sans" }
+
+  scale:
+    display:
+      semantic: "Hero text, onboarding"
+      size: { base: 32, range: [28, 36] }
+      weight: 700
+      line_height: 1.2
+    heading_lg:
+      semantic: "Screen titles"
+      size: { base: 24, range: [22, 26] }
+      weight: 600
+      line_height: 1.3
+    heading_md:
+      semantic: "Section titles"
+      size: { base: 20, range: [18, 22] }
+      weight: 600
+      line_height: 1.3
+    heading_sm:
+      semantic: "Card titles, list headings"
+      size: { base: 16, range: [15, 17] }
+      weight: 600
+      line_height: 1.4
+    body:
+      semantic: "Primary readable text"
+      size: { base: 16, range: [14, 16] }
+      weight: 400
+      line_height: 1.5
+    body_sm:
+      semantic: "Secondary body text"
+      size: { base: 14, range: [13, 15] }
+      weight: 400
+      line_height: 1.5
+    caption:
+      semantic: "Labels, timestamps, metadata"
+      size: { base: 12, range: [11, 13] }
+      weight: 400
+      line_height: 1.4
+    button:
+      semantic: "Button labels"
+      size: { base: 16, range: [14, 16] }
+      weight: 600
+      line_height: 1.0

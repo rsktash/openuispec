@@ -1,0 +1,78 @@
+discover:
+  semantic: "Discover screen with search, trending topics, and suggested creators"
+  status: draft
+
+  data:
+    creators:
+      source: "api.discover.creators"
+      loading: { skeleton: true, count: 6 }
+    trends:
+      source: "api.discover.trends"
+      loading: { skeleton: true, count: 5 }
+    tags:
+      source: "api.discover.tags"
+      loading: { skeleton: true, count: 10 }
+
+  state:
+    search_query: { type: string, default: "" }
+
+  layout:
+    type: scroll_vertical
+    sections:
+      - id: search_bar
+        contract: input_field
+        input_type: text
+        props:
+          label: "$t:discover.search_placeholder"
+          value: "state.search_query"
+          icon: "search"
+        action:
+          type: navigate
+          destination: "screens/search_results"
+          params: { query: "state.search_query" }
+
+      - id: trending_section
+        header: "$t:discover.trending"
+        contract: collection
+        variant: list
+        props:
+          data: "trends"
+          item_contract: data_display
+          item_props_map:
+            title: "item.label"
+            subtitle: "{item.post_count | format:number}"
+        action:
+          type: navigate
+          destination: "screens/search_results"
+          params: { query: "{item.label}", tab: "posts" }
+
+      - id: tags_section
+        header: "$t:discover.popular_tags"
+        contract: collection
+        variant: chip_row
+        props:
+          data: "tags"
+          item_contract: action_trigger
+          item_props_map:
+            label: "#{item.name}"
+        action:
+          type: navigate
+          destination: "screens/search_results"
+          params: { query: "#{item.name}", tab: "posts" }
+
+      - id: creators_section
+        header: "$t:discover.suggested_creators"
+        contract: collection
+        variant: horizontal_scroll
+        props:
+          data: "creators"
+          item_contract: data_display
+          item_props_map:
+            title: "item.display_name"
+            subtitle: "@{item.handle}"
+            body: "item.bio"
+            leading: "item.avatar_url"
+        action:
+          type: navigate
+          destination: "screens/profile_user"
+          params: { user_id: "{item.id}" }

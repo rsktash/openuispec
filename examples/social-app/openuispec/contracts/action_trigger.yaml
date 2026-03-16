@@ -1,0 +1,73 @@
+# action_trigger contract extension
+# Base definition: spec Section 4.1
+# Rounded Cap: primary diagonal rounds TR+BL, alternate rounds TL+BR
+
+action_trigger:
+  tokens:
+    shape: "rounded_cap_primary"
+    shape_note: "TR+BL pill-rounded (~40-60% of element height), TL+BR sharp (2-4px)"
+
+  variants:
+    primary:
+      semantic: "Primary CTA — dark fill, rounded cap primary diagonal"
+      tokens:
+        background: "color.brand.primary"
+        text: "color.brand.primary.on_color"
+        border_width: 0
+        shape: "2px 24px 2px 24px"
+      platform_mapping:
+        ios: { shape: "RoundedCapShape(diagonal: .primary)" }
+        android: { shape: "RoundedCapShape(diagonal = Primary)" }
+        web: { style: "border-radius: 2px 24px 2px 24px" }
+      generation:
+        must_handle:
+          - "Rounded cap primary: TR and BL corners ~24px, TL and BR corners 2px"
+          - "Dark fill background with high-contrast white text"
+          - "Press state: scale down slightly with spring animation"
+        should_handle:
+          - "Haptic feedback on press (iOS)"
+
+    secondary:
+      semantic: "Secondary action — bordered, rounded cap alternate diagonal (mirrors primary)"
+      tokens:
+        background: "transparent"
+        text: "color.text.primary"
+        border: { color: "color.border.strong", width: 1 }
+        shape: "24px 2px 24px 2px"
+      platform_mapping:
+        ios: { shape: "RoundedCapShape(diagonal: .alternate)" }
+        android: { shape: "RoundedCapShape(diagonal = Alternate)" }
+        web: { style: "border-radius: 24px 2px 24px 2px" }
+      generation:
+        must_handle:
+          - "Rounded cap alternate: TL and BR corners ~24px, TR and BL corners 2px"
+          - "Visible border, no fill. Mirrors primary for visual rhythm."
+
+    chip:
+      semantic: "Chip / tag — rounded cap primary diagonal, accent fill when selected"
+      tokens:
+        background_default: "transparent"
+        background_selected: "color.brand.accent"
+        text_default: "color.text.primary"
+        text_selected: "color.brand.accent.on_color"
+        border: { color: "color.border.default", width: 1 }
+        shape: "2px 24px 2px 24px"
+      platform_mapping:
+        ios: { shape: "RoundedCapShape(diagonal: .primary)" }
+        android: { shape: "RoundedCapShape(diagonal = Primary)" }
+        web: { style: "border-radius: 2px 24px 2px 24px" }
+      generation:
+        must_handle:
+          - "Same diagonal as primary, radius scales to chip height (~16-20px for 32-40px tall chips)"
+          - "Toggle between default (bordered) and selected (accent fill) states"
+
+    destructive:
+      semantic: "Destructive action — danger color, rounded cap primary diagonal"
+      tokens:
+        background: "color.semantic.danger"
+        text: "color.semantic.danger.on_color"
+        shape: "2px 24px 2px 24px"
+      platform_mapping:
+        ios: { shape: "RoundedCapShape(diagonal: .primary)", role: "destructive" }
+        android: { shape: "RoundedCapShape(diagonal = Primary)" }
+        web: { style: "border-radius: 2px 24px 2px 24px" }

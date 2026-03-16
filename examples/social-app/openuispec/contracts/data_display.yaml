@@ -1,0 +1,47 @@
+# data_display contract extension
+# Base definition: spec Section 4.2
+# Rounded Cap: cards use 3px 20px 3px 20px (primary diagonal, scaled for card size)
+
+data_display:
+  variants:
+    card:
+      semantic: "Content card — rounded cap primary diagonal, subtle border, warm cream background"
+      tokens:
+        shape: "3px 20px 3px 20px"
+        background: "color.surface.secondary"
+        border: { color: "color.border.default", width: 1 }
+        padding: "spacing.md"
+        elevation: "elevation.sm"
+      platform_mapping:
+        ios: { shape: "RoundedCapShape(diagonal: .primary, radius: 20)" }
+        android: { shape: "RoundedCapShape(diagonal = Primary, radius = 20.dp)" }
+        web: { style: "border-radius: 3px 20px 3px 20px" }
+      generation:
+        must_handle:
+          - "Rounded cap primary diagonal scaled for card: TR+BL ~20px, TL+BR ~3px"
+          - "Subtle border with warm cream background"
+
+    compact:
+      semantic: "Compact list item — no card border, divider between items"
+      tokens:
+        padding: "spacing.sm"
+        divider_color: "color.border.default"
+      generation:
+        must_handle:
+          - "No card shape — flat with bottom divider"
+          - "Leading avatar uses rounded cap avatar shape, trailing metadata is caption scale"
+
+    hero:
+      semantic: "Hero display — large surface, rounded cap primary diagonal"
+      tokens:
+        shape: "3px 24px 3px 24px"
+        background: "color.surface.secondary"
+        padding: "spacing.lg"
+      platform_mapping:
+        ios: { shape: "RoundedCapShape(diagonal: .primary, radius: 24)" }
+        android: { shape: "RoundedCapShape(diagonal = Primary, radius = 24.dp)" }
+        web: { style: "border-radius: 3px 24px 3px 24px" }
+      generation:
+        must_handle:
+          - "Rounded cap primary diagonal at surface scale: TR+BL ~24px, TL+BR ~3px"
+          - "Title uses heading_lg, subtitle uses body_sm with secondary color"

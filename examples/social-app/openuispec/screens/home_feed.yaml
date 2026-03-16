@@ -1,0 +1,123 @@
+home_feed:
+  semantic: "Main feed with stories carousel, post list, and create post action"
+  status: draft
+
+  data:
+    feed:
+      source: "api.feed.list"
+      params:
+        filter: "state.active_filter"
+        search: "state.search_query"
+        cursor: "state.cursor"
+      loading: { skeleton: true, count: 5 }
+      empty: { message: "$t:home.empty_feed" }
+    stories:
+      source: "api.feed.stories"
+      loading: { skeleton: true, count: 8 }
+
+  state:
+    active_filter:
+      type: enum
+      values: [all, following, popular]
+      default: all
+    search_query: { type: string, default: "" }
+    cursor: { type: string, default: "" }
+
+  navigation:
+    contract: nav_container
+    props:
+      items:
+        - id: "home"
+          label: "$t:nav.home"
+          icon: "home"
+          destination: "screens/home_feed"
+        - id: "discover"
+          label: "$t:nav.discover"
+          icon: "discover"
+          destination: "screens/discover"
+        - id: "create"
+          label: "$t:nav.create"
+          icon: "create_post"
+          destination: "flows/create_post"
+        - id: "notifications"
+          label: "$t:nav.notifications"
+          icon: "notifications"
+          destination: "screens/notifications"
+          badge:
+            count: "api.notifications.unreadCount"
+        - id: "profile"
+          label: "$t:nav.profile"
+          icon: "profile"
+          destination: "screens/profile_self"
+    adaptive:
+      compact: { variant: tab_bar }
+      expanded: { variant: sidebar }
+
+  layout:
+    type: scroll_vertical
+    sections:
+      - id: stories_bar
+        contract: collection
+        variant: horizontal_scroll
+        props:
+          data: "stories"
+          item_contract: data_display
+          item_props_map:
+            title: "item.author.display_name"
+            media: "item.preview_url"
+        action:
+          type: navigate
+          destination: "screens/post_detail"
+          params: { post_id: "{item.id}" }
+
+      - id: filter_chips
+        contract: collection
+        variant: chip_row
+        props:
+          data: "state.active_filter"
+          item_contract: action_trigger
+          item_props_map:
+            label: "item.label"
+          options:
+            - { value: "all", label: "$t:home.filter_all" }
+            - { value: "following", label: "$t:home.filter_following" }
+            - { value: "popular", label: "$t:home.filter_popular" }
+
+      - id: post_list
+        contract: collection
+        variant: list
+        props:
+          data: "feed"
+          item_contract: data_display
+          item_props_map:
+            title: "item.author.display_name"
+            subtitle: "@{item.author.handle}"
+            body: "item.body"
+            media: "item.media_url"
+            leading: "item.author.avatar_url"
+            metadata:
+              like_count: "{item.like_count | format:number}"
+              comment_count: "{item.comment_count | format:number}"
+              timestamp: "{item.published_at | format:date_relative}"
+          item_actions:
+            - id: like
+              icon: "like"
+              icon_active: "like_fill"
+              action: { type: api_call, endpoint: "api.posts.toggleLike", params: { id: "{item.id}" } }
+            - id: comment
+              icon: "comment"
+              action: { type: navigate, destination: "screens/post_detail", params: { post_id: "{item.id}" } }
+            - id: share
+              icon: "share"
+              action: { type: share, content: "{item.body}" }
+            - id: save
+              icon: "bookmark"
+              icon_active: "bookmark_fill"
+              action: { type: api_call, endpoint: "api.posts.save", params: { id: "{item.id}" } }
+        action:
+          type: navigate
+          destination: "screens/post_detail"
+          params: { post_id: "{item.id}" }
+        pagination:
+          type: infinite_scroll
+          cursor_field: "cursor"

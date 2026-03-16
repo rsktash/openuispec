@@ -1,0 +1,37 @@
+layout:
+  size_classes:
+    compact:
+      semantic: "Phones in portrait"
+      width:
+        max: 600
+      columns: 4
+      margin: "md"
+    regular:
+      semantic: "Tablets, phones in landscape"
+      width:
+        min: 601
+        max: 1024
+      columns: 8
+      margin: "lg"
+    expanded:
+      semantic: "Desktops, large tablets"
+      width:
+        min: 1025
+      columns: 12
+      margin: "xl"
+
+  platform_mapping:
+    ios:
+      uses: "UITraitCollection"
+      compact: "compact"
+      regular: "regular"
+    android:
+      uses: "WindowSizeClass"
+      compact: "Compact"
+      regular: "Medium"
+      expanded: "Expanded"
+    web:
+      uses: "media-query"
+      compact: "max-width: 600px"
+      regular: "min-width: 601px and max-width: 1024px"
+      expanded: "min-width: 1025px"

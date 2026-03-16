@@ -1,0 +1,62 @@
+search_results:
+  semantic: "Search results with tabbed views for posts, people, and tags"
+  status: draft
+
+  params:
+    query: { type: string, required: true }
+    tab: { type: string, default: "posts" }
+
+  data:
+    results:
+      source: "api.discover.search"
+      params:
+        query: "params.query"
+        tab: "state.active_tab"
+      loading: { skeleton: true, count: 5 }
+      empty: { message: "$t:search.no_results" }
+
+  state:
+    active_tab:
+      type: enum
+      values: [posts, people, tags]
+      default: "params.tab"
+
+  layout:
+    type: scroll_vertical
+    sections:
+      - id: search_bar
+        contract: input_field
+        input_type: text
+        props:
+          label: "$t:search.placeholder"
+          value: "params.query"
+          icon: "search"
+
+      - id: tab_bar
+        contract: collection
+        variant: chip_row
+        props:
+          data: "state.active_tab"
+          item_contract: action_trigger
+          item_props_map:
+            label: "item.label"
+          options:
+            - { value: "posts", label: "$t:search.tab_posts" }
+            - { value: "people", label: "$t:search.tab_people" }
+            - { value: "tags", label: "$t:search.tab_tags" }
+
+      - id: results_list
+        contract: collection
+        variant: list
+        props:
+          data: "results"
+          item_contract: data_display
+          item_props_map:
+            title: "item.title"
+            subtitle: "item.subtitle"
+            body: "item.body"
+            leading: "item.avatar_url"
+        action:
+          type: navigate
+          destination: "screens/post_detail"
+          params: { post_id: "{item.id}" }

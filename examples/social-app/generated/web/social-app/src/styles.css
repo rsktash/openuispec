@@ -1,0 +1,124 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap");
+@import "tailwindcss";
+
+:root {
+  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  --color-brand-primary: #1c1b1a;
+  --color-brand-primary-on: #ffffff;
+  --color-brand-accent: #5b52a3;
+  --color-brand-accent-on: #ffffff;
+  --color-surface-primary: #faf8f5;
+  --color-surface-secondary: #f3f0eb;
+  --color-surface-tertiary: #ebe7e0;
+  --color-text-primary: #1c1b1a;
+  --color-text-secondary: #6b6966;
+  --color-text-tertiary: #9e9a95;
+  --color-border-default: #e0dcd6;
+  --color-border-strong: #c5c0b8;
+  --color-semantic-danger: #d43b3b;
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --color-surface-primary: #1c1b1a;
+  --color-surface-secondary: #262422;
+  --color-surface-tertiary: #34312d;
+  --color-text-primary: #faf8f5;
+  --color-text-secondary: #c1bab0;
+  --color-text-tertiary: #8c847b;
+  --color-border-default: rgba(224, 220, 214, 0.12);
+  --color-border-strong: rgba(224, 220, 214, 0.24);
+  color-scheme: dark;
+}
+
+@theme inline {
+  --font-family-sans: var(--font-sans);
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background:
+    radial-gradient(circle at top left, rgba(91, 82, 163, 0.08), transparent 28%),
+    linear-gradient(180deg, rgba(250, 248, 245, 0.8), rgba(250, 248, 245, 1));
+  color: var(--color-text-primary);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+.rounded-cap-primary {
+  border-radius: 2px 24px 2px 24px;
+}
+
+.rounded-cap-alternate {
+  border-radius: 24px 2px 24px 2px;
+}
+
+.rounded-card {
+  border-radius: 3px 20px 3px 20px;
+}
+
+.rounded-surface {
+  border-radius: 3px 24px 3px 24px;
+}
+
+.interactive-press {
+  transition:
+    transform 200ms ease-out,
+    background-color 200ms ease-out,
+    border-color 200ms ease-out,
+    color 200ms ease-out;
+}
+
+.interactive-press:active {
+  transform: scale(0.98);
+}
+
+.skeleton {
+  position: relative;
+  overflow: hidden;
+}
+
+.skeleton::after {
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.45),
+    transparent
+  );
+  animation: skeleton-shimmer 1.4s ease-out infinite;
+  content: "";
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+@keyframes skeleton-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}

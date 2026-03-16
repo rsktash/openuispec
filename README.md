@@ -82,10 +82,11 @@ This replaces the old approach of writing instructions in CLAUDE.md and hoping t
 | **Claude Code** | `.mcp.json` | Always |
 | **Codex** | `.codex/config.toml` | Always |
 | **VS Code / Copilot** | `.vscode/mcp.json` | If `.vscode/` exists |
+| **Gemini CLI** | `.gemini/settings.json` | If `.gemini/` exists |
 
 Manual setup (if needed):
 
-**Claude Code** (`.mcp.json`), **VS Code / Copilot** (`.vscode/mcp.json`):
+**Claude Code** (`.mcp.json`), **VS Code / Copilot** (`.vscode/mcp.json`), **Gemini CLI** (`.gemini/settings.json`):
 ```json
 {
   "mcpServers": {

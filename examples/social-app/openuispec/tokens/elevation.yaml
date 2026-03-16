@@ -1,0 +1,31 @@
+elevation:
+  sm:
+    semantic: "Cards, subtle lift"
+    value: "sm"
+    platform:
+      ios:
+        shadow: { color: "#1C1B1A", opacity: 0.08, radius: 3, x: 0, y: 1 }
+      android:
+        elevation: 2
+      web:
+        box_shadow: "0 1px 3px rgba(28,27,26,0.08)"
+  md:
+    semantic: "Floating elements, dropdowns"
+    value: "md"
+    platform:
+      ios:
+        shadow: { color: "#1C1B1A", opacity: 0.12, radius: 12, x: 0, y: 4 }
+      android:
+        elevation: 6
+      web:
+        box_shadow: "0 4px 12px rgba(28,27,26,0.12)"
+  lg:
+    semantic: "Modals, sheets"
+    value: "lg"
+    platform:
+      ios:
+        shadow: { color: "#1C1B1A", opacity: 0.16, radius: 24, x: 0, y: 8 }
+      android:
+        elevation: 12
+      web:
+        box_shadow: "0 8px 24px rgba(28,27,26,0.16)"

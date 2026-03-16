@@ -1,0 +1,91 @@
+<resources>
+    <!-- Navigation -->
+    <string name="nav_home">Home</string>
+    <string name="nav_discover">Discover</string>
+    <string name="nav_create">Create</string>
+    <string name="nav_notifications">Notifications</string>
+    <string name="nav_profile">Profile</string>
+    <string name="nav_messages">Messages</string>
+    <string name="nav_settings">Settings</string>
+
+    <!-- Home -->
+    <string name="home_filter_all">All</string>
+    <string name="home_filter_following">Following</string>
+    <string name="home_filter_popular">Popular</string>
+    <string name="home_empty_feed">No posts yet. Follow people to see their posts here.</string>
+
+    <!-- Discover -->
+    <string name="discover_search_placeholder">Search posts, people, tags…</string>
+    <string name="discover_trending">Trending</string>
+    <string name="discover_popular_tags">Popular Tags</string>
+    <string name="discover_suggested_creators">Suggested Creators</string>
+
+    <!-- Search -->
+    <string name="search_placeholder">Search…</string>
+    <string name="search_tab_posts">Posts</string>
+    <string name="search_tab_people">People</string>
+    <string name="search_tab_tags">Tags</string>
+    <string name="search_no_results">No results found.</string>
+
+    <!-- Post -->
+    <string name="post_comments_header">Comments</string>
+    <string name="post_no_comments">No comments yet. Be the first to comment.</string>
+    <string name="post_comment_placeholder">Write a comment…</string>
+    <string name="post_comment_sent">Comment posted.</string>
+    <string name="post_like_action">Like</string>
+
+    <!-- Profile -->
+    <string name="profile_edit_button">Edit Profile</string>
+    <string name="profile_follow_button">Follow</string>
+    <string name="profile_following">Following</string>
+    <string name="profile_posts_header">Posts</string>
+    <string name="profile_no_posts_self">You haven\'t posted anything yet.</string>
+    <string name="profile_no_posts_user">This user hasn\'t posted anything yet.</string>
+
+    <!-- Edit Profile -->
+    <string name="edit_profile_avatar">Profile Photo</string>
+    <string name="edit_profile_display_name">Display Name</string>
+    <string name="edit_profile_handle">Username</string>
+    <string name="edit_profile_bio">Bio</string>
+    <string name="edit_profile_website">Website</string>
+    <string name="edit_profile_save">Save Changes</string>
+    <string name="edit_profile_saved">Profile updated.</string>
+
+    <!-- Notifications -->
+    <string name="notifications_empty">No notifications yet.</string>
+
+    <!-- Messages & Chat -->
+    <string name="messages_search_placeholder">Search conversations…</string>
+    <string name="messages_empty_inbox">No conversations yet.</string>
+    <string name="chat_message_placeholder">Type a message…</string>
+    <string name="chat_empty_thread">Start the conversation.</string>
+
+    <!-- Create Post -->
+    <string name="create_post_body_placeholder">What\'s on your mind?</string>
+    <string name="create_post_audience">Audience</string>
+    <string name="create_post_audience_public">Public</string>
+    <string name="create_post_audience_followers">Followers Only</string>
+    <string name="create_post_add_image">Add Image</string>
+    <string name="create_post_take_photo">Take Photo</string>
+    <string name="create_post_publish">Publish</string>
+    <string name="create_post_success">Post published!</string>
+
+    <!-- Settings -->
+    <string name="settings_appearance">Appearance</string>
+    <string name="settings_theme">Theme</string>
+    <string name="settings_theme_system">System</string>
+    <string name="settings_theme_light">Light</string>
+    <string name="settings_theme_dark">Dark</string>
+    <string name="settings_notifications">Notifications</string>
+    <string name="settings_push_notifications">Push Notifications</string>
+    <string name="settings_message_previews">Message Previews</string>
+    <string name="settings_language">Language</string>
+    <string name="settings_auto_translate">Auto-translate Posts</string>
+    <string name="settings_account">Account</string>
+    <string name="settings_edit_profile">Edit Profile</string>
+    <string name="settings_logout">Log Out</string>
+    <string name="settings_logout_confirm">Are you sure you want to log out?</string>
+
+    <!-- Common -->
+    <string name="common_cancel">Cancel</string>
+</resources>
