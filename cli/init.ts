@@ -489,6 +489,7 @@ export function updateRules(): void {
       claudeJson.mcpServers.openuispec = mcpConfig;
       writeFileSync(claudeJsonPath, JSON.stringify(claudeJson, null, 2) + "\n");
       console.log(`  create .claude.json (MCP server configured)`);
+      console.log(`\n  Restart Claude Code to activate the MCP server.`);
     }
   } catch {
     // non-critical — skip silently
