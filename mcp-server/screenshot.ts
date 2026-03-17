@@ -6,7 +6,7 @@
  */
 
 import { spawn, type ChildProcess, execSync } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, mkdirSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { createServer, type AddressInfo } from "node:net";
 import YAML from "yaml";
@@ -21,6 +21,7 @@ export interface ScreenshotOptions {
   wait_for?: number;
   full_page?: boolean;
   selector?: string;
+  output_dir?: string;
 }
 
 export interface ScreenshotResult {
@@ -180,6 +181,7 @@ export async function takeScreenshot(
     wait_for = 1000,
     full_page = false,
     selector,
+    output_dir,
   } = options;
 
   // 1. Find and start
@@ -223,6 +225,17 @@ export async function takeScreenshot(
 
     const base64 = buffer.toString("base64");
 
+    // Save to output_dir if specified
+    let savedPath: string | undefined;
+    if (output_dir) {
+      const outDir = resolve(webDir, output_dir);
+      mkdirSync(outDir, { recursive: true });
+      const routeSlug = route.replace(/^\//, "").replace(/\//g, "_") || "index";
+      const themeLabel = theme ?? "default";
+      savedPath = join(outDir, `${routeSlug}_${themeLabel}.png`);
+      writeFileSync(savedPath, buffer);
+    }
+
     return {
       content: [
         { type: "image" as const, data: base64, mimeType: "image/png" },
@@ -235,6 +248,7 @@ export async function takeScreenshot(
             theme: theme ?? "default",
             full_page,
             selector: selector ?? null,
+            path: savedPath ?? null,
           }, null, 2),
         },
       ],

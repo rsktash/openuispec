@@ -1,6 +1,6 @@
 {
   "name": "openuispec",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "license": "MIT",
   "type": "module",
   "description": "A semantic UI specification format for AI-native, platform-native app development",
@@ -42,7 +42,8 @@
     "drift:snapshot": "tsx drift/index.ts --snapshot --target",
     "prepare:target": "tsx prepare/index.ts",
     "status": "tsx status/index.ts",
-    "postinstall": "echo \"\\n  ✓ openuispec installed — if upgrading, run: openuispec update-rules\\n\""
+    "postinstall": "echo \"\\n  ✓ openuispec installed — if upgrading, run: openuispec update-rules\\n\"",
+    "cloc": "cloc --exclude-dir=$(tr '\n' ',' < .cloc-ignore) ."
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.27.1",

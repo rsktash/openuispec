@@ -3,4 +3,5 @@ plugins {
     alias(libs.plugins.android.application) apply false
     alias(libs.plugins.compose.compiler) apply false
     kotlin("plugin.serialization") version "2.3.0" apply false
+    id("app.cash.paparazzi") version "2.0.0-alpha04" apply false
 }

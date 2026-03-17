@@ -123,9 +123,39 @@ Or run directly: `openuispec mcp`
 | `openuispec_get_contract` | Incremental edits | Get a single contract spec, optionally filtered to one variant |
 | `openuispec_get_tokens` | Incremental edits | Get tokens for a specific category (color, typography, spacing, etc.) |
 | `openuispec_get_locale` | Incremental edits | Get a single locale file, optionally filtered to specific keys |
-| `openuispec_screenshot` | Visual verification | Take a screenshot of the generated web app at a specific route (requires `puppeteer`) |
+| `openuispec_screenshot` | Visual verification | Screenshot the web app at a route via headless browser (requires `puppeteer`) |
+| `openuispec_screenshot_android` | Visual verification | Screenshot Android app on emulator — builds APK, installs, captures via adb. Works with any Android project via `project_dir` param |
+| `openuispec_screenshot_ios` | Visual verification | Screenshot iOS app on Simulator — builds with xcodebuild, captures via XCUITest. Works with any iOS project via `project_dir` param |
 
 The server includes **protocol-level instructions** that trigger on UI-related requests independently of CLAUDE.md rules — so even if CLAUDE.md is buried under other project rules, the MCP enforcement still works.
+
+### Visual verification
+
+The screenshot tools work with **any** Android/iOS/web project — they don't require an OpenUISpec manifest. Use `project_dir` to point directly at a project root:
+
+```
+# With OpenUISpec manifest (auto-discovers generated app)
+openuispec_screenshot_android(screen: "home")
+
+# Standalone — any Android project
+openuispec_screenshot_android(project_dir: "/path/to/android/project", screen: "home")
+
+# Standalone — any iOS project
+openuispec_screenshot_ios(project_dir: "/path/to/ios/project", scheme: "MyApp")
+```
+
+Additional override params:
+
+| Param | Android | iOS | Purpose |
+|-------|---------|-----|---------|
+| `project_dir` | yes | yes | Skip manifest, point directly at project root |
+| `module` | yes | — | Override app module name (default: auto-detect from `settings.gradle`) |
+| `scheme` | — | yes | Override Xcode scheme (default: auto-detect) |
+| `bundle_id` | — | yes | Override bundle ID (default: auto-detect from `project.pbxproj`) |
+
+Auto-detection features:
+- **Android**: Scans `settings.gradle.kts`/`.gradle` to find the module with `com.android.application` plugin. Supports both Kotlin DSL and Groovy DSL.
+- **iOS**: Reads deployment target from `project.pbxproj`. For navigation screenshots, generates an XCUITest project via xcodegen — works with both xcodegen-managed and standalone Xcode projects.
 
 ## Using without MCP
 
@@ -191,8 +221,17 @@ openuispec/
 │   ├── index.ts                        # Entry point
 │   └── init.ts                         # Project scaffolding + AI rules
 ├── mcp-server/                          # MCP server (openuispec-mcp)
-│   ├── index.ts                        # Stdio transport, 13 tools
-│   └── screenshot.ts                  # Dev server + headless browser screenshot
+│   ├── index.ts                        # Stdio transport, 15 tools
+│   ├── screenshot.ts                  # Dev server + headless browser screenshot (web)
+│   ├── screenshot-shared.ts           # Shared utilities for platform screenshot tools
+│   ├── screenshot-android.ts          # Android screenshot via emulator (adb screencap)
+│   └── screenshot-ios.ts             # iOS screenshot via Simulator (xcodebuild + XCUITest)
+├── scripts/
+│   └── take-all-screenshots.ts        # Batch screenshot capture for all example projects
+├── artifacts/                           # Screenshot artifacts from generated apps
+│   ├── social-app/screenshots/        # Web + Android screenshots
+│   ├── todo-orbit/screenshots/        # Web + Android + iOS screenshots
+│   └── taskflow/screenshots/          # Web + Android + iOS screenshots
 ├── check/                               # Composite validation command
 │   └── index.ts                        # Schema + semantic + readiness
 ├── drift/                               # Drift detection (spec change tracking)

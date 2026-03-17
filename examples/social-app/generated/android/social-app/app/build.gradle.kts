@@ -1,4 +1,5 @@
 plugins {
+    id("app.cash.paparazzi")
     alias(libs.plugins.android.application)
     alias(libs.plugins.compose.compiler)
     kotlin("plugin.serialization")
@@ -89,4 +90,5 @@ dependencies {
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation("androidx.compose.ui:ui-test-manifest")
+
 }

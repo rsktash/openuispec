@@ -28,6 +28,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import com.social.app.R
 import com.social.app.data.MockData
 import com.social.app.ui.components.ChipOption
@@ -153,5 +154,16 @@ fun HomeFeedScreen(
                 }
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun HomeFeedScreenPreview() {
+    MaterialTheme {
+        HomeFeedScreen(
+            onPostClick = {},
+            onUserClick = {},
+        )
     }
 }

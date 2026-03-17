@@ -1,4 +1,5 @@
 [versions]
+paparazzi = "2.0.0-alpha04"
 agp = "9.1.0"
 kotlin = "2.3.0"
 coreKtx = "1.18.0"
@@ -43,6 +44,7 @@ androidx-datastore-preferences = { group = "androidx.datastore", name = "datasto
 androidx-datastore-core = { group = "androidx.datastore", name = "datastore-core", version.ref = "datastore" }
 
 [plugins]
+paparazzi = { id = "app.cash.paparazzi", version.ref = "paparazzi" }
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }

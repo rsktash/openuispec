@@ -26,6 +26,8 @@ import { readFileSync as fsReadFileSync, existsSync, readdirSync } from "node:fs
 import { relative, resolve } from "node:path";
 import YAML from "yaml";
 import { takeScreenshot } from "./screenshot.js";
+import { takeAndroidScreenshot } from "./screenshot-android.js";
+import { takeIOSScreenshot } from "./screenshot-ios.js";
 
 // ── resolve project cwd ──────────────────────────────────────────────
 
@@ -149,6 +151,12 @@ VISUAL VERIFICATION:
 - openuispec_screenshot(route, viewport?, theme?) — screenshot the generated web app at a route.
   Starts the dev server automatically. Use after generation to visually verify UI matches the spec.
   Requires puppeteer (npm install -g puppeteer).
+- openuispec_screenshot_android(screen?, theme?, wait_for?) — screenshot the generated Android app.
+  Builds APK, installs on emulator, and captures via adb screencap.
+  Shows the real app with navigation, images, and themes. Requires a running emulator.
+- openuispec_screenshot_ios(screen?, device?, nav?, theme?, wait_for?) — screenshot the generated iOS app.
+  Builds with xcodebuild, installs on simulator, and captures via xcrun simctl.
+  Shows the real app with navigation, images, and themes. Requires Xcode.
 
 Skip these tools ONLY when the request is purely non-UI (API logic, database, infrastructure, etc.)
 or explicitly platform-specific polish that doesn't affect shared UI semantics.`,
@@ -696,9 +704,10 @@ server.registerTool(
       wait_for: z.number().optional().default(1000).describe("Milliseconds to wait after page load before screenshotting (default 1000)"),
       full_page: z.boolean().optional().default(false).describe("Capture the full scrollable page instead of just the viewport"),
       selector: z.string().optional().describe("CSS selector to screenshot a specific element instead of the full page"),
+      output_dir: z.string().optional().describe("Directory to save the screenshot PNG (relative to web app root). E.g. 'screenshots'. If omitted, only returns base64 in response."),
     },
   },
-  async ({ route, viewport, theme, wait_for, full_page, selector }) => {
+  async ({ route, viewport, theme, wait_for, full_page, selector, output_dir }) => {
     try {
       return await takeScreenshot(projectCwd, {
         route,
@@ -707,7 +716,61 @@ server.registerTool(
         wait_for,
         full_page,
         selector,
+        output_dir,
       });
+    } catch (err) {
+      return toolError(err);
+    }
+  }
+);
+
+// ── tool: openuispec_screenshot_android ───────────────────────────────
+
+server.registerTool(
+  "openuispec_screenshot_android",
+  {
+    description: "Take a screenshot of an Android app on an emulator. Builds the APK, installs it, launches the app, and captures via adb screencap. Shows the real app with navigation, images, and themes. Requires a running Android emulator. Works with any Android project — use project_dir to point directly at a project, or uses OpenUISpec manifest discovery if available.",
+    inputSchema: {
+      screen: z.string().optional().describe("Screen name for metadata and filename (e.g. 'home_feed')."),
+      route: z.string().optional().describe("Deep link URI to navigate to a specific screen (e.g. 'myapp://profile/123'). If omitted, launches the main activity."),
+      nav: z.array(z.string()).optional().describe("UI navigation steps — tap elements by visible text in order (e.g. ['Profile', 'Settings']). Executed after the app launches and loads."),
+      theme: z.enum(["light", "dark"]).optional().describe("Force light or dark mode via system UI mode"),
+      wait_for: z.number().optional().default(3000).describe("Milliseconds to wait after launch for content to load (default 3000)"),
+      output_dir: z.string().optional().describe("Directory to save the screenshot PNG (relative to Android project root). E.g. 'screenshots'. If omitted, only returns base64 in response."),
+      project_dir: z.string().optional().describe("Direct path to the Android project root (containing gradlew). Skips OpenUISpec manifest lookup. Use this for standalone Android projects."),
+      module: z.string().optional().describe("App module name (e.g. 'app', 'mobile'). If omitted, auto-detects by scanning settings.gradle for the module with com.android.application plugin."),
+    },
+  },
+  async ({ screen, route, nav, theme, wait_for, output_dir, project_dir, module }) => {
+    try {
+      return await takeAndroidScreenshot(projectCwd, { screen, route, nav, theme, wait_for, output_dir, project_dir, module });
+    } catch (err) {
+      return toolError(err);
+    }
+  }
+);
+
+// ── tool: openuispec_screenshot_ios ───────────────────────────────────
+
+server.registerTool(
+  "openuispec_screenshot_ios",
+  {
+    description: "Take a screenshot of an iOS app on a Simulator. Builds with xcodebuild, installs on simulator, launches the app, and captures via xcrun simctl. Shows the real app with navigation, images, and themes. Requires Xcode. Works with any iOS project — use project_dir to point directly at a project, or uses OpenUISpec manifest discovery if available.",
+    inputSchema: {
+      screen: z.string().optional().describe("Screen name for metadata and filename (e.g. 'settings')."),
+      device: z.string().optional().describe("Simulator device name (e.g. 'iPhone 15', 'iPad Pro 11-inch (M4)'). If omitted, uses any booted iPhone or the first available one."),
+      nav: z.array(z.string()).optional().describe("UI navigation steps — tap elements by visible text in order (e.g. ['Profile', 'Settings']). Executed after the app launches and loads."),
+      theme: z.enum(["light", "dark"]).optional().describe("Force light or dark appearance on the simulator"),
+      wait_for: z.number().optional().default(3000).describe("Milliseconds to wait after launch for content to load (default 3000)"),
+      output_dir: z.string().optional().describe("Directory to save the screenshot PNG (relative to iOS project root). E.g. 'screenshots'. If omitted, only returns base64 in response."),
+      project_dir: z.string().optional().describe("Direct path to the iOS project root (containing .xcodeproj/.xcworkspace). Skips OpenUISpec manifest lookup. Use this for standalone iOS projects."),
+      scheme: z.string().optional().describe("Xcode scheme name to build. If omitted, auto-detects from xcshareddata/xcschemes or uses the project name."),
+      bundle_id: z.string().optional().describe("App bundle identifier (e.g. 'com.example.myapp'). If omitted, auto-detects from project.pbxproj."),
+    },
+  },
+  async ({ screen, device, nav, theme, wait_for, output_dir, project_dir, scheme, bundle_id }) => {
+    try {
+      return await takeIOSScreenshot(projectCwd, { screen, device, nav, theme, wait_for, output_dir, project_dir, scheme, bundle_id });
     } catch (err) {
       return toolError(err);
     }

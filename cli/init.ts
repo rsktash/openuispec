@@ -283,6 +283,8 @@ When the openuispec MCP server is configured, AI assistants should use these too
 | \`openuispec_get_tokens\` | Get tokens for a specific category (color, typography, spacing, etc.). |
 | \`openuispec_get_locale\` | Get a single locale file, optionally filtered to specific keys. |
 | \`openuispec_screenshot\` | Take a screenshot of the generated web app at a route (requires \`puppeteer\`). |
+| \`openuispec_screenshot_android\` | Take screenshots of the generated Android app on an emulator (requires running emulator). |
+| \`openuispec_screenshot_ios\` | Take screenshots of the generated iOS app using swift-snapshot-testing (requires Xcode + Simulator). |
 
 ## CLI commands
 
