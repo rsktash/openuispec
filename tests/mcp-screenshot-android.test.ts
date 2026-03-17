@@ -25,7 +25,8 @@ const {
   collectPngSnapshots,
   walkFiles,
 } = await import("../mcp-server/screenshot-shared.ts");
-const { findAndroidAppDir } = await import("../mcp-server/screenshot-android.ts");
+const { findAndroidAppDir, takeAndroidScreenshotBatch } = await import("../mcp-server/screenshot-android.ts");
+const { takeScreenshotBatch: takeWebScreenshotBatch } = await import("../mcp-server/screenshot.ts");
 
 let client: Client;
 
@@ -161,6 +162,12 @@ describe("screenshot-android", () => {
       /not found|No openuispec/i,
     );
   });
+
+  test("takeAndroidScreenshotBatch returns error for empty captures", async () => {
+    const result = await takeAndroidScreenshotBatch(socialAppDir, { captures: [] });
+    assert.equal(result.isError, true);
+    assert.match((result.content[0] as any).text, /No Android captures specified/i);
+  });
 });
 
 // ── MCP tool integration tests ────────────────────────────────────────
@@ -185,5 +192,46 @@ describe("openuispec_screenshot_android (MCP tool)", () => {
       );
     }
     // If no error, a screenshot was taken — that's fine too
+  });
+
+  test("batch returns error for empty captures via MCP", async () => {
+    const result: any = await client.callTool({
+      name: "openuispec_screenshot_android_batch",
+      arguments: { captures: [] },
+    });
+    assert.ok(result.isError);
+    assert.match(result.content[0].text, /No Android captures specified/i);
+  });
+});
+
+// ── web batch tests ───────────────────────────────────────────────────
+
+describe("screenshot-web-batch", () => {
+  test("takeWebScreenshotBatch returns error for empty captures", async () => {
+    const result = await takeWebScreenshotBatch("/tmp/unused", { captures: [] });
+    assert.equal(result.isError, true);
+    assert.match((result.content[0] as any).text, /No web captures specified/i);
+  });
+
+  test("web batch returns error for empty captures via MCP", async () => {
+    const result: any = await client.callTool({
+      name: "openuispec_screenshot_web_batch",
+      arguments: { captures: [] },
+    });
+    assert.ok(result.isError);
+    assert.match(result.content[0].text, /No web captures specified/i);
+  });
+});
+
+// ── iOS batch MCP test ────────────────────────────────────────────────
+
+describe("openuispec_screenshot_ios_batch (MCP tool)", () => {
+  test("batch returns error for empty captures via MCP", async () => {
+    const result: any = await client.callTool({
+      name: "openuispec_screenshot_ios_batch",
+      arguments: { captures: [] },
+    });
+    assert.ok(result.isError);
+    assert.match(result.content[0].text, /No iOS captures specified/i);
   });
 });

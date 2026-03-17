@@ -258,6 +258,86 @@ export async function takeScreenshot(
   }
 }
 
+// ── batch types ──────────────────────────────────────────────────────
+
+export interface WebBatchCapture {
+  screen: string;
+  route: string;
+  selector?: string;
+  full_page?: boolean;
+  wait_for?: number;
+}
+
+export interface WebScreenshotBatchOptions {
+  captures: WebBatchCapture[];
+  viewport?: { width: number; height: number };
+  theme?: "light" | "dark";
+  output_dir?: string;
+}
+
+// ── batch screenshot ─────────────────────────────────────────────────
+
+export async function takeScreenshotBatch(
+  projectCwd: string,
+  options: WebScreenshotBatchOptions,
+): Promise<ScreenshotResult> {
+  const { captures, viewport = { width: 1280, height: 800 }, theme, output_dir } = options;
+
+  if (captures.length === 0) {
+    return { content: [{ type: "text", text: "No web captures specified." }], isError: true };
+  }
+
+  const webDir = findWebAppDir(projectCwd);
+  const server = await startDevServer(webDir);
+  const browser = await getBrowser();
+  const page = await browser.newPage();
+
+  try {
+    await page.setViewport({ width: viewport.width, height: viewport.height });
+    if (theme) {
+      await page.emulateMediaFeatures([{ name: "prefers-color-scheme", value: theme }]);
+    }
+
+    const base = server.url.replace(/\/+$/, "");
+    const themeLabel = theme ?? "default";
+    const snapshots: Array<{ screen: string; path: string; data: string }> = [];
+
+    for (const capture of captures) {
+      const targetUrl = `${base}${capture.route.startsWith("/") ? "" : "/"}${capture.route}`;
+      await page.goto(targetUrl, { waitUntil: "networkidle2", timeout: 30_000 });
+      await new Promise((r) => setTimeout(r, capture.wait_for ?? 1000));
+
+      let buffer: Buffer;
+      if (capture.selector) {
+        const el = await page.$(capture.selector);
+        buffer = el ? await el.screenshot({ type: "png" }) : await page.screenshot({ type: "png" });
+      } else {
+        buffer = await page.screenshot({ type: "png", fullPage: capture.full_page ?? false });
+      }
+
+      const filename = `${capture.screen}_${themeLabel}.png`;
+      let savedPath = filename;
+      if (output_dir) {
+        const outDir = resolve(webDir, output_dir);
+        mkdirSync(outDir, { recursive: true });
+        savedPath = join(outDir, filename);
+        writeFileSync(savedPath, buffer);
+      }
+
+      snapshots.push({ screen: capture.screen, path: savedPath, data: buffer.toString("base64") });
+    }
+
+    const content: ScreenshotResult["content"] = [];
+    for (const s of snapshots) {
+      content.push({ type: "image" as const, data: s.data, mimeType: "image/png" });
+      content.push({ type: "text" as const, text: JSON.stringify({ screen: s.screen, path: s.path, theme: themeLabel }, null, 2) });
+    }
+    return { content };
+  } finally {
+    await page.close();
+  }
+}
+
 // ── cleanup ─────────────────────────────────────────────────────────
 
 export async function shutdownAll() {

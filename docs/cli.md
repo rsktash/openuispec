@@ -92,9 +92,15 @@ openuispec spec-schema <type>                 # Get JSON schema for a spec type
 ### Screenshots
 
 ```bash
+# Single captures
 openuispec screenshot --route /home [--theme dark] [--output-dir dir]
 openuispec screenshot-android [--project-dir path] [--screen name] [--module name] [--route deeplink]
 openuispec screenshot-ios [--project-dir path] [--screen name] [--scheme name] [--bundle-id id]
+
+# Batch — build once, capture many
+openuispec screenshot-web-batch --config captures.json [--theme dark] [--output-dir dir]
+openuispec screenshot-android-batch --config captures.json [--project-dir path] [--module name]
+openuispec screenshot-ios-batch --config captures.json [--project-dir path] [--scheme name] [--bundle-id id]
 ```
 
 Screenshot tools work with **any** project — use `--project-dir` to skip manifest lookup.
@@ -110,6 +116,30 @@ Screenshot tools work with **any** project — use `--project-dir` to skip manif
 | `--theme` | yes | yes | Force light or dark mode |
 | `--device` | -- | yes | Simulator device name |
 | `--output-dir` | yes | yes | Save screenshot to directory |
+
+### Batch config
+
+All batch commands accept `--config captures.json`. The JSON file has the same structure for all platforms:
+
+```json
+{
+  "project_dir": "path/to/project",
+  "output_dir": "screenshots",
+  "theme": "light",
+  "captures": [
+    { "screen": "home", "route": "/home", "wait_for": 3000 },
+    { "screen": "settings", "nav": ["Settings"], "wait_for": 5000 }
+  ]
+}
+```
+
+Each capture supports:
+- `screen`: output filename stem (required)
+- `route`: deep link URI (Android) or URL path (web)
+- `nav`: array of visible-text tap steps after launch (Android, iOS)
+- `wait_for`: per-capture wait time in ms
+- `selector`: CSS selector to screenshot a specific element (web only)
+- `full_page`: capture full scrollable page (web only)
 
 ## Target Update Workflow
 

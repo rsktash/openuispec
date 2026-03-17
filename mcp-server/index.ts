@@ -25,9 +25,9 @@ import { loadTargetDrift } from "../drift/index.js";
 import { readFileSync as fsReadFileSync, existsSync, readdirSync } from "node:fs";
 import { relative, resolve } from "node:path";
 import YAML from "yaml";
-import { takeScreenshot } from "./screenshot.js";
-import { takeAndroidScreenshot } from "./screenshot-android.js";
-import { takeIOSScreenshot } from "./screenshot-ios.js";
+import { takeScreenshot, takeScreenshotBatch } from "./screenshot.js";
+import { takeAndroidScreenshot, takeAndroidScreenshotBatch } from "./screenshot-android.js";
+import { takeIOSScreenshot, takeIOSScreenshotBatch } from "./screenshot-ios.js";
 
 // ── resolve project cwd ──────────────────────────────────────────────
 
@@ -771,6 +771,97 @@ server.registerTool(
   async ({ screen, device, nav, theme, wait_for, output_dir, project_dir, scheme, bundle_id }) => {
     try {
       return await takeIOSScreenshot(projectCwd, { screen, device, nav, theme, wait_for, output_dir, project_dir, scheme, bundle_id });
+    } catch (err) {
+      return toolError(err);
+    }
+  }
+);
+
+// ── tool: openuispec_screenshot_web_batch ──────────────────────────────
+
+const webBatchCaptureSchema = z.object({
+  screen: z.string().describe("Screen name for metadata and filename"),
+  route: z.string().describe("Route path (e.g. '/home', '/settings')"),
+  selector: z.string().optional().describe("CSS selector to screenshot a specific element"),
+  full_page: z.boolean().optional().describe("Capture full scrollable page"),
+  wait_for: z.number().optional().describe("Per-capture wait time in ms"),
+});
+
+server.registerTool(
+  "openuispec_screenshot_web_batch",
+  {
+    description: "Take multiple web screenshots in a single server session. Starts the dev server once, then captures all routes in sequence. Much faster than calling screenshot for each route individually.",
+    inputSchema: {
+      captures: z.array(webBatchCaptureSchema).describe("Array of captures — each with screen name and route"),
+      viewport: z.object({ width: z.number().default(1280), height: z.number().default(800) }).optional().describe("Viewport dimensions for all captures"),
+      theme: z.enum(["light", "dark"]).optional().describe("Force color scheme for all captures"),
+      output_dir: z.string().optional().describe("Directory to save all PNGs (relative to web app root)"),
+    },
+  },
+  async ({ captures, viewport, theme, output_dir }) => {
+    try {
+      return await takeScreenshotBatch(projectCwd, { captures, viewport, theme, output_dir });
+    } catch (err) {
+      return toolError(err);
+    }
+  }
+);
+
+// ── tool: openuispec_screenshot_android_batch ─────────────────────────
+
+const androidBatchCaptureSchema = z.object({
+  screen: z.string().describe("Screen name for metadata and filename"),
+  route: z.string().optional().describe("Deep link URI to launch"),
+  nav: z.array(z.string()).optional().describe("UI tap steps after launch"),
+  wait_for: z.number().optional().describe("Per-capture wait time in ms"),
+});
+
+server.registerTool(
+  "openuispec_screenshot_android_batch",
+  {
+    description: "Take multiple Android screenshots in a single build+install cycle. Builds the APK once, installs once, then captures each screen in sequence via deep links or UI navigation. Much faster than calling screenshot_android for each screen individually.",
+    inputSchema: {
+      captures: z.array(androidBatchCaptureSchema).describe("Array of captures — each with screen name and optional route/nav"),
+      theme: z.enum(["light", "dark"]).optional().describe("Force light or dark mode for all captures"),
+      output_dir: z.string().optional().describe("Directory to save all PNGs (relative to Android project root)"),
+      project_dir: z.string().optional().describe("Direct path to Android project root"),
+      module: z.string().optional().describe("App module name (default: auto-detect)"),
+    },
+  },
+  async ({ captures, theme, output_dir, project_dir, module }) => {
+    try {
+      return await takeAndroidScreenshotBatch(projectCwd, { captures, theme, output_dir, project_dir, module });
+    } catch (err) {
+      return toolError(err);
+    }
+  }
+);
+
+// ── tool: openuispec_screenshot_ios_batch ──────────────────────────────
+
+const iosBatchCaptureSchema = z.object({
+  screen: z.string().describe("Screen name for metadata and filename"),
+  nav: z.array(z.string()).optional().describe("UI tap steps after launch"),
+  wait_for: z.number().optional().describe("Per-capture wait time in ms"),
+});
+
+server.registerTool(
+  "openuispec_screenshot_ios_batch",
+  {
+    description: "Take multiple iOS screenshots in a single build+install cycle. Builds the app once, then captures each screen — no-nav screens via simctl, nav screens batched into a single XCUITest run. Much faster than calling screenshot_ios for each screen individually.",
+    inputSchema: {
+      captures: z.array(iosBatchCaptureSchema).describe("Array of captures — each with screen name and optional nav steps"),
+      device: z.string().optional().describe("Simulator device name"),
+      theme: z.enum(["light", "dark"]).optional().describe("Force light or dark appearance for all captures"),
+      output_dir: z.string().optional().describe("Directory to save all PNGs (relative to iOS project root)"),
+      project_dir: z.string().optional().describe("Direct path to iOS project root"),
+      scheme: z.string().optional().describe("Xcode scheme name"),
+      bundle_id: z.string().optional().describe("App bundle identifier"),
+    },
+  },
+  async ({ captures, device, theme, output_dir, project_dir, scheme, bundle_id }) => {
+    try {
+      return await takeIOSScreenshotBatch(projectCwd, { captures, device, theme, output_dir, project_dir, scheme, bundle_id });
     } catch (err) {
       return toolError(err);
     }

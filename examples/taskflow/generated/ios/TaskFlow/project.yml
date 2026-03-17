@@ -24,3 +24,8 @@ targets:
         INFOPLIST_KEY_UIUserInterfaceStyle: Automatic
         SWIFT_VERSION: 5.10
         PRODUCT_BUNDLE_IDENTIFIER: uz.rsteam.taskflow
+schemes:
+  TaskFlow:
+    build:
+      targets:
+        TaskFlow: all

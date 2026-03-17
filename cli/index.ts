@@ -24,6 +24,7 @@
  *   openuispec spec-schema <type>             Get JSON schema for a spec type
  *   openuispec screenshot [--route /path]     Screenshot the web app
  *   openuispec screenshot-android [opts]      Screenshot Android app on emulator
+ *   openuispec screenshot-android-batch [opts] Batch screenshot Android app on emulator
  *   openuispec screenshot-ios [opts]          Screenshot iOS app on simulator
  */
 
@@ -45,6 +46,25 @@ function getOption(argv: string[], name: string): string | null {
 
 function getPositional(argv: string[], startIdx = 0): string[] {
   return argv.slice(startIdx).filter((a) => !a.startsWith("--"));
+}
+
+function readJsonFile(filePath: string): any {
+  return JSON.parse(readFileSync(resolve(filePath), "utf-8"));
+}
+
+function parseBatchConfig(rest: string[], usage: string): { config: any; captures: any[] } {
+  const configPath = getOption(rest, "--config");
+  if (!configPath) {
+    console.error(usage);
+    process.exit(1);
+  }
+  const config = readJsonFile(configPath);
+  const captures = Array.isArray(config) ? config : config.captures;
+  if (!Array.isArray(captures) || captures.length === 0) {
+    console.error("Batch config must be an array of captures or an object with a non-empty 'captures' array.");
+    process.exit(1);
+  }
+  return { config, captures };
 }
 
 // ── rules version check ─────────────────────────────────────────────
@@ -338,6 +358,37 @@ async function main(): Promise<void> {
       break;
     }
 
+    case "screenshot-android-batch": {
+      const { takeAndroidScreenshotBatch } = await import("../mcp-server/screenshot-android.js");
+      const { config, captures } = parseBatchConfig(rest,
+        "Usage: openuispec screenshot-android-batch --config <captures.json> [--project-dir path] [--module name] [--theme light|dark] [--output-dir dir]");
+
+      const result = await takeAndroidScreenshotBatch(cwd, {
+        captures,
+        theme: (getOption(rest, "--theme") ?? config.theme) as "light" | "dark" | undefined,
+        output_dir: getOption(rest, "--output-dir") ?? config.output_dir ?? undefined,
+        project_dir: getOption(rest, "--project-dir") ?? config.project_dir ?? undefined,
+        module: getOption(rest, "--module") ?? config.module ?? undefined,
+      });
+      printScreenshotResult(result);
+      break;
+    }
+
+    case "screenshot-web-batch": {
+      const { takeScreenshotBatch } = await import("../mcp-server/screenshot.js");
+      const { config, captures } = parseBatchConfig(rest,
+        "Usage: openuispec screenshot-web-batch --config <captures.json> [--theme light|dark] [--output-dir dir]");
+
+      const result = await takeScreenshotBatch(cwd, {
+        captures,
+        viewport: config.viewport,
+        theme: (getOption(rest, "--theme") ?? config.theme) as "light" | "dark" | undefined,
+        output_dir: getOption(rest, "--output-dir") ?? config.output_dir ?? undefined,
+      });
+      printScreenshotResult(result);
+      break;
+    }
+
     case "screenshot-ios": {
       const { takeIOSScreenshot } = await import("../mcp-server/screenshot-ios.js");
       const result = await takeIOSScreenshot(cwd, {
@@ -350,6 +401,24 @@ async function main(): Promise<void> {
         project_dir: getOption(rest, "--project-dir") ?? undefined,
         scheme: getOption(rest, "--scheme") ?? undefined,
         bundle_id: getOption(rest, "--bundle-id") ?? undefined,
+      });
+      printScreenshotResult(result);
+      break;
+    }
+
+    case "screenshot-ios-batch": {
+      const { takeIOSScreenshotBatch } = await import("../mcp-server/screenshot-ios.js");
+      const { config, captures } = parseBatchConfig(rest,
+        "Usage: openuispec screenshot-ios-batch --config <captures.json> [--project-dir path] [--scheme name] [--bundle-id id] [--device name] [--theme light|dark] [--output-dir dir]");
+
+      const result = await takeIOSScreenshotBatch(cwd, {
+        captures,
+        device: getOption(rest, "--device") ?? config.device ?? undefined,
+        theme: (getOption(rest, "--theme") ?? config.theme) as "light" | "dark" | undefined,
+        output_dir: getOption(rest, "--output-dir") ?? config.output_dir ?? undefined,
+        project_dir: getOption(rest, "--project-dir") ?? config.project_dir ?? undefined,
+        scheme: getOption(rest, "--scheme") ?? config.scheme ?? undefined,
+        bundle_id: getOption(rest, "--bundle-id") ?? config.bundle_id ?? undefined,
       });
       printScreenshotResult(result);
       break;
@@ -389,12 +458,19 @@ Spec access:
   openuispec spec-types                     List available spec types
   openuispec spec-schema <type>             Get full JSON schema for a spec type
 
-Screenshots:
+Screenshots (single):
   openuispec screenshot [--route /path] [--theme light|dark] [--output-dir dir]
   openuispec screenshot-android [--screen name] [--project-dir path] [--module name]
       [--route deeplink] [--nav Step1,Step2] [--theme light|dark] [--output-dir dir]
   openuispec screenshot-ios [--screen name] [--project-dir path] [--scheme name]
       [--bundle-id id] [--device name] [--nav Step1,Step2] [--theme light|dark]
+
+Screenshots (batch — build once, capture many):
+  openuispec screenshot-web-batch --config captures.json [--theme light|dark] [--output-dir dir]
+  openuispec screenshot-android-batch --config captures.json [--project-dir path]
+      [--module name] [--theme light|dark] [--output-dir dir]
+  openuispec screenshot-ios-batch --config captures.json [--project-dir path]
+      [--scheme name] [--bundle-id id] [--device name] [--theme light|dark] [--output-dir dir]
 
 Server:
   openuispec mcp                            Start MCP server (stdio transport)

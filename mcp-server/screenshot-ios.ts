@@ -233,6 +233,45 @@ async function setAppearance(udid: string, theme: "light" | "dark"): Promise<voi
 const UITEST_TARGET = "ScreenshotUITests";
 const UITEST_DIR = ".screenshot-uitest";
 
+export function generateUITestTargetYml(
+  appInfo: IOSAppInfo,
+  sourcePath: string,
+  includeProductName = false,
+): string {
+  const productLines = includeProductName
+    ? `\n        PRODUCT_NAME: ${UITEST_TARGET}\n        PRODUCT_MODULE_NAME: ${UITEST_TARGET}`
+    : "";
+  return `  ${UITEST_TARGET}:
+    type: bundle.ui-testing
+    platform: iOS
+    deploymentTarget: "${appInfo.deploymentTarget}"
+    sources:
+      - path: ${sourcePath}
+    dependencies:
+      - target: ${appInfo.schemeName}
+        embed: false
+    settings:
+      base:${productLines}
+        TEST_TARGET_NAME: ${appInfo.schemeName}
+        PRODUCT_BUNDLE_IDENTIFIER: ${appInfo.bundleId}.uitests
+        GENERATE_INFOPLIST_FILE: YES`;
+}
+
+export function insertUITestTarget(yml: string, targetYml: string): string {
+  if (yml.includes("\nschemes:")) {
+    return yml.replace("\nschemes:", `\n${targetYml}\nschemes:`);
+  }
+  return yml + "\n" + targetYml + "\n";
+}
+
+export function ensureInfoPlistFlag(yml: string): string {
+  if (yml.includes("GENERATE_INFOPLIST_FILE")) return yml;
+  return yml.replace(
+    /(PRODUCT_BUNDLE_IDENTIFIER:[^\n]+\n)/,
+    "$1        GENERATE_INFOPLIST_FILE: YES\n",
+  );
+}
+
 function generateUITestSwift(
   bundleId: string,
   navSteps: string[],
@@ -322,40 +361,13 @@ async function runXCUITest(
 
   if (appInfo.hasXcodegen) {
     originalProjectYml = readFileSync(projectYmlPath, "utf-8");
+    let modifiedYml = ensureInfoPlistFlag(originalProjectYml);
+    modifiedYml = insertUITestTarget(modifiedYml, generateUITestTargetYml(appInfo, `${UITEST_DIR}/Sources`));
+    writeFileSync(projectYmlPath, modifiedYml);
 
-    // Ensure main target has GENERATE_INFOPLIST_FILE and append UI test target
-    let modifiedYml = originalProjectYml;
-    if (!modifiedYml.includes("GENERATE_INFOPLIST_FILE")) {
-      // Add after the first PRODUCT_BUNDLE_IDENTIFIER line
-      modifiedYml = modifiedYml.replace(
-        /(PRODUCT_BUNDLE_IDENTIFIER:[^\n]+\n)/,
-        "$1        GENERATE_INFOPLIST_FILE: YES\n",
-      );
-    }
-
-    const uitestConfig = `
-  ${UITEST_TARGET}:
-    type: bundle.ui-testing
-    platform: iOS
-    deploymentTarget: "${appInfo.deploymentTarget}"
-    sources:
-      - path: ${UITEST_DIR}/Sources
-    dependencies:
-      - target: ${appInfo.schemeName}
-        embed: false
-    settings:
-      base:
-        TEST_TARGET_NAME: ${appInfo.schemeName}
-        PRODUCT_BUNDLE_IDENTIFIER: ${appInfo.bundleId}.uitests
-        GENERATE_INFOPLIST_FILE: YES
-`;
-    writeFileSync(projectYmlPath, modifiedYml + uitestConfig);
-
-    // Regenerate Xcode project
     try {
       await exec(`xcodegen generate`, { cwd: iosDir, timeout: 30_000 });
     } catch (err: any) {
-      // Restore original project.yml
       writeFileSync(projectYmlPath, originalProjectYml);
       throw new Error(`xcodegen failed: ${((err.stderr ?? "") + (err.stdout ?? "")).slice(-300)}`);
     }
@@ -538,4 +550,204 @@ export async function takeIOSScreenshot(
   } finally {
     try { unlinkSync(tmpPath); } catch { /* ignore */ }
   }
+}
+
+// ── batch types ──────────────────────────────────────────────────────
+
+export interface IOSBatchCapture {
+  screen: string;
+  nav?: string[];
+  wait_for?: number;
+}
+
+export interface IOSScreenshotBatchOptions {
+  captures: IOSBatchCapture[];
+  device?: string;
+  theme?: "light" | "dark";
+  output_dir?: string;
+  project_dir?: string;
+  scheme?: string;
+  bundle_id?: string;
+}
+
+// ── batch screenshot ─────────────────────────────────────────────────
+
+export async function takeIOSScreenshotBatch(
+  projectCwd: string,
+  options: IOSScreenshotBatchOptions,
+): Promise<ScreenshotResult> {
+  const { captures, device, theme, output_dir, project_dir, scheme, bundle_id } = options;
+
+  if (captures.length === 0) {
+    return { content: [{ type: "text", text: "No iOS captures specified." }], isError: true };
+  }
+
+  const iosDir = findIOSAppDir(projectCwd, project_dir);
+  const appInfo = extractAppInfo(iosDir, { scheme, bundle_id });
+  const sim = findSimulator(device);
+  await ensureSimulatorBooted(sim.udid);
+
+  if (theme) {
+    await setAppearance(sim.udid, theme);
+  }
+
+  const themeLabel = theme ?? "default";
+  const snapshots: Array<{ screen: string; path: string; data: string }> = [];
+
+  // Separate captures: no-nav (simctl screenshot) vs nav (XCUITest batch)
+  const noNavCaptures = captures.filter((c) => !c.nav || c.nav.length === 0);
+  const navCaptures = captures.filter((c) => c.nav && c.nav.length > 0);
+
+  // Build + install once for all captures
+  const appBundlePath = await buildApp(iosDir, appInfo, sim.udid);
+  await installAndLaunch(sim.udid, appBundlePath, appInfo.bundleId);
+
+  // Pre-create output dir once
+  if (output_dir) mkdirSync(resolve(iosDir, output_dir), { recursive: true });
+
+  // No-nav captures: relaunch, wait, simctl screenshot
+  for (const capture of noNavCaptures) {
+    // Relaunch without reinstalling
+    try { await exec(`xcrun simctl terminate ${sim.udid} ${appInfo.bundleId}`); } catch { /* not running */ }
+    await exec(`xcrun simctl launch ${sim.udid} ${appInfo.bundleId}`, { timeout: 30_000 });
+    await waitForAppReady(sim.udid, appInfo.bundleId, capture.wait_for ?? 3000);
+
+    const filename = `${capture.screen}_${themeLabel}.png`;
+    const tmpPath = join(iosDir, `.openuispec-screenshot-${capture.screen}.png`);
+    await captureScreenshot(sim.udid, tmpPath);
+
+    if (!existsSync(tmpPath)) continue;
+
+    let savedPath = filename;
+    if (output_dir) {
+      savedPath = join(resolve(iosDir, output_dir), filename);
+      copyFileSync(tmpPath, savedPath);
+    }
+
+    snapshots.push({ screen: capture.screen, path: savedPath, data: readFileSync(tmpPath).toString("base64") });
+    try { unlinkSync(tmpPath); } catch { /* ignore */ }
+  }
+
+  // Nav captures: batch into a single XCUITest run
+  if (navCaptures.length > 0) {
+    const uitestDir = join(iosDir, ".screenshot-uitest");
+    const sourcesDir = join(uitestDir, "Sources");
+    mkdirSync(sourcesDir, { recursive: true });
+
+    // Build output paths map
+    const outputPaths: Record<string, string> = {};
+    for (const capture of navCaptures) {
+      const filename = `${capture.screen}_${themeLabel}.png`;
+      if (output_dir) {
+        const outDir = resolve(iosDir, output_dir);
+        mkdirSync(outDir, { recursive: true });
+        outputPaths[capture.screen] = join(outDir, filename);
+      } else {
+        outputPaths[capture.screen] = join(iosDir, `.openuispec-screenshot-${capture.screen}.png`);
+      }
+    }
+
+    // Generate multi-test Swift file
+    const testCases = navCaptures.map((capture, i) => {
+      const taps = (capture.nav ?? []).map((step, j) => {
+        const escaped = step.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+        return `
+        let target_${i}_${j} = app.descendants(matching: .any).matching(NSPredicate(format: "label ==[c] %@ OR title ==[c] %@", "${escaped}", "${escaped}")).firstMatch
+        if target_${i}_${j}.waitForExistence(timeout: 5) {
+            target_${i}_${j}.tap()
+            Thread.sleep(forTimeInterval: 0.8)
+        }`;
+      }).join("\n");
+
+      const outPath = outputPaths[capture.screen].replace(/"/g, '\\"');
+      return `
+    func test_${String(i + 1).padStart(2, "0")}_${capture.screen}() {
+        let app = XCUIApplication()
+        app.launchArguments = ["-AppleLanguages", "(en)"]
+        app.launch()
+        Thread.sleep(forTimeInterval: ${((capture.wait_for ?? 3000) / 1000).toFixed(1)})
+${taps}
+        Thread.sleep(forTimeInterval: 0.5)
+        let screenshot = XCUIScreen.main.screenshot()
+        try! screenshot.pngRepresentation.write(to: URL(fileURLWithPath: "${outPath}"))
+    }`;
+    }).join("\n");
+
+    writeFileSync(join(sourcesDir, "ScreenshotUITest.swift"),
+      `import XCTest\n\nfinal class ScreenshotUITest: XCTestCase {\n${testCases}\n}\n`);
+
+    // Set up xcodegen
+    const UITEST_TARGET = "ScreenshotUITests";
+    const hasXcodegen = existsSync(join(iosDir, "project.yml"));
+    const projectYmlPath = join(iosDir, "project.yml");
+    let originalProjectYml: string | null = null;
+    const buildDir = join(iosDir, ".build", "screenshot");
+
+    if (hasXcodegen) {
+      originalProjectYml = readFileSync(projectYmlPath, "utf-8");
+      let modifiedYml = ensureInfoPlistFlag(originalProjectYml);
+      modifiedYml = insertUITestTarget(modifiedYml, generateUITestTargetYml(appInfo, ".screenshot-uitest/Sources", true));
+      writeFileSync(projectYmlPath, modifiedYml);
+      await exec(`xcodegen generate`, { cwd: iosDir, timeout: 30_000 });
+    } else {
+      writeFileSync(join(uitestDir, "project.yml"), `name: ${UITEST_TARGET}
+targets:
+  ${UITEST_TARGET}:
+    type: bundle.ui-testing
+    platform: iOS
+    deploymentTarget: "${appInfo.deploymentTarget}"
+    sources:
+      - path: Sources
+    settings:
+      base:
+        TEST_TARGET_NAME: ${appInfo.schemeName}
+        PRODUCT_BUNDLE_IDENTIFIER: ${appInfo.bundleId}.uitests
+        GENERATE_INFOPLIST_FILE: YES
+`);
+      await exec(`xcodegen generate`, { cwd: uitestDir, timeout: 30_000 });
+    }
+
+    const testProjectFlag = hasXcodegen
+      ? (appInfo.xcodeproj ? `-project "${join(iosDir, appInfo.xcodeproj)}"` : "")
+      : `-project "${join(uitestDir, `${UITEST_TARGET}.xcodeproj`)}"`;
+    const testCwd = hasXcodegen ? iosDir : uitestDir;
+
+    try {
+      await exec(
+        `xcodebuild test ${testProjectFlag} -scheme "${UITEST_TARGET}" -destination "id=${sim.udid}" -derivedDataPath "${buildDir}" -only-testing:${UITEST_TARGET}/ScreenshotUITest 2>&1`,
+        { cwd: testCwd, timeout: 300_000 },
+      );
+    } catch {
+      // Tests may "fail" but still produce screenshots
+    } finally {
+      if (originalProjectYml) {
+        writeFileSync(projectYmlPath, originalProjectYml);
+        try { await exec(`xcodegen generate`, { cwd: iosDir, timeout: 30_000 }); } catch { /* best effort */ }
+      }
+    }
+
+    // Collect results
+    for (const capture of navCaptures) {
+      const outPath = outputPaths[capture.screen];
+      if (existsSync(outPath)) {
+        snapshots.push({
+          screen: capture.screen,
+          path: output_dir ? outPath : `${capture.screen}_${themeLabel}.png`,
+          data: readFileSync(outPath).toString("base64"),
+        });
+        if (!output_dir) { try { unlinkSync(outPath); } catch { /* ignore */ } }
+      }
+    }
+  }
+
+  if (snapshots.length === 0) {
+    return { content: [{ type: "text", text: "No screenshots were captured. Check Xcode and Simulator output." }], isError: true };
+  }
+
+  const content: ScreenshotResult["content"] = [];
+  for (const s of snapshots) {
+    content.push({ type: "image" as const, data: s.data, mimeType: "image/png" });
+    content.push({ type: "text" as const, text: JSON.stringify({ screen: s.screen, path: s.path, simulator: sim.name, theme: themeLabel, bundleId: appInfo.bundleId }, null, 2) });
+  }
+  return { content };
 }

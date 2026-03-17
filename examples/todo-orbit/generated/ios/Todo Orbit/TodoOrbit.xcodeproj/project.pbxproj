@@ -19,16 +19,19 @@
 		BC38D8705D84A35CA4597319 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB44040683A902497C58A015 /* SettingsView.swift */; };
 		C48B6CB49E4975FA1F6E375B /* TaskEditorSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18F27CD847E25814CF020BD2 /* TaskEditorSheet.swift */; };
 		C6106B18861BE3E491DF43E2 /* RecurringRuleSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2ECC34C8FF28EDDC9779648 /* RecurringRuleSheet.swift */; };
+		F1510F7B66940A31758A2561 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = BEE6DEA10F74F9459C452D3F /* Localizable.strings */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		1549DC459C5275175F9C14DA /* SchedulePreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SchedulePreviewView.swift; sourceTree = "<group>"; };
 		18F27CD847E25814CF020BD2 /* TaskEditorSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskEditorSheet.swift; sourceTree = "<group>"; };
+		2B9B6454B5BB98B387C7B5C4 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/Localizable.strings; sourceTree = "<group>"; };
 		39885C677159185FF63FD439 /* TasksHomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TasksHomeView.swift; sourceTree = "<group>"; };
 		44D5BC7160E201639C3BB553 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
 		4ED01AC556A631AD84466AB3 /* TrendChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrendChartView.swift; sourceTree = "<group>"; };
 		557759E88A2388894FA0C7BB /* TodoOrbit.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = TodoOrbit.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		6998ADDB28617F993A8C0457 /* TodoOrbitApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodoOrbitApp.swift; sourceTree = "<group>"; };
+		6E3C87FA6CD54B76AEB1E84A /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		7A697422498544CC5739C094 /* Charts.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Charts.framework; path = System/Library/Frameworks/Charts.framework; sourceTree = SDKROOT; };
 		8888C94EDF738EA4F84E3F63 /* AnalyticsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalyticsView.swift; sourceTree = "<group>"; };
 		BB44040683A902497C58A015 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
@@ -86,6 +89,7 @@
 		20A8D65D5A36A0A1D83FC83B = {
 			isa = PBXGroup;
 			children = (
+				4E25DE308842C29211993157 /* Resources */,
 				F8B6569F634112DBF4BA31A0 /* TodoOrbit */,
 				2076B302B77DCDE399DBA8FE /* Frameworks */,
 				004F5B8035C988C3C942C7B6 /* Products */,
@@ -100,6 +104,14 @@
 				4ED01AC556A631AD84466AB3 /* TrendChartView.swift */,
 			);
 			path = Components;
+			sourceTree = "<group>";
+		};
+		4E25DE308842C29211993157 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				BEE6DEA10F74F9459C452D3F /* Localizable.strings */,
+			);
+			path = Resources;
 			sourceTree = "<group>";
 		};
 		59DB494C80FF64B9BB3FD8AF /* Models */ = {
@@ -149,6 +161,7 @@
 			buildConfigurationList = 8F4D2BE44A3854271D9C066F /* Build configuration list for PBXNativeTarget "TodoOrbit" */;
 			buildPhases = (
 				6918283D91B9066E2F9DADD5 /* Sources */,
+				EBFB738E78B6AF48E8771031 /* Resources */,
 				56326A91B4B75B21E246160E /* Frameworks */,
 			);
 			buildRules = (
@@ -179,6 +192,7 @@
 			knownRegions = (
 				Base,
 				en,
+				ru,
 			);
 			mainGroup = 20A8D65D5A36A0A1D83FC83B;
 			minimizedProjectReferenceProxies = 1;
@@ -191,6 +205,17 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		EBFB738E78B6AF48E8771031 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F1510F7B66940A31758A2561 /* Localizable.strings in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		6918283D91B9066E2F9DADD5 /* Sources */ = {
@@ -212,6 +237,18 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXVariantGroup section */
+		BEE6DEA10F74F9459C452D3F /* Localizable.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				6E3C87FA6CD54B76AEB1E84A /* en */,
+				2B9B6454B5BB98B387C7B5C4 /* ru */,
+			);
+			name = Localizable.strings;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
 		24892C5AA9CE821A3653389E /* Debug */ = {
@@ -265,14 +302,15 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = TodoOrbit;
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
-				SWIFT_VERSION = 5.1;
+				SWIFT_VERSION = 5.0;
 			};
 			name = Debug;
 		};
@@ -286,13 +324,13 @@
 				INFOPLIST_KEY_CFBundleDisplayName = "Todo Orbit";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = uz.rsteam.generated.todoorbit;
 				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.1;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
@@ -307,13 +345,13 @@
 				INFOPLIST_KEY_CFBundleDisplayName = "Todo Orbit";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = uz.rsteam.generated.todoorbit;
 				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.1;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
@@ -363,13 +401,14 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = TodoOrbit;
 				SDKROOT = iphoneos;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
-				SWIFT_VERSION = 5.1;
+				SWIFT_VERSION = 5.0;
 			};
 			name = Release;
 		};

@@ -21,7 +21,7 @@ if (hasSocialApp) {
 const { server } = await import("../mcp-server/index.ts");
 const { Client } = await import("@modelcontextprotocol/sdk/client/index.js");
 const { InMemoryTransport } = await import("@modelcontextprotocol/sdk/inMemory.js");
-const { findIOSAppDir } = await import("../mcp-server/screenshot-ios.ts");
+const { findIOSAppDir, takeIOSScreenshotBatch } = await import("../mcp-server/screenshot-ios.ts");
 const { walkFiles } = await import("../mcp-server/screenshot-shared.ts");
 
 let client: Client;
@@ -55,6 +55,12 @@ describe("screenshot-ios", () => {
       () => findIOSAppDir("/tmp/nonexistent-project-xyz"),
       /not found|No openuispec/i,
     );
+  });
+
+  test("takeIOSScreenshotBatch returns error for empty captures", async () => {
+    const result = await takeIOSScreenshotBatch("/tmp/unused", { captures: [] });
+    assert.equal(result.isError, true);
+    assert.match((result.content[0] as any).text, /No iOS captures specified/i);
   });
 });
 

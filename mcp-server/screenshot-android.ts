@@ -17,6 +17,7 @@ import {
 } from "./screenshot-shared.js";
 
 const exec = promisify(execCb);
+const androidScreenshotQueues = new Map<string, Promise<void>>();
 
 // ── types ───────────────────────────────────────────────────────────
 
@@ -26,6 +27,21 @@ export interface AndroidScreenshotOptions {
   nav?: string[];
   theme?: "light" | "dark";
   wait_for?: number;
+  output_dir?: string;
+  project_dir?: string;
+  module?: string;
+}
+
+export interface AndroidBatchCapture {
+  screen: string;
+  route?: string;
+  nav?: string[];
+  wait_for?: number;
+}
+
+export interface AndroidScreenshotBatchOptions {
+  captures: AndroidBatchCapture[];
+  theme?: "light" | "dark";
   output_dir?: string;
   project_dir?: string;
   module?: string;
@@ -282,6 +298,27 @@ export async function installAndLaunch(
   }
 }
 
+export async function launchInstalledApp(
+  adb: string,
+  serial: string,
+  appInfo: AppInfo,
+  route?: string,
+): Promise<void> {
+  await adbShell(adb, serial, `am force-stop ${appInfo.applicationId}`);
+  // Clear saved nav state so deep links route correctly
+  try { await adbShell(adb, serial, `pm clear ${appInfo.applicationId}`); } catch { /* ignore */ }
+  if (route) {
+    await adbShell(
+      adb,
+      serial,
+      `am start -W -a android.intent.action.VIEW -d '${route}' ` +
+        `${appInfo.applicationId}/${appInfo.launchActivity}`,
+    );
+  } else {
+    await adbShell(adb, serial, `am start -W -n ${appInfo.applicationId}/${appInfo.launchActivity}`);
+  }
+}
+
 // ── theme control ───────────────────────────────────────────────────
 
 export async function setTheme(adb: string, serial: string, theme: "light" | "dark"): Promise<void> {
@@ -358,9 +395,12 @@ export async function captureScreenshot(
   serial: string,
   localPath: string,
 ): Promise<void> {
-  await adbShell(adb, serial, `screencap -p ${ADB_SCREENSHOT_PATH}`);
-  await adbExec(adb, serial, `pull ${ADB_SCREENSHOT_PATH} "${localPath}"`);
-  await adbShell(adb, serial, `rm ${ADB_SCREENSHOT_PATH}`);
+  try {
+    await exec(`${adb} -s ${serial} exec-out screencap -p > "${localPath}"`, { timeout: 60_000, shell: "/bin/bash" });
+  } catch (err: any) {
+    const output = ((err.stderr ?? "") + "\n" + (err.stdout ?? "")).trim();
+    throw new Error(`Android screenshot capture failed${output ? `:\n${output}` : "."}`);
+  }
 }
 
 // ── wait for app ready ──────────────────────────────────────────────
@@ -395,6 +435,47 @@ async function waitForAppReady(
   await new Promise(r => setTimeout(r, waitMs));
 }
 
+async function takeSingleAndroidCapture(
+  adb: string,
+  serial: string,
+  androidDir: string,
+  appInfo: AppInfo,
+  capture: AndroidBatchCapture,
+  theme: "light" | "dark" | undefined,
+  defaultOutputDir: string | undefined,
+): Promise<{ screen: string; path: string; data: string }> {
+  await launchInstalledApp(adb, serial, appInfo, capture.route);
+  await waitForAppReady(adb, serial, appInfo.applicationId, capture.wait_for ?? 3000);
+
+  if (capture.nav && capture.nav.length > 0) {
+    await navigateByTaps(adb, serial, capture.nav);
+  }
+
+  const themeLabel = theme ?? "default";
+  const filename = `${capture.screen}_${themeLabel}.png`;
+  const tmpPath = join(androidDir, `.openuispec-screenshot-${capture.screen}.png`);
+  await captureScreenshot(adb, serial, tmpPath);
+
+  let savedPath = filename;
+  if (defaultOutputDir) {
+    const outDir = resolve(androidDir, defaultOutputDir);
+    mkdirSync(outDir, { recursive: true });
+    savedPath = join(outDir, filename);
+    copyFileSync(tmpPath, savedPath);
+  }
+
+  try {
+    const data = readFileSync(tmpPath).toString("base64");
+    return {
+      screen: capture.screen,
+      path: savedPath,
+      data,
+    };
+  } finally {
+    try { unlinkSync(tmpPath); } catch { /* ignore */ }
+  }
+}
+
 // ── main entry point ────────────────────────────────────────────────
 
 export async function takeAndroidScreenshot(
@@ -420,61 +501,121 @@ export async function takeAndroidScreenshot(
   const adb = findAdb();
   const serial = await getConnectedEmulator(adb);
 
-  // 3. Free emulator storage before build/install
-  await cleanEmulatorStorage(adb, serial);
+  const previousRun = androidScreenshotQueues.get(serial) ?? Promise.resolve();
+  let releaseQueue: (() => void) | undefined;
+  const currentRun = new Promise<void>((resolve) => {
+    releaseQueue = resolve;
+  });
+  androidScreenshotQueues.set(serial, previousRun.then(() => currentRun));
 
-  // 4. Build APK
-  const apkPath = await buildApk(androidDir, appInfo.moduleName);
+  await previousRun;
 
-  // 5. Set theme if requested
-  if (theme) {
-    await setTheme(adb, serial, theme);
-  }
-
-  // 6. Install and launch
-  await installAndLaunch(adb, serial, apkPath, appInfo, route);
-
-  // 7. Wait for app to be ready and content to load
-  await waitForAppReady(adb, serial, appInfo.applicationId, wait_for);
-
-  // 8. Navigate via UI taps if specified
-  if (nav && nav.length > 0) {
-    await navigateByTaps(adb, serial, nav);
-  }
-
-  // 9. Capture screenshot
-  const screenLabel = screen ?? "main";
-  const themeLabel = theme ?? "default";
-  const filename = `${screenLabel}_${themeLabel}.png`;
-  const tmpPath = join(androidDir, ".openuispec-screenshot.png");
-  await captureScreenshot(adb, serial, tmpPath);
-
-  // 9. Save to output_dir if specified
-  let savedPath: string | undefined;
-  if (output_dir) {
-    const outDir = resolve(androidDir, output_dir);
-    mkdirSync(outDir, { recursive: true });
-    savedPath = join(outDir, filename);
-    copyFileSync(tmpPath, savedPath);
-  }
-
-  // 10. Read and return
   try {
-    const data = readFileSync(tmpPath).toString("base64");
-    const snapshots = [{
-      screen: screenLabel,
-      path: savedPath ?? filename,
-      data,
-    }];
+    // 3. Free emulator storage before build/install
+    await cleanEmulatorStorage(adb, serial);
 
-    return buildScreenshotResponse(snapshots, (s) => ({
+    // 4. Build APK
+    const apkPath = await buildApk(androidDir, appInfo.moduleName);
+
+    // 5. Set theme if requested
+    if (theme) {
+      await setTheme(adb, serial, theme);
+    }
+
+    // 6. Install fresh once, then capture
+    await installAndLaunch(adb, serial, apkPath, appInfo, route);
+
+    const snapshot = await takeSingleAndroidCapture(
+      adb,
+      serial,
+      androidDir,
+      appInfo,
+      { screen: screen ?? "main", route, nav, wait_for },
+      theme,
+      output_dir,
+    );
+
+    return buildScreenshotResponse([snapshot], (s) => ({
       screen: s.screen,
-      path: savedPath ?? null,
+      path: snapshot.path ?? null,
       emulator: serial,
-      theme: themeLabel,
+      theme: theme ?? "default",
       applicationId: appInfo.applicationId,
     }));
   } finally {
-    try { unlinkSync(tmpPath); } catch { /* ignore */ }
+    releaseQueue?.();
+    if (androidScreenshotQueues.get(serial) === currentRun) {
+      androidScreenshotQueues.delete(serial);
+    }
+  }
+}
+
+export async function takeAndroidScreenshotBatch(
+  projectCwd: string,
+  options: AndroidScreenshotBatchOptions,
+): Promise<ScreenshotResult> {
+  const { captures, theme, output_dir, project_dir, module } = options;
+  if (captures.length === 0) {
+    return {
+      content: [{ type: "text", text: "No Android captures specified." }],
+      isError: true,
+    };
+  }
+
+  const androidDir = findAndroidAppDir(projectCwd, project_dir);
+  const appInfo = extractAppInfo(androidDir, module);
+  const adb = findAdb();
+  const serial = await getConnectedEmulator(adb);
+
+  const previousRun = androidScreenshotQueues.get(serial) ?? Promise.resolve();
+  let releaseQueue: (() => void) | undefined;
+  const currentRun = new Promise<void>((resolve) => {
+    releaseQueue = resolve;
+  });
+  androidScreenshotQueues.set(serial, previousRun.then(() => currentRun));
+
+  await previousRun;
+
+  try {
+    await cleanEmulatorStorage(adb, serial);
+    const apkPath = await buildApk(androidDir, appInfo.moduleName);
+
+    if (theme) {
+      await setTheme(adb, serial, theme);
+    }
+
+    await installAndLaunch(adb, serial, apkPath, appInfo);
+
+    // Pre-create output dir once
+    if (output_dir) mkdirSync(resolve(androidDir, output_dir), { recursive: true });
+
+    const snapshots = [];
+    for (let index = 0; index < captures.length; index += 1) {
+      const capture = captures[index];
+      snapshots.push(
+        await takeSingleAndroidCapture(
+          adb,
+          serial,
+          androidDir,
+          appInfo,
+          capture,
+          theme,
+          output_dir,
+        ),
+      );
+    }
+
+    return buildScreenshotResponse(snapshots, (snapshot) => ({
+      screen: snapshot.screen,
+      path: snapshot.path,
+      emulator: serial,
+      theme: theme ?? "default",
+      applicationId: appInfo.applicationId,
+    }));
+  } finally {
+    releaseQueue?.();
+    if (androidScreenshotQueues.get(serial) === currentRun) {
+      androidScreenshotQueues.delete(serial);
+    }
   }
 }
