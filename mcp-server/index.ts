@@ -65,6 +65,39 @@ function toolError(err: unknown): { content: [{ type: "text"; text: string }]; i
   return { content: [{ type: "text" as const, text: `Error: ${formatError(err)}` }], isError: true };
 }
 
+function formatAuditValue(value: unknown): string {
+  if (typeof value === "string") return value;
+  return JSON.stringify(value);
+}
+
+function collectStateRoleAuditItems(node: unknown, prefix = ""): string[] {
+  if (!node || typeof node !== "object" || Array.isArray(node)) {
+    return [];
+  }
+
+  const items: string[] = [];
+  const record = node as Record<string, unknown>;
+
+  const states = record.states;
+  if (states && typeof states === "object" && !Array.isArray(states)) {
+    for (const [stateName, roles] of Object.entries(states as Record<string, unknown>)) {
+      if (!roles || typeof roles !== "object" || Array.isArray(roles)) continue;
+      for (const [roleName, roleValue] of Object.entries(roles as Record<string, unknown>)) {
+        const statePath = prefix ? `${prefix}.states.${stateName}.${roleName}` : `states.${stateName}.${roleName}`;
+        items.push(`${statePath} = ${formatAuditValue(roleValue)}`);
+      }
+    }
+  }
+
+  for (const [key, value] of Object.entries(record)) {
+    if (key === "states" || !value || typeof value !== "object" || Array.isArray(value)) continue;
+    const childPrefix = prefix ? `${prefix}.${key}` : key;
+    items.push(...collectStateRoleAuditItems(value, childPrefix));
+  }
+
+  return items;
+}
+
 // ── create server ────────────────────────────────────────────────────
 
 export const server = new McpServer(
@@ -173,6 +206,17 @@ function buildAuditChecklist(projectDir: string, target: string, screenFilter?: 
               lines.push(`- [ ] ${item}`);
             }
           }
+
+          const stateRoleItems = collectStateRoleAuditItems(variant?.tokens);
+          if (stateRoleItems.length) {
+            if (!mustHandle?.length) {
+              lines.push(`\n### ${contractName}.${variantName}`);
+            }
+            lines.push(`- [ ] Explicit state-role tokens are implemented for ${contractName}.${variantName}`);
+            for (const item of stateRoleItems) {
+              lines.push(`- [ ] ${item}`);
+            }
+          }
         }
 
         // Top-level generation.must_handle
@@ -180,6 +224,14 @@ function buildAuditChecklist(projectDir: string, target: string, screenFilter?: 
         if (topMustHandle?.length) {
           lines.push(`\n### ${contractName} (global)`);
           for (const item of topMustHandle) {
+            lines.push(`- [ ] ${item}`);
+          }
+        }
+
+        const topLevelStateRoleItems = collectStateRoleAuditItems(contract?.tokens);
+        if (topLevelStateRoleItems.length) {
+          lines.push(`\n### ${contractName} (state-role tokens)`);
+          for (const item of topLevelStateRoleItems) {
             lines.push(`- [ ] ${item}`);
           }
         }

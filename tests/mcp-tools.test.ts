@@ -179,6 +179,19 @@ describe("openuispec_check (scoped)", () => {
     assert.ok(!contractSection.includes("### nav_container"), "scoped audit should not include nav_container in contract section");
   });
 
+  test("audit includes explicit state-role token requirements when contracts declare them", async () => {
+    const result = await client.callTool({ name: "openuispec_check", arguments: { target: "web", contracts: ["action_trigger"] } });
+    const auditText = result.content[1].text;
+    assert.ok(
+      auditText.includes("Explicit state-role tokens are implemented for action_trigger.primary"),
+      "audit should mention explicit state-role tokens for action_trigger.primary",
+    );
+    assert.ok(
+      auditText.includes("states.disabled.text = color.text.tertiary"),
+      "audit should include concrete state-role token entries",
+    );
+  });
+
   test("scoped audit still returns full validation results", async () => {
     const result = await client.callTool({ name: "openuispec_check", arguments: { target: "web", screens: ["home_feed"] } });
     const validation = JSON.parse(result.content[0].text);
