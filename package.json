@@ -28,7 +28,9 @@
     "openuispec-mcp": "./mcp-server/index.ts"
   },
   "scripts": {
-    "test": "node --import tsx --test tests/*.test.ts",
+    "test": "node --import tsx --test tests/check.test.ts tests/configure-target.test.ts tests/drift-prepare.test.ts tests/init.test.ts tests/mcp-tools.test.ts tests/semantic-lint.test.ts tests/status.test.ts",
+    "test:screenshot": "node --import tsx --test tests/mcp-screenshot.test.ts",
+    "test:all": "node --import tsx --test tests/*.test.ts",
     "validate": "tsx schema/validate.ts",
     "validate:manifest": "tsx schema/validate.ts manifest",
     "validate:tokens": "tsx schema/validate.ts tokens",
