@@ -123,6 +123,7 @@ Or run directly: `openuispec mcp`
 | `openuispec_get_contract` | Incremental edits | Get a single contract spec, optionally filtered to one variant |
 | `openuispec_get_tokens` | Incremental edits | Get tokens for a specific category (color, typography, spacing, etc.) |
 | `openuispec_get_locale` | Incremental edits | Get a single locale file, optionally filtered to specific keys |
+| `openuispec_screenshot` | Visual verification | Take a screenshot of the generated web app at a specific route (requires `puppeteer`) |
 
 The server includes **protocol-level instructions** that trigger on UI-related requests independently of CLAUDE.md rules — so even if CLAUDE.md is buried under other project rules, the MCP enforcement still works.
 
@@ -190,7 +191,8 @@ openuispec/
 │   ├── index.ts                        # Entry point
 │   └── init.ts                         # Project scaffolding + AI rules
 ├── mcp-server/                          # MCP server (openuispec-mcp)
-│   └── index.ts                        # Stdio transport, 12 tools
+│   ├── index.ts                        # Stdio transport, 13 tools
+│   └── screenshot.ts                  # Dev server + headless browser screenshot
 ├── check/                               # Composite validation command
 │   └── index.ts                        # Schema + semantic + readiness
 ├── drift/                               # Drift detection (spec change tracking)

@@ -25,6 +25,7 @@ import { loadTargetDrift } from "../drift/index.js";
 import { readFileSync as fsReadFileSync, existsSync, readdirSync } from "node:fs";
 import { relative, resolve } from "node:path";
 import YAML from "yaml";
+import { takeScreenshot } from "./screenshot.js";
 
 // ── resolve project cwd ──────────────────────────────────────────────
 
@@ -110,6 +111,11 @@ FOCUSED GETTERS (prefer these for incremental edits over read_specs):
 - openuispec_get_locale(locale, keys?) — single locale file, optionally filtered keys
 - openuispec_check(target, screens?, contracts?) — scoped audit for specific screens/contracts
 Use read_specs for full-project generation; use focused getters when editing one screen or contract.
+
+VISUAL VERIFICATION:
+- openuispec_screenshot(route, viewport?, theme?) — screenshot the generated web app at a route.
+  Starts the dev server automatically. Use after generation to visually verify UI matches the spec.
+  Requires puppeteer (npm install -g puppeteer).
 
 Skip these tools ONLY when the request is purely non-UI (API logic, database, infrastructure, etc.)
 or explicitly platform-specific polish that doesn't affect shared UI semantics.`,
@@ -616,6 +622,40 @@ server.registerTool(
       }
 
       return toolResult({ locale, path: relative(projectDir, filePath), content });
+    } catch (err) {
+      return toolError(err);
+    }
+  }
+);
+
+// ── tool: openuispec_screenshot ──────────────────────────────────────
+
+server.registerTool(
+  "openuispec_screenshot",
+  {
+    description: "Take a screenshot of the generated web app at a specific route. Starts the Vite dev server automatically if needed (first call may take longer). Returns a PNG image for visual verification of generated UI. Requires puppeteer to be installed (npm install -g puppeteer).",
+    inputSchema: {
+      route: z.string().default("/").describe("Route path to navigate to, e.g. '/home', '/settings', '/posts/123'"),
+      viewport: z.object({
+        width: z.number().default(1280),
+        height: z.number().default(800),
+      }).optional().describe("Viewport dimensions. Defaults to 1280x800. Use {width: 375, height: 812} for mobile."),
+      theme: z.enum(["light", "dark"]).optional().describe("Force a color scheme via prefers-color-scheme emulation"),
+      wait_for: z.number().optional().default(1000).describe("Milliseconds to wait after page load before screenshotting (default 1000)"),
+      full_page: z.boolean().optional().default(false).describe("Capture the full scrollable page instead of just the viewport"),
+      selector: z.string().optional().describe("CSS selector to screenshot a specific element instead of the full page"),
+    },
+  },
+  async ({ route, viewport, theme, wait_for, full_page, selector }) => {
+    try {
+      return await takeScreenshot(projectCwd, {
+        route,
+        viewport,
+        theme,
+        wait_for,
+        full_page,
+        selector,
+      });
     } catch (err) {
       return toolError(err);
     }

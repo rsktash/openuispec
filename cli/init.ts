@@ -282,6 +282,7 @@ When the openuispec MCP server is configured, AI assistants should use these too
 | \`openuispec_get_contract\` | Get a single contract spec, optionally filtered to one variant. |
 | \`openuispec_get_tokens\` | Get tokens for a specific category (color, typography, spacing, etc.). |
 | \`openuispec_get_locale\` | Get a single locale file, optionally filtered to specific keys. |
+| \`openuispec_screenshot\` | Take a screenshot of the generated web app at a route (requires \`puppeteer\`). |
 
 ## CLI commands
 
