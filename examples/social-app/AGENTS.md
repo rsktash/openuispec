@@ -1,5 +1,5 @@
 <!-- openuispec-rules-start -->
-<!-- openuispec-rules-version: 0.2.3 -->
+<!-- openuispec-rules-version: 0.2.4 -->
 # OpenUISpec — AI Assistant Rules
 # ================================
 # This project uses OpenUISpec to define UI as a semantic spec.
@@ -60,6 +60,16 @@ If MCP tools are not available, use these CLI commands with `--json` flag:
 - `openuispec status --json` — cross-target status
 - `openuispec drift --target <t> --explain --json` — semantic drift
 - `openuispec validate [group...] --json` — schema validation
+- `openuispec read-specs [paths...]` — read spec file contents
+- `openuispec get-screen <name>` — get a single screen spec
+- `openuispec get-contract <name> [--variant v]` — get a contract spec
+- `openuispec get-tokens <category>` — get tokens for a category
+- `openuispec get-locale <locale> [--keys k1,k2]` — get a locale file
+- `openuispec spec-types` — list available spec types
+- `openuispec spec-schema <type>` — get JSON schema for a spec type
+- `openuispec screenshot --route /path` — screenshot the web app
+- `openuispec screenshot-android [--project-dir path]` — screenshot Android app
+- `openuispec screenshot-ios [--project-dir path]` — screenshot iOS app
 
 ### Other CLI commands
 - `openuispec init` — scaffold a new spec project

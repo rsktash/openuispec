@@ -15,11 +15,39 @@
  *   openuispec status                         Show cross-target baseline/drift status
  *   openuispec check --target <t> [--json]    Composite validation + prepare readiness
  *   openuispec validate [group...]            Validate spec files against schemas
+ *   openuispec read-specs [paths...]          Read spec file contents
+ *   openuispec get-screen <name>              Get a single screen spec
+ *   openuispec get-contract <name> [--variant v] Get a contract spec
+ *   openuispec get-tokens <category>          Get tokens for a category
+ *   openuispec get-locale <locale> [--keys k1,k2] Get a locale file
+ *   openuispec spec-types                     List available spec types
+ *   openuispec spec-schema <type>             Get JSON schema for a spec type
+ *   openuispec screenshot [--route /path]     Screenshot the web app
+ *   openuispec screenshot-android [opts]      Screenshot Android app on emulator
+ *   openuispec screenshot-ios [opts]          Screenshot iOS app on simulator
  */
 
 import { init, updateRules, extractRulesVersion, getPackageVersion } from "./init.js";
-import { join } from "node:path";
-import { existsSync, readFileSync } from "node:fs";
+import { join, dirname, relative, resolve } from "node:path";
+import { existsSync, readFileSync, readdirSync, writeFileSync, mkdirSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+
+// ── arg parsing helpers ──────────────────────────────────────────────
+
+function getFlag(argv: string[], name: string): boolean {
+  return argv.includes(name);
+}
+
+function getOption(argv: string[], name: string): string | null {
+  const idx = argv.indexOf(name);
+  return idx !== -1 && argv[idx + 1] ? argv[idx + 1] : null;
+}
+
+function getPositional(argv: string[], startIdx = 0): string[] {
+  return argv.slice(startIdx).filter((a) => !a.startsWith("--"));
+}
+
+// ── rules version check ─────────────────────────────────────────────
 
 function checkRulesVersion(): void {
   const cwd = process.cwd();
@@ -45,8 +73,35 @@ function checkRulesVersion(): void {
   }
 }
 
+// ── spec helpers (shared with MCP server) ────────────────────────────
+
+function resolveSpecDir(projectDir: string, manifest: any, key: string): string {
+  return resolve(projectDir, manifest.includes?.[key] ?? `./${key}/`);
+}
+
+const SCHEMA_CATALOG: Record<string, { file: string; title: string; description: string }> = {
+  manifest:         { file: "openuispec.schema.json",            title: "Root Manifest",    description: "Root manifest (openuispec.yaml)" },
+  screen:           { file: "screen.schema.json",                title: "Screen",           description: "Screen composition: layout, sections, navigation" },
+  flow:             { file: "flow.schema.json",                  title: "Flow",             description: "Navigation flow definitions" },
+  platform:         { file: "platform.schema.json",              title: "Platform",         description: "Platform-specific generation config" },
+  contract:         { file: "contract.schema.json",              title: "Contract",         description: "Built-in UI contract definitions" },
+  "custom-contract":{ file: "custom-contract.schema.json",       title: "Custom Contract",  description: "User-defined UI contract definitions (x_ prefixed)" },
+  locale:           { file: "locale.schema.json",                title: "Locale",           description: "Locale translation files" },
+  "tokens/color":       { file: "tokens/color.schema.json",       title: "Color Tokens",       description: "Color tokens" },
+  "tokens/typography":  { file: "tokens/typography.schema.json",   title: "Typography Tokens",  description: "Typography tokens" },
+  "tokens/spacing":     { file: "tokens/spacing.schema.json",     title: "Spacing Tokens",     description: "Spacing tokens" },
+  "tokens/elevation":   { file: "tokens/elevation.schema.json",   title: "Elevation Tokens",   description: "Elevation tokens" },
+  "tokens/motion":      { file: "tokens/motion.schema.json",      title: "Motion Tokens",      description: "Motion tokens" },
+  "tokens/layout":      { file: "tokens/layout.schema.json",      title: "Layout Tokens",      description: "Layout tokens" },
+  "tokens/themes":      { file: "tokens/themes.schema.json",      title: "Theme Tokens",       description: "Theme definitions" },
+  "tokens/icons":       { file: "tokens/icons.schema.json",       title: "Icon Tokens",        description: "Icon tokens" },
+};
+
+// ── main ─────────────────────────────────────────────────────────────
+
 async function main(): Promise<void> {
   const [command, ...rest] = process.argv.slice(2);
+  const cwd = process.cwd();
 
   switch (command) {
     case "init":
@@ -100,35 +155,252 @@ async function main(): Promise<void> {
       break;
     }
 
+    // ── spec getters ───────────────────────────────────────────────
+
+    case "read-specs": {
+      const { findProjectDir, discoverSpecFiles } = await import("../drift/index.js");
+      const projectDir = findProjectDir(cwd);
+      const allFiles = discoverSpecFiles(projectDir);
+      const paths = getPositional(rest);
+
+      const filesToRead = paths.length > 0
+        ? allFiles.filter((f) => {
+            const rel = relative(projectDir, f);
+            return paths.some((p) => rel === p || rel.endsWith(p));
+          })
+        : allFiles;
+
+      const contents = filesToRead.map((f) => ({
+        path: relative(projectDir, f),
+        content: readFileSync(f, "utf-8"),
+      }));
+      console.log(JSON.stringify(contents, null, 2));
+      break;
+    }
+
+    case "get-screen": {
+      const name = rest[0];
+      if (!name) { console.error("Usage: openuispec get-screen <name>"); process.exit(1); }
+      const { findProjectDir } = await import("../drift/index.js");
+      const YAML = (await import("yaml")).default;
+      const projectDir = findProjectDir(cwd);
+      const manifest = YAML.parse(readFileSync(join(projectDir, "openuispec.yaml"), "utf-8"));
+      const screensDir = resolveSpecDir(projectDir, manifest, "screens");
+      const filePath = join(screensDir, `${name}.yaml`);
+      if (!existsSync(filePath)) { console.error(`Screen "${name}" not found at ${filePath}`); process.exit(1); }
+      console.log(readFileSync(filePath, "utf-8"));
+      break;
+    }
+
+    case "get-contract": {
+      const name = rest[0];
+      if (!name) { console.error("Usage: openuispec get-contract <name> [--variant v]"); process.exit(1); }
+      const variant = getOption(rest, "--variant");
+      const { findProjectDir } = await import("../drift/index.js");
+      const YAML = (await import("yaml")).default;
+      const projectDir = findProjectDir(cwd);
+      const manifest = YAML.parse(readFileSync(join(projectDir, "openuispec.yaml"), "utf-8"));
+      const contractsDir = resolveSpecDir(projectDir, manifest, "contracts");
+
+      if (!existsSync(contractsDir)) { console.error(`Contracts directory not found: ${contractsDir}`); process.exit(1); }
+
+      let found = false;
+      for (const file of readdirSync(contractsDir).filter(f => f.endsWith(".yaml")).sort()) {
+        const filePath = join(contractsDir, file);
+        const raw = readFileSync(filePath, "utf-8");
+        const content = YAML.parse(raw);
+        const contractName = Object.keys(content)[0];
+        if (contractName !== name) continue;
+        found = true;
+
+        if (variant) {
+          const variantDef = content[contractName]?.variants?.[variant];
+          if (!variantDef) {
+            const available = Object.keys(content[contractName]?.variants ?? {}).join(", ");
+            console.error(`Variant "${variant}" not found. Available: ${available}`);
+            process.exit(1);
+          }
+          console.log(JSON.stringify({ name, variant, definition: variantDef }, null, 2));
+        } else {
+          console.log(raw);
+        }
+        break;
+      }
+      if (!found) { console.error(`Contract "${name}" not found in ${contractsDir}`); process.exit(1); }
+      break;
+    }
+
+    case "get-tokens": {
+      const category = rest[0];
+      if (!category) { console.error("Usage: openuispec get-tokens <category>"); process.exit(1); }
+      const { findProjectDir } = await import("../drift/index.js");
+      const YAML = (await import("yaml")).default;
+      const projectDir = findProjectDir(cwd);
+      const manifest = YAML.parse(readFileSync(join(projectDir, "openuispec.yaml"), "utf-8"));
+      const tokensDir = resolveSpecDir(projectDir, manifest, "tokens");
+
+      for (const ext of [".yaml", ".yml"]) {
+        const filePath = join(tokensDir, `${category}${ext}`);
+        if (existsSync(filePath)) { console.log(readFileSync(filePath, "utf-8")); process.exit(0); }
+      }
+
+      const available = readdirSync(tokensDir).filter(f => f.endsWith(".yaml") || f.endsWith(".yml")).map(f => f.replace(/\.ya?ml$/, ""));
+      console.error(`Token category "${category}" not found. Available: ${available.join(", ")}`);
+      process.exit(1);
+      break;
+    }
+
+    case "get-locale": {
+      const locale = rest[0];
+      if (!locale) { console.error("Usage: openuispec get-locale <locale> [--keys k1,k2,k3]"); process.exit(1); }
+      const keysStr = getOption(rest, "--keys");
+      const keys = keysStr ? keysStr.split(",").map(k => k.trim()) : null;
+      const { findProjectDir } = await import("../drift/index.js");
+      const YAML = (await import("yaml")).default;
+      const projectDir = findProjectDir(cwd);
+      const manifest = YAML.parse(readFileSync(join(projectDir, "openuispec.yaml"), "utf-8"));
+      const localesDir = resolveSpecDir(projectDir, manifest, "locales");
+      const filePath = join(localesDir, `${locale}.json`);
+
+      if (!existsSync(filePath)) {
+        const available = existsSync(localesDir)
+          ? readdirSync(localesDir).filter(f => f.endsWith(".json")).map(f => f.replace(".json", ""))
+          : [];
+        console.error(`Locale "${locale}" not found. Available: ${available.join(", ")}`);
+        process.exit(1);
+      }
+
+      const content = JSON.parse(readFileSync(filePath, "utf-8"));
+      if (keys) {
+        const filtered: Record<string, unknown> = {};
+        for (const key of keys) { if (key in content) filtered[key] = content[key]; }
+        console.log(JSON.stringify(filtered, null, 2));
+      } else {
+        console.log(JSON.stringify(content, null, 2));
+      }
+      break;
+    }
+
+    // ── schema reference ───────────────────────────────────────────
+
+    case "spec-types": {
+      const types = Object.entries(SCHEMA_CATALOG).map(([type, info]) => ({
+        type, title: info.title, description: info.description,
+      }));
+      console.log(JSON.stringify(types, null, 2));
+      break;
+    }
+
+    case "spec-schema": {
+      const type = rest[0];
+      if (!type) { console.error("Usage: openuispec spec-schema <type>\nRun `openuispec spec-types` to list types."); process.exit(1); }
+      const entry = SCHEMA_CATALOG[type];
+      if (!entry) { console.error(`Unknown spec type "${type}". Run \`openuispec spec-types\` to list types.`); process.exit(1); }
+      const __dirname = dirname(fileURLToPath(import.meta.url));
+      const schemaPath = join(__dirname, "..", "schema", entry.file);
+      console.log(readFileSync(schemaPath, "utf-8"));
+      break;
+    }
+
+    // ── screenshot tools ───────────────────────────────────────────
+
+    case "screenshot": {
+      const { takeScreenshot } = await import("../mcp-server/screenshot.js");
+      const result = await takeScreenshot(cwd, {
+        route: getOption(rest, "--route") ?? "/",
+        viewport: {
+          width: parseInt(getOption(rest, "--width") ?? "1280"),
+          height: parseInt(getOption(rest, "--height") ?? "800"),
+        },
+        theme: getOption(rest, "--theme") as "light" | "dark" | undefined,
+        wait_for: parseInt(getOption(rest, "--wait-for") ?? "1000"),
+        full_page: getFlag(rest, "--full-page"),
+        selector: getOption(rest, "--selector") ?? undefined,
+        output_dir: getOption(rest, "--output-dir") ?? undefined,
+      });
+      printScreenshotResult(result);
+      break;
+    }
+
+    case "screenshot-android": {
+      const { takeAndroidScreenshot } = await import("../mcp-server/screenshot-android.js");
+      const result = await takeAndroidScreenshot(cwd, {
+        screen: getOption(rest, "--screen") ?? undefined,
+        route: getOption(rest, "--route") ?? undefined,
+        nav: getOption(rest, "--nav")?.split(",") ?? undefined,
+        theme: getOption(rest, "--theme") as "light" | "dark" | undefined,
+        wait_for: parseInt(getOption(rest, "--wait-for") ?? "3000"),
+        output_dir: getOption(rest, "--output-dir") ?? undefined,
+        project_dir: getOption(rest, "--project-dir") ?? undefined,
+        module: getOption(rest, "--module") ?? undefined,
+      });
+      printScreenshotResult(result);
+      break;
+    }
+
+    case "screenshot-ios": {
+      const { takeIOSScreenshot } = await import("../mcp-server/screenshot-ios.js");
+      const result = await takeIOSScreenshot(cwd, {
+        screen: getOption(rest, "--screen") ?? undefined,
+        device: getOption(rest, "--device") ?? undefined,
+        nav: getOption(rest, "--nav")?.split(",") ?? undefined,
+        theme: getOption(rest, "--theme") as "light" | "dark" | undefined,
+        wait_for: parseInt(getOption(rest, "--wait-for") ?? "3000"),
+        output_dir: getOption(rest, "--output-dir") ?? undefined,
+        project_dir: getOption(rest, "--project-dir") ?? undefined,
+        scheme: getOption(rest, "--scheme") ?? undefined,
+        bundle_id: getOption(rest, "--bundle-id") ?? undefined,
+      });
+      printScreenshotResult(result);
+      break;
+    }
+
+    // ── help ────────────────────────────────────────────────────────
+
     case undefined:
     case "--help":
     case "-h":
       console.log(`
-OpenUISpec CLI v0.1
+OpenUISpec CLI v${getPackageVersion()}
 
 Usage:
   openuispec init                           Create a new spec project
   openuispec init --defaults                Scaffold non-interactively with unconfirmed defaults
-  openuispec init --list-options            Print init prompt options as JSON
   openuispec init --no-configure-targets    Skip target stack setup during init
   openuispec update-rules                   Update AI rules to match installed version
-  openuispec configure-target <t> [--defaults] Configure target stack; --defaults stays unconfirmed
-  openuispec configure-target <t> --set k=v    Set specific stack values (confirmed)
-  openuispec configure-target <t> --list-options Print target stack prompt options as JSON
+  openuispec configure-target <t> [--defaults]  Configure target stack
+  openuispec configure-target <t> --set k=v     Set specific stack values (confirmed)
+
+Workflow:
+  openuispec status                         Show cross-target baseline/drift status
   openuispec drift [--target <t>]           Check for spec drift
   openuispec drift --snapshot --target <t>  Snapshot current state + git baseline
   openuispec drift --target <t> --explain   Explain semantic changes since baseline
   openuispec prepare --target <t>           Build the target work bundle
-  openuispec status                         Show cross-target baseline/drift status
   openuispec check --target <t> [--json]    Composite validation + prepare readiness
   openuispec validate [group...] [--json]   Validate spec files
-  openuispec validate semantic --json       Semantic validation as JSON
-  openuispec mcp                           Start MCP server (stdio transport)
+
+Spec access:
+  openuispec read-specs [paths...]          Read spec file contents as JSON
+  openuispec get-screen <name>              Get a single screen spec (YAML)
+  openuispec get-contract <name> [--variant v]  Get a contract spec
+  openuispec get-tokens <category>          Get tokens for a category (YAML)
+  openuispec get-locale <locale> [--keys k1,k2] Get a locale file (JSON)
+  openuispec spec-types                     List available spec types
+  openuispec spec-schema <type>             Get full JSON schema for a spec type
+
+Screenshots:
+  openuispec screenshot [--route /path] [--theme light|dark] [--output-dir dir]
+  openuispec screenshot-android [--screen name] [--project-dir path] [--module name]
+      [--route deeplink] [--nav Step1,Step2] [--theme light|dark] [--output-dir dir]
+  openuispec screenshot-ios [--screen name] [--project-dir path] [--scheme name]
+      [--bundle-id id] [--device name] [--nav Step1,Step2] [--theme light|dark]
+
+Server:
+  openuispec mcp                            Start MCP server (stdio transport)
 
 Validate groups: manifest, tokens, screens, flows, platform, locales, contracts, semantic
-
 Exit codes: 0 = success, 1 = missing config/usage error, 2 = validation failure
-
 Docs: https://openuispec.rsteam.uz
 `);
       break;
@@ -137,6 +409,25 @@ Docs: https://openuispec.rsteam.uz
       console.error(`Unknown command: ${command}`);
       console.error(`Run "openuispec --help" for usage.`);
       process.exit(1);
+  }
+}
+
+// ── screenshot result printer ────────────────────────────────────────
+
+function printScreenshotResult(result: { content: Array<{ type: string; text?: string; data?: string; mimeType?: string }>; isError?: boolean }): void {
+  if (result.isError) {
+    for (const item of result.content) {
+      if (item.type === "text") console.error(item.text);
+    }
+    process.exit(1);
+  }
+  for (const item of result.content) {
+    if (item.type === "text") console.log(item.text);
+    if (item.type === "image" && item.data) {
+      const outFile = `screenshot-${Date.now()}.png`;
+      writeFileSync(outFile, Buffer.from(item.data, "base64"));
+      console.log(`Screenshot saved: ${outFile}`);
+    }
   }
 }
 

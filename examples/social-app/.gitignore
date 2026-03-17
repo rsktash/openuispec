@@ -31,6 +31,7 @@ generated/**/.openuispec-state.json
 generated/**/node_modules/
 generated/**/dist/
 generated/**/.vite/
+generated/web/social-app/screenshots/
 
 # Android
 generated/**/.gradle/

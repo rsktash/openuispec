@@ -282,13 +282,14 @@ When the openuispec MCP server is configured, AI assistants should use these too
 | \`openuispec_get_contract\` | Get a single contract spec, optionally filtered to one variant. |
 | \`openuispec_get_tokens\` | Get tokens for a specific category (color, typography, spacing, etc.). |
 | \`openuispec_get_locale\` | Get a single locale file, optionally filtered to specific keys. |
-| \`openuispec_screenshot\` | Take a screenshot of the generated web app at a route (requires \`puppeteer\`). |
-| \`openuispec_screenshot_android\` | Take screenshots of the generated Android app on an emulator (requires running emulator). |
-| \`openuispec_screenshot_ios\` | Take screenshots of the generated iOS app using swift-snapshot-testing (requires Xcode + Simulator). |
+| \`openuispec_screenshot\` | Screenshot the web app at a route via headless browser (requires \`puppeteer\`). |
+| \`openuispec_screenshot_android\` | Screenshot Android app on emulator — works with any project via \`project_dir\`. |
+| \`openuispec_screenshot_ios\` | Screenshot iOS app on Simulator via XCUITest — works with any project via \`project_dir\`. |
 
 ## CLI commands
 
 \`\`\`bash
+# Workflow
 openuispec validate             # Validate spec files against schemas
 openuispec validate semantic    # Run semantic cross-reference linting
 openuispec configure-target ${targets[0]} [--defaults] # Configure target stack; --defaults stays unconfirmed
@@ -296,6 +297,20 @@ openuispec status               # Show cross-target baseline/drift status
 openuispec drift --target ${targets[0]} --explain   # Explain semantic spec drift
 openuispec prepare --target ${targets[0]}          # Build the target work bundle
 openuispec drift --snapshot --target ${targets[0]} # Snapshot current state + git baseline after target output exists
+
+# Spec access
+openuispec read-specs [paths...]          # Read spec file contents as JSON
+openuispec get-screen <name>              # Get a single screen spec
+openuispec get-contract <name> [--variant v] # Get a contract spec
+openuispec get-tokens <category>          # Get tokens for a category
+openuispec get-locale <locale> [--keys k1,k2] # Get a locale file
+openuispec spec-types                     # List available spec types
+openuispec spec-schema <type>             # Get JSON schema for a spec type
+
+# Screenshots
+openuispec screenshot --route /home --theme dark --output-dir screenshots
+openuispec screenshot-android --screen home --project-dir /path/to/android
+openuispec screenshot-ios --screen home --project-dir /path/to/ios --scheme MyApp
 \`\`\`
 
 The target work bundle has two modes:
@@ -376,6 +391,16 @@ If MCP tools are not available, use these CLI commands with \`--json\` flag:
 - \`openuispec status --json\` — cross-target status
 - \`openuispec drift --target <t> --explain --json\` — semantic drift
 - \`openuispec validate [group...] --json\` — schema validation
+- \`openuispec read-specs [paths...]\` — read spec file contents
+- \`openuispec get-screen <name>\` — get a single screen spec
+- \`openuispec get-contract <name> [--variant v]\` — get a contract spec
+- \`openuispec get-tokens <category>\` — get tokens for a category
+- \`openuispec get-locale <locale> [--keys k1,k2]\` — get a locale file
+- \`openuispec spec-types\` — list available spec types
+- \`openuispec spec-schema <type>\` — get JSON schema for a spec type
+- \`openuispec screenshot --route /path\` — screenshot the web app
+- \`openuispec screenshot-android [--project-dir path]\` — screenshot Android app
+- \`openuispec screenshot-ios [--project-dir path]\` — screenshot iOS app
 
 ### Other CLI commands
 - \`openuispec init\` — scaffold a new spec project

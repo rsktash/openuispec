@@ -1,0 +1,4 @@
+
+[mcp_servers.openuispec]
+command = "openuispec"
+args = ["mcp"]

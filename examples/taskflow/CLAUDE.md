@@ -1,114 +1,124 @@
 <!-- openuispec-rules-start -->
-<!-- openuispec-rules-version: 0.1.29 -->
+<!-- openuispec-rules-version: 0.2.4 -->
 # OpenUISpec — AI Assistant Rules
 # ================================
 # This project uses OpenUISpec to define UI as a semantic spec.
 # Spec files are the single source of truth for all UI across platforms.
 # Targets: "ios", "android", "web"
 
-## IMPORTANT — Read the specification before working with spec files
+## MANDATORY — UI work requires OpenUISpec tools
 
-The spec format, file schemas, and generation rules are defined in the installed `openuispec` package.
-You MUST read the reference files listed below before creating, editing, or generating from any spec file.
-Do NOT guess the file format — skipping this step will produce invalid YAML that fails validation.
+When the user's request involves UI — screens, navigation, layout, tokens, flows, localization,
+or any visual/structural change — you MUST use the OpenUISpec tools before writing any code.
 
-**Find the package in this order:**
-1. `node_modules/openuispec/` (project dependency)
-2. Run `npm root -g` → `<prefix>/openuispec/` (global install)
-3. Online: `https://openuispec.rsteam.uz/llms-full.txt` (if not installed)
+### MCP Tools (use these when available)
 
-**Reference files inside the package (read in this order):**
-1. `README.md` — schema tables, file format reference, root wrapper keys
-2. `spec/openuispec-v0.1.md` — full specification (contracts, layout, expressions, adaptive, etc.)
-3. `examples/taskflow/openuispec/` — complete working example with all file types
+Call these MCP tools directly. They return structured JSON with everything you need.
+
+**Pre-generation:**
+1. Call `openuispec_prepare` with the target platform — returns spec context, platform config, constraints.
+2. Call `openuispec_read_specs` to load spec file contents. Use these as the AUTHORITATIVE source.
+3. If spec changes are needed, update spec files FIRST, then call `openuispec_check`.
+4. Generate or update the platform UI code based on the spec contents.
+
+**Post-generation (EVERY TIME after writing UI code):**
+5. Call `openuispec_check` to validate spec integrity.
+6. Call `openuispec_read_specs` for the screens/contracts you just generated code for.
+7. Audit your generated code against the spec. For each screen, verify:
+   - Every field/action in the spec has a corresponding UI element
+   - Token values (colors, spacing, radii) match exactly — no approximations
+   - Contract `must_handle` states are all implemented (loading, error, empty, etc.)
+   - Adaptive breakpoints match the spec's `size_classes`
+   - Locale keys match `$t:` references
+   - Navigation targets match flow definitions
+8. Report any real gaps found and fix them before finishing.
+
+**Creating new spec files:**
+- Call `openuispec_spec_types` to discover available spec types.
+- Call `openuispec_spec_schema` with the specific type to get the full JSON schema.
+- Write the spec file following the schema exactly.
+
+**Focused getters (prefer these for incremental edits over `read_specs`):**
+- `openuispec_get_screen(name)` — single screen spec
+- `openuispec_get_contract(name, variant?)` — single contract, optionally one variant
+- `openuispec_get_tokens(category)` — single token category (color, typography, spacing, etc.)
+- `openuispec_get_locale(locale, keys?)` — single locale file, optionally filtered keys
+- `openuispec_check(target, screens?, contracts?)` — scoped audit for specific screens/contracts
+
+Use `read_specs` for full-project generation; use focused getters when editing one screen or contract.
+
+**Other tools:**
+- `openuispec_status` — cross-target summary, good starting point
+- `openuispec_drift` with `explain: true` — property-level spec changes
+- `openuispec_validate` — schema-only validation by group
+
+### CLI fallback (when MCP is not available)
+
+If MCP tools are not available, use these CLI commands with `--json` flag:
+- `openuispec prepare --target <t> --json` — build AI-ready work bundle
+- `openuispec check --target <t> --json` — composite validation
+- `openuispec status --json` — cross-target status
+- `openuispec drift --target <t> --explain --json` — semantic drift
+- `openuispec validate [group...] --json` — schema validation
+- `openuispec read-specs [paths...]` — read spec file contents
+- `openuispec get-screen <name>` — get a single screen spec
+- `openuispec get-contract <name> [--variant v]` — get a contract spec
+- `openuispec get-tokens <category>` — get tokens for a category
+- `openuispec get-locale <locale> [--keys k1,k2]` — get a locale file
+- `openuispec spec-types` — list available spec types
+- `openuispec spec-schema <type>` — get JSON schema for a spec type
+- `openuispec screenshot --route /path` — screenshot the web app
+- `openuispec screenshot-android [--project-dir path]` — screenshot Android app
+- `openuispec screenshot-ios [--project-dir path]` — screenshot iOS app
+
+### Other CLI commands
+- `openuispec init` — scaffold a new spec project
+- `openuispec drift --snapshot --target <t>` — snapshot current state (only after UI code is updated)
+- `openuispec configure-target <t>` — configure target platform stack
+- `openuispec update-rules` — update AI rules to match installed package version
+
+## Spec format reference
+
+The spec format, schemas, and generation rules are in the installed `openuispec` package.
+You MUST read the reference files before creating or editing spec files — do NOT guess the format.
+
+**Find the package:** `node_modules/openuispec/` or run `npm root -g` → `<prefix>/openuispec/`.
+**Online fallback:** `https://openuispec.rsteam.uz/llms-full.txt`
+
+**Reference files (read in order):**
+1. `README.md` — schema tables, file format, root wrapper keys
+2. `spec/openuispec-v0.1.md` — full specification
+3. `examples/taskflow/openuispec/` — complete working example
 4. `schema/` — JSON Schemas for every file type
 
-These files are updated with each package version. Always read from the installed package,
-not from cached or memorized content, to ensure you use the latest spec.
-
-## What is OpenUISpec
-OpenUISpec is a YAML-based spec format that describes an app's UI semantically — tokens, screens, flows, and platform overrides. AI reads the spec and generates native code (SwiftUI, Compose, React). AI reads native code and updates the spec. The spec is the sync layer between platforms.
-
 ## Spec location
-- Spec root: `openuispec/`
-- Manifest: `openuispec/openuispec.yaml` — always read this first.
-- Tokens: `openuispec/tokens/`
-- Screens: `openuispec/screens/`
-- Flows: `openuispec/flows/`
-- Contracts: `openuispec/contracts/`
-- Platform: `openuispec/platform/`
-- Locales: `openuispec/locales/`
+- Spec root: `openuispec/` — read `openuispec/openuispec.yaml` first for actual paths.
+- Default dirs: tokens/, screens/, flows/, contracts/, platform/, locales/
 
-**Note:** These are the default paths. Actual paths are in `includes:` in `openuispec.yaml` and may use relative paths. Always read `openuispec.yaml` to find the real directories.
+## When to start from spec vs platform code
+
+**Spec-first** (use `openuispec_prepare` or `openuispec prepare`):
+- Screen structure, navigation, fields, actions, validation, data binding changes
+- Token, variant, contract, flow, or localization changes
+- Changes affecting multiple platforms
+- Requests in product/UI terms
+
+**Platform-first** (skip spec tools):
+- Platform-specific polish (iOS-only, Android-only, web-only)
+- Local bug fixes that don't alter shared semantic behavior
 
 ## If spec directories are empty (first-time setup)
-This means the project has existing UI code but hasn't been specced yet. Your job:
 
-1. **Read the spec first** — find and read `spec/openuispec-v0.1.md` from the installed package.
-2. **Find existing screens** — scan the codebase for UI screen files.
-3. **Create stubs** — for each screen, create `openuispec/screens/<name>.yaml` with:
-   ```yaml
-   screen_name:
-     semantic: "Brief description of what this screen does"
-     status: stub
-     layout:
-       type: scroll_vertical
-   ```
-4. **Extract tokens** — scan for colors, fonts, spacing and create files in `openuispec/tokens/`.
-5. **Update the manifest** — fill in `data_model`, `api.endpoints`, and `generation.code_roots.backend` in `openuispec/openuispec.yaml`.
+Read `spec/openuispec-v0.1.md` from the package first, then:
+1. Scan codebase for UI screens → create `openuispec/screens/<name>.yaml` as `status: stub`
+2. Extract tokens (colors, fonts, spacing) → `openuispec/tokens/`
+3. Create contract extensions → `openuispec/contracts/`
+4. Create locale files → `openuispec/locales/<locale>.json`
+5. Fill in `data_model`, `api.endpoints` in `openuispec/openuispec.yaml`
 
-## OpenUISpec Source Of Truth
-
-OpenUISpec spec files are the primary source of truth for UI behavior across platforms.
-
-### Start from spec when:
-- the request changes screen structure
-- the request changes navigation
-- the request changes fields, actions, validation, or data binding
-- the request changes tokens, variants, contracts, flows, or localization
-- the request affects more than one platform
-- the request is phrased in product/UI terms rather than platform-code terms
-
-Spec-first workflow:
-1. Read `openuispec/openuispec.yaml` and the relevant spec files first.
-2. Update the spec first.
-3. Update the affected generated/native UI code to match the spec.
-4. Run `openuispec validate`.
-5. Run `openuispec validate semantic`.
-6. Run `openuispec drift --target <target> --explain` to inspect semantic changes since that target's baseline.
-7. Run `openuispec prepare --target <target>` to build the target work bundle for that target. In `bootstrap` mode it provides first-generation constraints; in `update` mode it provides drift-based update scope.
-   If the target stack was filled from defaults, stop and ask the user to confirm or change it before implementation.
-8. Verify the affected UI targets build/run if possible.
-9. Only then run `openuispec drift --snapshot --target <target>` for affected targets, after that target output directory exists.
-10. Run `openuispec drift --target <target> --explain` again to confirm no spec changes remain for that target.
-11. Use `openuispec status` to see which other targets are still behind the updated spec.
-
-### Start from platform code when:
-- the change is platform-specific polish
-- the change is a local bug fix that does not alter shared semantic behavior
-- the request explicitly asks for an iOS-only, Android-only, or web-only adjustment
-
-Platform-first workflow:
-1. Update native/platform code.
-2. If the change affects shared semantics, sync the spec afterward.
-3. If the change is intentionally platform-specific, document it in `platform/*.yaml` when appropriate.
-
-### Never do this:
-- Do not snapshot drift immediately after changing spec unless the UI code has also been updated.
-- Do not treat `openuispec drift` as proof that generated UI matches the spec.
-- Do not skip `--explain` / `prepare` when another platform needs to catch up with shared spec changes.
+## Rules
+- Do not snapshot drift unless the UI code has also been updated.
 - Do not modify generated UI without checking whether the spec must change first.
-- Do not use `configure-target --defaults` as silent approval for implementation. Ask the user to confirm the stack first.
-
-## CLI commands
-- `openuispec init` — scaffold a new spec project
-- `openuispec validate [group...]` — validate spec files against schemas
-- `openuispec validate semantic` — run semantic cross-reference linting
-- `openuispec drift --target <t>` — check for spec drift
-- `openuispec drift --target <t> --explain` — explain semantic spec drift since the target baseline
-- `openuispec drift --snapshot --target <t>` — snapshot current state after the target output exists
-- `openuispec prepare --target <t>` — build the target work bundle and check whether stack confirmation is still pending
-- `openuispec status` — show cross-target baseline/drift status
-- `openuispec update-rules` — update AI rules to match installed package version
-- `openuispec drift --all` — include stubs in drift check
+- Do not use `configure-target --defaults` as silent approval — ask the user to confirm.
+- Always read spec format from the installed package, not from cached/memorized content.
 <!-- openuispec-rules-end -->

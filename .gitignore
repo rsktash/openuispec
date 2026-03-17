@@ -19,3 +19,4 @@ build/
 .env
 .env.local
 site/_output/
+.cloc-ignore

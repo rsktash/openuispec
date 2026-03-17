@@ -332,6 +332,20 @@ Use the commands like this:
 - `openuispec prepare --target <t>` builds the target work bundle for either first-time generation or drift-based updates
 - `openuispec status` shows every target's snapshot state, baseline commit, and whether that target is behind the current spec, still needs a baseline, or has not been generated yet
 
+Spec access commands (also available as MCP tools):
+- `openuispec read-specs [paths...]` reads spec file contents as JSON
+- `openuispec get-screen <name>` gets a single screen spec
+- `openuispec get-contract <name> [--variant v]` gets a contract spec, optionally one variant
+- `openuispec get-tokens <category>` gets tokens for a category (color, typography, spacing, etc.)
+- `openuispec get-locale <locale> [--keys k1,k2]` gets a locale file, optionally filtered keys
+- `openuispec spec-types` lists all available spec types with descriptions
+- `openuispec spec-schema <type>` gets the full JSON schema for a spec type
+
+Screenshot commands (also available as MCP tools):
+- `openuispec screenshot --route /path [--theme dark] [--output-dir dir]` screenshots the web app
+- `openuispec screenshot-android [--project-dir path] [--screen name] [--module name]` screenshots the Android app on an emulator
+- `openuispec screenshot-ios [--project-dir path] [--screen name] [--scheme name]` screenshots the iOS app on a Simulator
+
 In first-time generation mode, `prepare` also carries target-specific generation constraints such as native localization requirements, multi-file output rules, target folder layout expectations, and a requirement to refresh current platform/framework setup knowledge before code generation.
 
 If stack choices were auto-applied via `configure-target --defaults` or `init --defaults`, they remain unconfirmed. `prepare` will block implementation readiness until the user explicitly confirms the target stack, and AI agents should ask the user to confirm or change those choices instead of silently proceeding to code generation.
