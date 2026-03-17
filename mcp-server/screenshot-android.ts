@@ -272,15 +272,20 @@ export async function installAndLaunch(
   // Install (replace existing)
   await adbExec(adb, serial, `install -r "${apkPath}"`);
 
-  // Force-stop any existing instance
+  // Force-stop and clear saved navigation state
   await adbShell(adb, serial, `am force-stop ${appInfo.applicationId}`);
 
+  // FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TASK = 0x10008000
+  // Clears saved navigation state so deep links route correctly
+  const clearFlags = `-f 0x10008000`;
+
   if (route) {
-    // Navigate via deep link — must specify component explicitly
-    await adbShell(adb, serial, `am start -W -a android.intent.action.VIEW -d "${route}" ${appInfo.applicationId}/${appInfo.launchActivity}`);
+    await adbShell(adb, serial,
+      `am start -W -a android.intent.action.VIEW -d "${route}" ${clearFlags} ` +
+      `${appInfo.applicationId}/${appInfo.launchActivity}`);
   } else {
-    // Launch the main activity
-    await adbShell(adb, serial, `am start -W -n ${appInfo.applicationId}/${appInfo.launchActivity}`);
+    await adbShell(adb, serial,
+      `am start -W ${clearFlags} -n ${appInfo.applicationId}/${appInfo.launchActivity}`);
   }
 }
 
