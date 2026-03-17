@@ -238,11 +238,12 @@ async function takeAndroidScreenshots(project: string, def: NonNullable<ProjectD
   for (const screen of def.screens) {
     log(`  android/${screen.name}...`);
 
-    // Force stop and relaunch with clear task to prevent stale nav state
+    // Clear app data to wipe saved nav state, then launch fresh
     await adbShell(adb, serial, `am force-stop ${appInfo.applicationId}`);
+    try { await adbShell(adb, serial, `pm clear ${appInfo.applicationId}`); } catch { /* ignore */ }
     await sleep(500);
     await adbShell(adb, serial,
-      `am start -W -f 0x10008000 -n ${appInfo.applicationId}/${appInfo.launchActivity}`);
+      `am start -W -n ${appInfo.applicationId}/${appInfo.launchActivity}`);
     await sleep(5000);
 
     // Navigate via shared helper

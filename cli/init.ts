@@ -558,7 +558,7 @@ const JSON_MCP_PATHS = [
 const CODEX_CONFIG_PATH = join(".codex", "config.toml");
 const CODEX_MCP_BLOCK = `\n[mcp_servers.openuispec]\ncommand = "openuispec"\nargs = ["mcp"]\n`;
 
-function configureCodexMcp(cwd: string, quiet: boolean): void {
+function configureCodexMcp(cwd: string, quiet: boolean): boolean {
   const codexDir = join(cwd, ".codex");
 
   const configPath = join(codexDir, "config.toml");
@@ -572,18 +572,22 @@ function configureCodexMcp(cwd: string, quiet: boolean): void {
 
     if (content.includes("[mcp_servers.openuispec]")) {
       if (!quiet) console.log(`  skip ${CODEX_CONFIG_PATH} (openuispec MCP already configured)`);
-      return;
+      return false;
     }
 
     if (!existsSync(codexDir)) mkdirSync(codexDir);
     writeFileSync(configPath, content + CODEX_MCP_BLOCK);
     if (!quiet) console.log(`  ${content ? "update" : "create"} ${CODEX_CONFIG_PATH} (MCP server configured)`);
+    return true;
   } catch {
     if (!quiet) console.log(`  skip ${CODEX_CONFIG_PATH} (could not configure MCP server)`);
+    return false;
   }
 }
 
 function configureMcp(cwd: string, showRestart: boolean, quiet: boolean = false): void {
+  let changed = false;
+
   for (const relPath of JSON_MCP_PATHS) {
     const configPath = join(cwd, relPath);
 
@@ -611,6 +615,7 @@ function configureMcp(cwd: string, showRestart: boolean, quiet: boolean = false)
         config.mcpServers.openuispec = { ...EXPECTED_MCP_CONFIG };
         writeFileSync(configPath, JSON.stringify(config, null, 2) + "\n");
         if (!quiet) console.log(`  ${existing ? "update" : "create"} ${relPath} (MCP server configured)`);
+        changed = true;
       } else {
         if (!quiet) console.log(`  skip ${relPath} (openuispec MCP already configured)`);
       }
@@ -620,9 +625,9 @@ function configureMcp(cwd: string, showRestart: boolean, quiet: boolean = false)
   }
 
   // Codex: .codex/config.toml (TOML format)
-  configureCodexMcp(cwd, quiet);
+  if (configureCodexMcp(cwd, quiet)) changed = true;
 
-  if (showRestart) console.log(`\n  Restart your AI coding agent to activate the MCP server.`);
+  if (showRestart && changed) console.log(`\n  Restart your AI coding agent to activate the MCP server.`);
 
   // Clean up stale .claude.json MCP config from older versions
   const claudeJsonPath = join(cwd, ".claude.json");

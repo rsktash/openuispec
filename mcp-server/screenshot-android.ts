@@ -213,18 +213,14 @@ export async function adbExec(adb: string, serial: string, args: string): Promis
 // ── emulator storage cleanup ─────────────────────────────────────────
 
 export async function cleanEmulatorStorage(adb: string, serial: string): Promise<void> {
-  try {
-    // Clear package manager cache
-    await adbShell(adb, serial, `pm trim-caches 512M`);
-  } catch { /* may require root, skip */ }
-  try {
-    // Remove leftover screenshot/temp files
-    await adbShell(adb, serial, `rm -f /sdcard/openuispec_screenshot.png /sdcard/ui_dump.xml /sdcard/screenshot.png`);
-  } catch { /* ignore */ }
-  try {
-    // Clear temp files
-    await adbShell(adb, serial, `rm -rf /data/local/tmp/*.apk`);
-  } catch { /* ignore */ }
+  const cmds = [
+    `pm trim-caches 2G`,                    // aggressively trim package cache
+    `rm -rf /data/local/tmp/*.apk`,          // leftover APKs from previous installs
+    `rm -f /sdcard/openuispec_screenshot.png /sdcard/ui_dump.xml /sdcard/screenshot.png`,
+  ];
+  for (const cmd of cmds) {
+    try { await adbShell(adb, serial, cmd); } catch { /* ignore */ }
+  }
 }
 
 // ── build APK ───────────────────────────────────────────────────────
@@ -269,23 +265,20 @@ export async function installAndLaunch(
   appInfo: AppInfo,
   route?: string,
 ): Promise<void> {
-  // Install (replace existing)
-  await adbExec(adb, serial, `install -r "${apkPath}"`);
-
-  // Force-stop and clear saved navigation state
+  // Force-stop and uninstall to free storage + wipe saved nav state
   await adbShell(adb, serial, `am force-stop ${appInfo.applicationId}`);
+  try { await adbShell(adb, serial, `pm uninstall ${appInfo.applicationId}`); } catch { /* not installed */ }
 
-  // FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TASK = 0x10008000
-  // Clears saved navigation state so deep links route correctly
-  const clearFlags = `-f 0x10008000`;
+  // Install fresh (not -r replace, since we uninstalled)
+  await adbExec(adb, serial, `install "${apkPath}"`);
 
   if (route) {
     await adbShell(adb, serial,
-      `am start -W -a android.intent.action.VIEW -d "${route}" ${clearFlags} ` +
+      `am start -W -a android.intent.action.VIEW -d '${route}' ` +
       `${appInfo.applicationId}/${appInfo.launchActivity}`);
   } else {
     await adbShell(adb, serial,
-      `am start -W ${clearFlags} -n ${appInfo.applicationId}/${appInfo.launchActivity}`);
+      `am start -W -n ${appInfo.applicationId}/${appInfo.launchActivity}`);
   }
 }
 
