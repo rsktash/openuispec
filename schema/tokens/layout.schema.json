@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://openuispec.org/schema/tokens/layout.schema.json",
+  "$id": "https://openuispec.rsteam.uz/schema/tokens/layout.schema.json",
   "title": "OpenUISpec Layout Tokens",
   "description": "Size classes, platform mapping, layout primitives, and content reflow rules",
   "type": "object",
@@ -17,13 +17,13 @@
           "description": "Size class definitions",
           "properties": {
             "compact": {
-              "$ref": "https://openuispec.org/schema/tokens/layout.schema.json#/$defs/size_class_def"
+              "$ref": "https://openuispec.rsteam.uz/schema/tokens/layout.schema.json#/$defs/size_class_def"
             },
             "regular": {
-              "$ref": "https://openuispec.org/schema/tokens/layout.schema.json#/$defs/size_class_def"
+              "$ref": "https://openuispec.rsteam.uz/schema/tokens/layout.schema.json#/$defs/size_class_def"
             },
             "expanded": {
-              "$ref": "https://openuispec.org/schema/tokens/layout.schema.json#/$defs/size_class_def"
+              "$ref": "https://openuispec.rsteam.uz/schema/tokens/layout.schema.json#/$defs/size_class_def"
             }
           },
           "additionalProperties": false
@@ -33,13 +33,13 @@
           "description": "How each platform resolves size classes",
           "properties": {
             "ios": {
-              "$ref": "https://openuispec.org/schema/tokens/layout.schema.json#/$defs/platform_size_mapping"
+              "$ref": "https://openuispec.rsteam.uz/schema/tokens/layout.schema.json#/$defs/platform_size_mapping"
             },
             "android": {
-              "$ref": "https://openuispec.org/schema/tokens/layout.schema.json#/$defs/platform_size_mapping"
+              "$ref": "https://openuispec.rsteam.uz/schema/tokens/layout.schema.json#/$defs/platform_size_mapping"
             },
             "web": {
-              "$ref": "https://openuispec.org/schema/tokens/layout.schema.json#/$defs/platform_size_mapping"
+              "$ref": "https://openuispec.rsteam.uz/schema/tokens/layout.schema.json#/$defs/platform_size_mapping"
             }
           },
           "additionalProperties": false
@@ -48,14 +48,14 @@
           "type": "object",
           "description": "Layout primitive definitions",
           "additionalProperties": {
-            "$ref": "https://openuispec.org/schema/tokens/layout.schema.json#/$defs/primitive_def"
+            "$ref": "https://openuispec.rsteam.uz/schema/tokens/layout.schema.json#/$defs/primitive_def"
           }
         },
         "reflow_rules": {
           "type": "object",
           "description": "Content reflow rules across size class boundaries",
           "additionalProperties": {
-            "$ref": "https://openuispec.org/schema/defs/adaptive.schema.json"
+            "$ref": "https://openuispec.rsteam.uz/schema/defs/adaptive.schema.json"
           }
         }
       },

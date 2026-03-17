@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://openuispec.org/schema/custom-contract.schema.json",
+  "$id": "https://openuispec.rsteam.uz/schema/custom-contract.schema.json",
   "title": "OpenUISpec Custom Contract",
   "description": "Custom contract extension — root key must be x_ prefixed, value follows the standard contract anatomy",
   "type": "object",
@@ -10,7 +10,7 @@
     "pattern": "^x_[a-z][a-z0-9_]*$"
   },
   "additionalProperties": {
-    "$ref": "https://openuispec.org/schema/custom-contract.schema.json#/$defs/contract_def"
+    "$ref": "https://openuispec.rsteam.uz/schema/custom-contract.schema.json#/$defs/contract_def"
   },
   "$defs": {
     "contract_def": {
@@ -25,14 +25,14 @@
           "type": "object",
           "description": "Typed property definitions for this contract",
           "additionalProperties": {
-            "$ref": "https://openuispec.org/schema/custom-contract.schema.json#/$defs/prop_def"
+            "$ref": "https://openuispec.rsteam.uz/schema/custom-contract.schema.json#/$defs/prop_def"
           }
         },
         "states": {
           "type": "object",
           "description": "State machine definition — each key is a state name",
           "additionalProperties": {
-            "$ref": "https://openuispec.org/schema/custom-contract.schema.json#/$defs/state_def"
+            "$ref": "https://openuispec.rsteam.uz/schema/custom-contract.schema.json#/$defs/state_def"
           }
         },
         "a11y": {
@@ -62,9 +62,8 @@
           "additionalProperties": true
         },
         "tokens": {
-          "type": "object",
           "description": "Per-variant visual token bindings",
-          "additionalProperties": true
+          "$ref": "https://openuispec.rsteam.uz/schema/custom-contract.schema.json#/$defs/token_object"
         },
         "platform_mapping": {
           "type": "object",
@@ -92,7 +91,7 @@
           "type": "object",
           "description": "Per-platform library/framework requirements",
           "additionalProperties": {
-            "$ref": "https://openuispec.org/schema/custom-contract.schema.json#/$defs/dependency_def"
+            "$ref": "https://openuispec.rsteam.uz/schema/custom-contract.schema.json#/$defs/dependency_def"
           }
         },
         "generation": {
@@ -121,7 +120,7 @@
           "type": "array",
           "description": "Behavioral verification scenarios",
           "items": {
-            "$ref": "https://openuispec.org/schema/custom-contract.schema.json#/$defs/test_case"
+            "$ref": "https://openuispec.rsteam.uz/schema/custom-contract.schema.json#/$defs/test_case"
           }
         }
       },
@@ -205,6 +204,58 @@
           "type": "string",
           "description": "Visual description of this state"
         }
+      },
+      "additionalProperties": false
+    },
+    "token_object": {
+      "type": "object",
+      "description": "Recursive token object. If a `states` key is present, it must use the documented interactive state-role shape.",
+      "properties": {
+        "states": {
+          "$ref": "https://openuispec.rsteam.uz/schema/custom-contract.schema.json#/$defs/state_role_map"
+        }
+      },
+      "additionalProperties": {
+        "$ref": "https://openuispec.rsteam.uz/schema/custom-contract.schema.json#/$defs/token_value"
+      }
+    },
+    "token_value": {
+      "description": "Any token value, including nested token objects and arrays.",
+      "oneOf": [
+        {
+          "type": ["string", "number", "boolean", "null"]
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "https://openuispec.rsteam.uz/schema/custom-contract.schema.json#/$defs/token_value"
+          }
+        },
+        {
+          "$ref": "https://openuispec.rsteam.uz/schema/custom-contract.schema.json#/$defs/token_object"
+        }
+      ]
+    },
+    "state_role_map": {
+      "type": "object",
+      "description": "Map of state names to visual-role overrides.",
+      "propertyNames": {
+        "pattern": "^[a-z][a-z0-9_]*$"
+      },
+      "additionalProperties": {
+        "$ref": "https://openuispec.rsteam.uz/schema/custom-contract.schema.json#/$defs/state_visual_roles"
+      }
+    },
+    "state_visual_roles": {
+      "type": "object",
+      "description": "Visual-role overrides available inside token `states` maps.",
+      "properties": {
+        "background": { "$ref": "https://openuispec.rsteam.uz/schema/custom-contract.schema.json#/$defs/token_value" },
+        "text": { "$ref": "https://openuispec.rsteam.uz/schema/custom-contract.schema.json#/$defs/token_value" },
+        "icon": { "$ref": "https://openuispec.rsteam.uz/schema/custom-contract.schema.json#/$defs/token_value" },
+        "border": { "$ref": "https://openuispec.rsteam.uz/schema/custom-contract.schema.json#/$defs/token_value" },
+        "badge_background": { "$ref": "https://openuispec.rsteam.uz/schema/custom-contract.schema.json#/$defs/token_value" },
+        "badge_text": { "$ref": "https://openuispec.rsteam.uz/schema/custom-contract.schema.json#/$defs/token_value" }
       },
       "additionalProperties": false
     },

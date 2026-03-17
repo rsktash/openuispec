@@ -6,24 +6,44 @@ nav_container:
       border_top: { width: 1, color: "color.border.default" }
       icon_size: 22
       label_style: "typography.caption"
-      active_color: "color.brand.primary"
-      inactive_color: "color.text.tertiary"
+      item:
+        states:
+          default:
+            text: "color.text.tertiary"
+            icon: "color.text.tertiary"
+          active:
+            text: "color.brand.primary"
+            icon: "color.brand.primary"
     rail:
       width: 76
       background: "color.surface.secondary"
       icon_size: 22
       label_style: "typography.caption"
-      active_color: "color.brand.primary"
+      item:
+        states:
+          default:
+            text: "color.text.secondary"
+            icon: "color.text.secondary"
+          active:
+            text: "color.brand.primary"
+            icon: "color.brand.primary"
     sidebar:
       width: { collapsed: 72, expanded: 240 }
       background: "color.surface.secondary"
       item_height: 48
       item_radius: "spacing.sm"
       item_padding_h: "spacing.md"
-      active_background: "color.brand.primary"
-      active_text: "color.brand.primary.on_color"
       icon_size: 20
       label_style: "typography.body_sm"
+      item:
+        states:
+          default:
+            text: "color.text.secondary"
+            icon: "color.text.secondary"
+          active:
+            background: "color.brand.primary"
+            text: "color.brand.primary.on_color"
+            icon: "color.brand.primary.on_color"
   platform_mapping:
     ios:
       tab_bar: { widget: "TabView" }

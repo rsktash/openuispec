@@ -9,6 +9,16 @@ nav_container:
         background: "color.surface.primary"
         tint_active: "color.brand.primary"
         tint_inactive: "color.text.tertiary"
+        item:
+          states:
+            default:
+              text: "color.text.tertiary"
+              icon: "color.text.tertiary"
+            active:
+              text: "color.brand.primary"
+              icon: "color.brand.primary"
+              badge_background: "color.brand.accent"
+              badge_text: "color.brand.accent.on_color"
       platform_mapping:
         ios: { uses_system_tab_bar: true, height: 49 }
         android: { component: "NavigationBar" }
@@ -23,6 +33,17 @@ nav_container:
       tokens:
         background: "color.surface.secondary"
         width: 280
+        item:
+          states:
+            default:
+              text: "color.text.secondary"
+              icon: "color.text.secondary"
+            active:
+              background: "color.brand.primary"
+              text: "color.brand.primary.on_color"
+              icon: "color.brand.primary.on_color"
+              badge_background: "color.brand.accent"
+              badge_text: "color.brand.accent.on_color"
       platform_mapping:
         ios: { style: "sidebar" }
         android: { component: "NavigationRail" }

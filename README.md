@@ -244,6 +244,21 @@ Validate with: `openuispec validate`
 
 Use `openuispec validate semantic` to run cross-reference linting for locale keys, formatter refs, mapper refs, contracts, icons, navigation targets, and API endpoint references.
 
+### Shared interactive state roles
+
+Interactive contracts may optionally express state-specific visual roles inside their token maps with a nested `states:` object. This lets generators use explicit foreground/background/icon/border roles for `default`, `active`, `selected`, `pressed`, `focused`, `disabled`, `loading`, and `error` states instead of inferring them from container colors or platform defaults.
+
+Allowed visual role keys (no others are permitted):
+
+- `background`
+- `text`
+- `icon`
+- `border`
+- `badge_background`
+- `badge_text`
+
+When `states:` is omitted, generators fall back to the token values defined at that level plus the base contract semantics.
+
 ## Output directories
 
 By default, drift stores state in `generated/<target>/<project>/`. To point targets to your actual code directories, add `output_dir` to `openuispec.yaml`:

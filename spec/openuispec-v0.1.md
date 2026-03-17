@@ -568,6 +568,57 @@ Any token value can be suffixed with `!exact` to override the range system and f
 logo_width: { value: 120, modifier: "!exact" }
 ```
 
+### Shared Interactive State Roles
+
+Interactive contracts may optionally encode **state-specific visual roles** inside their token maps using a nested `states:` object. This gives generators an explicit source of truth for foreground/background changes instead of forcing them to infer state styling from parent container colors or platform defaults.
+
+This pattern is optional. If a contract or variant does not declare `states:`, generators fall back to the token values defined at that level plus the base contract semantics.
+
+Recommended state keys:
+
+- `default`
+- `active`
+- `selected`
+- `pressed`
+- `focused`
+- `disabled`
+- `loading`
+- `error`
+
+Allowed visual role keys (no others are permitted):
+
+- `background`
+- `text`
+- `icon`
+- `border`
+- `badge_background`
+- `badge_text`
+
+Rules:
+
+- State keys should correspond to declared contract states where possible. `active` and `selected` may also be used for per-item selection semantics such as navigation items, chips, tabs, and segmented controls.
+- Omitted roles inherit from the parent token block for that variant or element.
+- Top-level token values remain the default/fallback values unless overridden inside `states:`.
+- Generators and audits should prefer explicit state-role tokens over inferred color inheritance when both are present.
+
+Example:
+
+```yaml
+sidebar:
+  item_height: [44, 48]
+  item_radius: "spacing.sm"
+  states:
+    default:
+      text: "color.text.secondary"
+      icon: "color.text.secondary"
+    active:
+      background: "color.brand.primary"
+      text: "color.brand.primary.on_color"
+      icon: "color.brand.primary.on_color"
+      badge_background: "color.brand.accent"
+      badge_text: "color.brand.accent.on_color"
+```
+
 ---
 
 ### 4.1 `action_trigger`
@@ -629,6 +680,12 @@ action_trigger:
       min_height: { sm: 32, md: [44, 48], lg: 56 }
       padding_h: { sm: "spacing.sm", md: "spacing.md", lg: "spacing.lg" }
       radius: "spacing.sm"
+      states:
+        disabled:
+          background: "color.surface.tertiary"
+          text: "color.text.tertiary"
+        loading:
+          text: "color.brand.primary.on_color"
     secondary:
       background: "color.surface.secondary"
       text: "color.text.primary"
@@ -636,6 +693,11 @@ action_trigger:
       min_height: { sm: 32, md: [44, 48], lg: 56 }
       padding_h: "spacing.md"
       radius: "spacing.sm"
+      states:
+        disabled:
+          background: "color.surface.tertiary"
+          text: "color.text.tertiary"
+          border: { width: 1, color: "color.border.default" }
     tertiary:
       background: transparent
       text: "color.brand.primary"
@@ -1017,18 +1079,35 @@ nav_container:
       border_top: { width: 0.5, color: "color.border.default" }
       icon_size: 24
       label_style: "typography.caption"
-      active_color: "color.brand.primary"
-      inactive_color: "color.text.tertiary"
+      item:
+        states:
+          default:
+            text: "color.text.tertiary"
+            icon: "color.text.tertiary"
+          active:
+            text: "color.brand.primary"
+            icon: "color.brand.primary"
+            badge_background: "color.brand.accent"
+            badge_text: "color.brand.accent.on_color"
     sidebar:
       width: { collapsed: [64, 72], expanded: [220, 280] }
       background: "color.surface.secondary"
       item_height: [44, 48]
       item_radius: "spacing.sm"
       item_padding_h: "spacing.md"
-      active_background: "color.brand.primary"
-      active_text: "color.brand.primary.on_color"
       icon_size: 20
       label_style: "typography.body_sm"
+      item:
+        states:
+          default:
+            text: "color.text.secondary"
+            icon: "color.text.secondary"
+          active:
+            background: "color.brand.primary"
+            text: "color.brand.primary.on_color"
+            icon: "color.brand.primary.on_color"
+            badge_background: "color.brand.accent"
+            badge_text: "color.brand.accent.on_color"
     drawer:
       width: { range: [280, 320] }
       overlay_opacity: 0.5

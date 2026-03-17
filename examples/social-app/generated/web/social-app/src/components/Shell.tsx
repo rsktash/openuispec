@@ -91,23 +91,11 @@ export function AppShell() {
 
         {sizeClass !== "expanded" ? <BottomTabBar unreadCount={unreadCount} /> : null}
 
-        {location.pathname.startsWith("/home") || location.pathname === "/" ? (
-          <Link
-            to="/create"
-            className={cn(
-              "interactive-press fixed z-30 flex h-14 w-14 items-center justify-center rounded-cap-primary bg-[var(--color-brand-primary)] text-white shadow-md",
-              sizeClass === "expanded" ? "bottom-8 right-8" : "bottom-20 right-4",
-            )}
-            aria-label={t("nav.create")}
-          >
-            <Icon name="create_post" className="h-6 w-6" />
-          </Link>
-        ) : null}
       </div>
 
       {toast ? (
         <div className="pointer-events-none fixed inset-x-0 top-4 z-50 flex justify-center px-4">
-          <div className="rounded-cap-primary bg-[var(--color-brand-primary)] px-5 py-3 text-sm font-medium text-white shadow-md">
+          <div className="rounded-cap-primary bg-[var(--color-brand-primary)] px-5 py-3 text-sm font-medium text-[var(--color-brand-primary-on)] shadow-md">
             {toast.message}
           </div>
         </div>
@@ -160,7 +148,7 @@ function BottomTabBar({ unreadCount }: { unreadCount: number }) {
             <Icon name={route.icon} className="h-5 w-5" />
             <span>{t(route.labelKey)}</span>
             {route.to === "/notifications" && unreadCount > 0 ? (
-              <span className="absolute right-3 top-2 inline-flex min-h-5 min-w-5 items-center justify-center rounded-full bg-[var(--color-brand-accent)] px-1.5 text-[10px] font-semibold text-white">
+              <span className="absolute right-3 top-2 inline-flex min-h-5 min-w-5 items-center justify-center rounded-full bg-[var(--color-brand-accent)] px-1.5 text-[10px] font-semibold text-[var(--color-brand-accent-on)]">
                 {unreadCount}
               </span>
             ) : null}
@@ -187,20 +175,32 @@ function DesktopSidebar({ unreadCount }: { unreadCount: number }) {
             to={route.to}
             className={({ isActive }) =>
               cn(
-                "relative flex items-center gap-3 rounded-cap-primary px-4 py-3 text-sm font-semibold transition",
+                "relative rounded-cap-primary px-4 py-3 text-sm font-semibold transition",
                 isActive
-                  ? "bg-[var(--color-brand-primary)] text-white shadow-sm"
-                  : "text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-tertiary)]",
+                  ? "bg-[var(--color-brand-primary)] shadow-sm"
+                  : "hover:bg-[var(--color-surface-tertiary)]",
               )
             }
           >
-            <Icon name={route.icon} className="h-5 w-5" />
-            <span>{t(route.labelKey)}</span>
-            {route.to === "/notifications" && unreadCount > 0 ? (
-              <span className="ml-auto rounded-full bg-[var(--color-brand-accent)] px-2 py-1 text-[10px] font-semibold text-white">
-                {unreadCount}
-              </span>
-            ) : null}
+            {({ isActive }) => (
+              <div className="flex items-center gap-3">
+                <Icon
+                  name={route.icon}
+                  className={cn(
+                    "h-5 w-5 shrink-0",
+                    isActive ? "text-[var(--color-brand-primary-on)]" : "text-[var(--color-text-secondary)]",
+                  )}
+                />
+                <span className={cn(isActive ? "text-[var(--color-brand-primary-on)]" : "text-[var(--color-text-secondary)]")}>
+                  {t(route.labelKey)}
+                </span>
+                {route.to === "/notifications" && unreadCount > 0 ? (
+                  <span className="ml-auto rounded-full bg-[var(--color-brand-accent)] px-2 py-1 text-[10px] font-semibold text-[var(--color-brand-accent-on)]">
+                    {unreadCount}
+                  </span>
+                ) : null}
+              </div>
+            )}
           </NavLink>
         ))}
       </nav>

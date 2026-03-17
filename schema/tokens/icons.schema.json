@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://openuispec.org/schema/tokens/icons.schema.json",
+  "$id": "https://openuispec.rsteam.uz/schema/tokens/icons.schema.json",
   "title": "OpenUISpec Icon Tokens",
   "description": "Semantic icon registry with platform mappings, sizes, and variant conventions",
   "type": "object",

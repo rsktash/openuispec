@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://openuispec.org/schema/tokens/motion.schema.json",
+  "$id": "https://openuispec.rsteam.uz/schema/tokens/motion.schema.json",
   "title": "OpenUISpec Motion Tokens",
   "description": "Animation durations, easings, reduced motion policy, and motion patterns",
   "type": "object",
@@ -39,7 +39,7 @@
           "type": "object",
           "description": "Named motion patterns for common interactions",
           "additionalProperties": {
-            "$ref": "https://openuispec.org/schema/tokens/motion.schema.json#/$defs/motion_pattern"
+            "$ref": "https://openuispec.rsteam.uz/schema/tokens/motion.schema.json#/$defs/motion_pattern"
           }
         }
       },

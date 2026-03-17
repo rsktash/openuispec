@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://openuispec.org/schema/contract.schema.json",
+  "$id": "https://openuispec.rsteam.uz/schema/contract.schema.json",
   "title": "OpenUISpec Standard Contract Extension",
   "description": "Extension file for a standard contract — add variants, override tokens, platform mapping, and generation hints",
   "type": "object",
@@ -36,13 +36,12 @@
           "type": "object",
           "description": "Additional props beyond the spec definition",
           "additionalProperties": {
-            "$ref": "https://openuispec.org/schema/custom-contract.schema.json#/$defs/prop_def"
+            "$ref": "https://openuispec.rsteam.uz/schema/custom-contract.schema.json#/$defs/prop_def"
           }
         },
         "tokens": {
-          "type": "object",
           "description": "Token overrides at the contract level",
-          "additionalProperties": true
+          "$ref": "#/$defs/token_object"
         },
         "platform_mapping": {
           "type": "object",
@@ -80,7 +79,7 @@
           "type": "array",
           "description": "Additional behavioral test cases",
           "items": {
-            "$ref": "https://openuispec.org/schema/custom-contract.schema.json#/$defs/test_case"
+            "$ref": "https://openuispec.rsteam.uz/schema/custom-contract.schema.json#/$defs/test_case"
           }
         }
       },
@@ -95,9 +94,8 @@
           "description": "Human-readable description of this variant"
         },
         "tokens": {
-          "type": "object",
           "description": "Visual token bindings for this variant",
-          "additionalProperties": true
+          "$ref": "#/$defs/token_object"
         },
         "platform_mapping": {
           "type": "object",
@@ -122,6 +120,58 @@
           },
           "additionalProperties": false
         }
+      },
+      "additionalProperties": false
+    },
+    "token_object": {
+      "type": "object",
+      "description": "Recursive token object. If a `states` key is present, it must use the documented interactive state-role shape.",
+      "properties": {
+        "states": {
+          "$ref": "#/$defs/state_role_map"
+        }
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/token_value"
+      }
+    },
+    "token_value": {
+      "description": "Any token value, including nested token objects and arrays.",
+      "oneOf": [
+        {
+          "type": ["string", "number", "boolean", "null"]
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/token_value"
+          }
+        },
+        {
+          "$ref": "#/$defs/token_object"
+        }
+      ]
+    },
+    "state_role_map": {
+      "type": "object",
+      "description": "Map of state names to visual-role overrides.",
+      "propertyNames": {
+        "pattern": "^[a-z][a-z0-9_]*$"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/state_visual_roles"
+      }
+    },
+    "state_visual_roles": {
+      "type": "object",
+      "description": "Visual-role overrides available inside token `states` maps.",
+      "properties": {
+        "background": { "$ref": "#/$defs/token_value" },
+        "text": { "$ref": "#/$defs/token_value" },
+        "icon": { "$ref": "#/$defs/token_value" },
+        "border": { "$ref": "#/$defs/token_value" },
+        "badge_background": { "$ref": "#/$defs/token_value" },
+        "badge_text": { "$ref": "#/$defs/token_value" }
       },
       "additionalProperties": false
     }

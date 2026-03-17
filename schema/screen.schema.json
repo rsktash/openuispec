@@ -1,13 +1,13 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://openuispec.org/schema/screen.schema.json",
+  "$id": "https://openuispec.rsteam.uz/schema/screen.schema.json",
   "title": "OpenUISpec Screen",
   "description": "Screen composition \u2014 a single root key (screen name) mapping to the screen definition",
   "type": "object",
   "minProperties": 1,
   "maxProperties": 1,
   "additionalProperties": {
-    "$ref": "https://openuispec.org/schema/screen.schema.json#/$defs/screen_def"
+    "$ref": "https://openuispec.rsteam.uz/schema/screen.schema.json#/$defs/screen_def"
   },
   "$defs": {
     "screen_def": {
@@ -30,25 +30,25 @@
           ]
         },
         "params": {
-          "$ref": "https://openuispec.org/schema/defs/data-binding.schema.json#/$defs/params_map"
+          "$ref": "https://openuispec.rsteam.uz/schema/defs/data-binding.schema.json#/$defs/params_map"
         },
         "data": {
-          "$ref": "https://openuispec.org/schema/defs/data-binding.schema.json#/$defs/data_map"
+          "$ref": "https://openuispec.rsteam.uz/schema/defs/data-binding.schema.json#/$defs/data_map"
         },
         "state": {
-          "$ref": "https://openuispec.org/schema/defs/data-binding.schema.json#/$defs/state_map"
+          "$ref": "https://openuispec.rsteam.uz/schema/defs/data-binding.schema.json#/$defs/state_map"
         },
         "navigation": {
-          "$ref": "https://openuispec.org/schema/screen.schema.json#/$defs/navigation_def"
+          "$ref": "https://openuispec.rsteam.uz/schema/screen.schema.json#/$defs/navigation_def"
         },
         "layout": {
-          "$ref": "https://openuispec.org/schema/screen.schema.json#/$defs/layout_def"
+          "$ref": "https://openuispec.rsteam.uz/schema/screen.schema.json#/$defs/layout_def"
         },
         "surfaces": {
           "type": "object",
           "description": "Named surface definitions (sheets, modals, panels)",
           "additionalProperties": {
-            "$ref": "https://openuispec.org/schema/screen.schema.json#/$defs/surface_def"
+            "$ref": "https://openuispec.rsteam.uz/schema/screen.schema.json#/$defs/surface_def"
           }
         }
       },
@@ -74,7 +74,7 @@
             "items": {
               "type": "array",
               "items": {
-                "$ref": "https://openuispec.org/schema/screen.schema.json#/$defs/nav_item"
+                "$ref": "https://openuispec.rsteam.uz/schema/screen.schema.json#/$defs/nav_item"
               }
             },
             "selected": {
@@ -84,7 +84,7 @@
           "additionalProperties": true
         },
         "adaptive": {
-          "$ref": "https://openuispec.org/schema/defs/adaptive.schema.json"
+          "$ref": "https://openuispec.rsteam.uz/schema/defs/adaptive.schema.json"
         }
       },
       "required": [
@@ -112,7 +112,7 @@
           "type": "string"
         },
         "badge": {
-          "$ref": "https://openuispec.org/schema/defs/common.schema.json#/$defs/badge_config"
+          "$ref": "https://openuispec.rsteam.uz/schema/defs/common.schema.json#/$defs/badge_config"
         }
       },
       "required": [
@@ -131,7 +131,7 @@
           "type": "string"
         },
         "adaptive": {
-          "$ref": "https://openuispec.org/schema/screen.schema.json#/$defs/layout_adaptive"
+          "$ref": "https://openuispec.rsteam.uz/schema/screen.schema.json#/$defs/layout_adaptive"
         },
         "safe_area": {
           "type": "boolean"
@@ -142,11 +142,11 @@
         "sections": {
           "type": "array",
           "items": {
-            "$ref": "https://openuispec.org/schema/screen.schema.json#/$defs/section_item"
+            "$ref": "https://openuispec.rsteam.uz/schema/screen.schema.json#/$defs/section_item"
           }
         },
         "on_submit": {
-          "$ref": "https://openuispec.org/schema/defs/action.schema.json"
+          "$ref": "https://openuispec.rsteam.uz/schema/defs/action.schema.json"
         }
       },
       "additionalProperties": true
@@ -205,14 +205,14 @@
           "additionalProperties": true
         },
         "action": {
-          "$ref": "https://openuispec.org/schema/defs/action.schema.json"
+          "$ref": "https://openuispec.rsteam.uz/schema/defs/action.schema.json"
         },
         "tokens_override": {
           "type": "object",
           "additionalProperties": true
         },
         "adaptive": {
-          "$ref": "https://openuispec.org/schema/defs/adaptive.schema.json"
+          "$ref": "https://openuispec.rsteam.uz/schema/defs/adaptive.schema.json"
         },
         "condition": {
           "type": "string"
@@ -239,7 +239,7 @@
           "additionalProperties": true
         },
         "validate": {
-          "$ref": "https://openuispec.org/schema/defs/validation.schema.json#/$defs/validation_rules"
+          "$ref": "https://openuispec.rsteam.uz/schema/defs/validation.schema.json#/$defs/validation_rules"
         },
         "required_when": {
           "type": "string",
@@ -250,15 +250,15 @@
           "description": "Condition expression — field is enabled (editable) when true"
         },
         "validate_trigger": {
-          "$ref": "https://openuispec.org/schema/defs/validation.schema.json#/$defs/validate_trigger"
+          "$ref": "https://openuispec.rsteam.uz/schema/defs/validation.schema.json#/$defs/validate_trigger"
         },
         "layout": {
-          "$ref": "https://openuispec.org/schema/screen.schema.json#/$defs/inline_layout"
+          "$ref": "https://openuispec.rsteam.uz/schema/screen.schema.json#/$defs/inline_layout"
         },
         "children": {
           "type": "array",
           "items": {
-            "$ref": "https://openuispec.org/schema/screen.schema.json#/$defs/section_item"
+            "$ref": "https://openuispec.rsteam.uz/schema/screen.schema.json#/$defs/section_item"
           }
         },
         "padding": {
@@ -287,7 +287,7 @@
           "type": "string"
         },
         "adaptive": {
-          "$ref": "https://openuispec.org/schema/screen.schema.json#/$defs/layout_adaptive"
+          "$ref": "https://openuispec.rsteam.uz/schema/screen.schema.json#/$defs/layout_adaptive"
         },
         "spacing": {
           "type": "string"
@@ -335,14 +335,14 @@
             "content": {
               "type": "array",
               "items": {
-                "$ref": "https://openuispec.org/schema/screen.schema.json#/$defs/section_item"
+                "$ref": "https://openuispec.rsteam.uz/schema/screen.schema.json#/$defs/section_item"
               }
             }
           },
           "additionalProperties": true
         },
         "adaptive": {
-          "$ref": "https://openuispec.org/schema/defs/adaptive.schema.json"
+          "$ref": "https://openuispec.rsteam.uz/schema/defs/adaptive.schema.json"
         }
       },
       "required": [

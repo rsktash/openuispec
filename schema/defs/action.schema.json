@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://openuispec.org/schema/defs/action.schema.json",
+  "$id": "https://openuispec.rsteam.uz/schema/defs/action.schema.json",
   "title": "OpenUISpec Action",
   "description": "Discriminated union of the 14 action types in OpenUISpec",
 

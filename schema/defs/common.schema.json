@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://openuispec.org/schema/defs/common.schema.json",
+  "$id": "https://openuispec.rsteam.uz/schema/defs/common.schema.json",
   "title": "OpenUISpec Common Definitions",
   "description": "Shared type definitions used across OpenUISpec schemas",
   "$defs": {
@@ -130,7 +130,7 @@
           "type": "number"
         },
         {
-          "$ref": "https://openuispec.org/schema/defs/common.schema.json#/$defs/range_object"
+          "$ref": "https://openuispec.rsteam.uz/schema/defs/common.schema.json#/$defs/range_object"
         }
       ]
     },
@@ -226,13 +226,13 @@
           "type": "string"
         },
         {
-          "$ref": "https://openuispec.org/schema/defs/common.schema.json#/$defs/icon_object"
+          "$ref": "https://openuispec.rsteam.uz/schema/defs/common.schema.json#/$defs/icon_object"
         },
         {
-          "$ref": "https://openuispec.org/schema/defs/common.schema.json#/$defs/media_object"
+          "$ref": "https://openuispec.rsteam.uz/schema/defs/common.schema.json#/$defs/media_object"
         },
         {
-          "$ref": "https://openuispec.org/schema/defs/common.schema.json#/$defs/nested_contract"
+          "$ref": "https://openuispec.rsteam.uz/schema/defs/common.schema.json#/$defs/nested_contract"
         }
       ]
     },
@@ -272,7 +272,7 @@
       "description": "An inline contract instance used in props (leading/trailing/content)",
       "properties": {
         "contract": {
-          "$ref": "https://openuispec.org/schema/defs/common.schema.json#/$defs/contract_ref"
+          "$ref": "https://openuispec.rsteam.uz/schema/defs/common.schema.json#/$defs/contract_ref"
         },
         "variant": {
           "type": "string"
@@ -284,7 +284,7 @@
           "type": "object"
         },
         "action": {
-          "$ref": "https://openuispec.org/schema/defs/action.schema.json"
+          "$ref": "https://openuispec.rsteam.uz/schema/defs/action.schema.json"
         },
         "data_binding": {
           "type": "string"
@@ -293,7 +293,7 @@
           "type": "object"
         },
         "adaptive": {
-          "$ref": "https://openuispec.org/schema/defs/adaptive.schema.json"
+          "$ref": "https://openuispec.rsteam.uz/schema/defs/adaptive.schema.json"
         },
         "behavior": {
           "type": "object"

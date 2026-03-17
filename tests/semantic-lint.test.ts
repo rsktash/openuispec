@@ -132,6 +132,47 @@ test("validate --json returns total_errors 0 for clean project", () => {
   }
 });
 
+test("validate rejects unknown visual role keys inside token states maps", () => {
+  const sandbox = mkdtempSync(join(tmpdir(), "openuispec-token-states-schema-"));
+
+  try {
+    cpSync(join(repoRoot, "examples", "taskflow"), sandbox, { recursive: true });
+
+    const contractPath = join(sandbox, "openuispec", "contracts", "action_trigger.yaml");
+    writeFileSync(
+      contractPath,
+      `# action_trigger contract extension
+# Base definition: spec Section 4.1
+
+action_trigger:
+  variants:
+    primary:
+      tokens:
+        background: "color.brand.primary"
+        text: "color.brand.primary.on_color"
+        states:
+          disabled:
+            text: "color.text.tertiary"
+            glow: "color.brand.accent"
+`,
+    );
+
+    const output = runValidate(sandbox, ["--json"], true);
+    const result = JSON.parse(output);
+
+    assert.ok(result.total_errors > 0, "expected schema errors for invalid state role key");
+    const contractGroup = result.groups.find((group: any) => group.group === "contracts");
+    assert.ok(contractGroup, "expected contracts validation group");
+    const messages = contractGroup.errors.map((error: any) => error.message);
+    assert.ok(
+      messages.some((message: string) => message.includes("glow") || message.includes("additional properties")),
+      "expected schema error mentioning invalid visual role key",
+    );
+  } finally {
+    rmSync(sandbox, { recursive: true, force: true });
+  }
+});
+
 test("semantic validate passes when backend code root is omitted with api endpoints", () => {
   const sandbox = mkdtempSync(join(tmpdir(), "openuispec-semantic-backend-root-"));
 

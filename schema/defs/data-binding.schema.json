@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://openuispec.org/schema/defs/data-binding.schema.json",
+  "$id": "https://openuispec.rsteam.uz/schema/defs/data-binding.schema.json",
   "title": "OpenUISpec Data Binding Definitions",
   "description": "Data sources, state definitions, data paths, and format expressions",
   "$defs": {
@@ -75,14 +75,14 @@
       "type": "object",
       "description": "Map of named data sources",
       "additionalProperties": {
-        "$ref": "https://openuispec.org/schema/defs/data-binding.schema.json#/$defs/data_source"
+        "$ref": "https://openuispec.rsteam.uz/schema/defs/data-binding.schema.json#/$defs/data_source"
       }
     },
     "state_map": {
       "type": "object",
       "description": "Map of named state definitions",
       "additionalProperties": {
-        "$ref": "https://openuispec.org/schema/defs/data-binding.schema.json#/$defs/state_def"
+        "$ref": "https://openuispec.rsteam.uz/schema/defs/data-binding.schema.json#/$defs/state_def"
       }
     },
     "params_map": {

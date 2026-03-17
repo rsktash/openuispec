@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://openuispec.org/schema/tokens/spacing.schema.json",
+  "$id": "https://openuispec.rsteam.uz/schema/tokens/spacing.schema.json",
   "title": "OpenUISpec Spacing Tokens",
   "description": "Spacing scale, base unit, and aliases",
   "type": "object",
@@ -24,14 +24,14 @@
           "type": "object",
           "description": "Named spacing scale values",
           "additionalProperties": {
-            "$ref": "https://openuispec.org/schema/tokens/spacing.schema.json#/$defs/spacing_value"
+            "$ref": "https://openuispec.rsteam.uz/schema/tokens/spacing.schema.json#/$defs/spacing_value"
           }
         },
         "aliases": {
           "type": "object",
           "description": "Named spacing aliases for common patterns",
           "additionalProperties": {
-            "$ref": "https://openuispec.org/schema/tokens/spacing.schema.json#/$defs/alias_value"
+            "$ref": "https://openuispec.rsteam.uz/schema/tokens/spacing.schema.json#/$defs/alias_value"
           }
         }
       },
@@ -50,7 +50,7 @@
           "type": "integer"
         },
         {
-          "$ref": "https://openuispec.org/schema/defs/common.schema.json#/$defs/range_object"
+          "$ref": "https://openuispec.rsteam.uz/schema/defs/common.schema.json#/$defs/range_object"
         }
       ]
     },

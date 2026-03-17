@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://openuispec.org/schema/tokens/color.schema.json",
+  "$id": "https://openuispec.rsteam.uz/schema/tokens/color.schema.json",
   "title": "OpenUISpec Color Tokens",
   "description": "Color token definitions: brand, surface, text, semantic, border, and custom groups",
   "type": "object",
@@ -16,35 +16,35 @@
           "type": "object",
           "description": "Brand identity colors",
           "additionalProperties": {
-            "$ref": "https://openuispec.org/schema/tokens/color.schema.json#/$defs/color_entry"
+            "$ref": "https://openuispec.rsteam.uz/schema/tokens/color.schema.json#/$defs/color_entry"
           }
         },
         "surface": {
           "type": "object",
           "description": "Background/surface colors",
           "additionalProperties": {
-            "$ref": "https://openuispec.org/schema/tokens/color.schema.json#/$defs/color_entry"
+            "$ref": "https://openuispec.rsteam.uz/schema/tokens/color.schema.json#/$defs/color_entry"
           }
         },
         "text": {
           "type": "object",
           "description": "Text and foreground colors",
           "additionalProperties": {
-            "$ref": "https://openuispec.org/schema/tokens/color.schema.json#/$defs/color_entry"
+            "$ref": "https://openuispec.rsteam.uz/schema/tokens/color.schema.json#/$defs/color_entry"
           }
         },
         "semantic": {
           "type": "object",
           "description": "Semantic status colors (success, warning, danger, info)",
           "additionalProperties": {
-            "$ref": "https://openuispec.org/schema/tokens/color.schema.json#/$defs/color_entry"
+            "$ref": "https://openuispec.rsteam.uz/schema/tokens/color.schema.json#/$defs/color_entry"
           }
         },
         "border": {
           "type": "object",
           "description": "Border colors",
           "additionalProperties": {
-            "$ref": "https://openuispec.org/schema/tokens/color.schema.json#/$defs/border_color_entry"
+            "$ref": "https://openuispec.rsteam.uz/schema/tokens/color.schema.json#/$defs/border_color_entry"
           }
         }
       },
@@ -52,7 +52,7 @@
         "type": "object",
         "description": "Custom color group",
         "additionalProperties": {
-          "$ref": "https://openuispec.org/schema/tokens/color.schema.json#/$defs/color_entry"
+          "$ref": "https://openuispec.rsteam.uz/schema/tokens/color.schema.json#/$defs/color_entry"
         }
       }
     }
@@ -68,10 +68,10 @@
           "type": "string"
         },
         "range": {
-          "$ref": "https://openuispec.org/schema/defs/common.schema.json#/$defs/hsl_range"
+          "$ref": "https://openuispec.rsteam.uz/schema/defs/common.schema.json#/$defs/hsl_range"
         },
         "on_color": {
-          "$ref": "https://openuispec.org/schema/defs/common.schema.json#/$defs/on_color"
+          "$ref": "https://openuispec.rsteam.uz/schema/defs/common.schema.json#/$defs/on_color"
         },
         "contrast_min": {
           "type": "number"

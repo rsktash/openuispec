@@ -398,7 +398,7 @@ function buildAjv(): AjvInstance {
   return ajv;
 }
 
-const BASE = "https://openuispec.org/schema/";
+const BASE = "https://openuispec.rsteam.uz/schema/";
 
 // ── validate one file ────────────────────────────────────────────────
 

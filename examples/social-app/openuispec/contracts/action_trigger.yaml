@@ -15,6 +15,10 @@ action_trigger:
         text: "color.brand.primary.on_color"
         border_width: 0
         shape: "2px 24px 2px 24px"
+        states:
+          disabled:
+            background: "color.surface.tertiary"
+            text: "color.text.tertiary"
       platform_mapping:
         ios: { shape: "RoundedCapShape(diagonal: .primary)" }
         android: { shape: "RoundedCapShape(diagonal = Primary)" }
@@ -36,6 +40,10 @@ action_trigger:
         text: "color.text.primary"
         border: { color: "color.border.strong", width: 1 }
         shape: "24px 2px 24px 2px"
+        states:
+          disabled:
+            text: "color.text.tertiary"
+            border: { color: "color.border.default", width: 1 }
       platform_mapping:
         ios: { shape: "RoundedCapShape(diagonal: .alternate)" }
         android: { shape: "RoundedCapShape(diagonal = Alternate)" }
@@ -56,6 +64,15 @@ action_trigger:
         text_selected: "color.brand.accent.on_color"
         border: { color: "color.border.default", width: 1 }
         shape: "2px 24px 2px 24px"
+        states:
+          default:
+            background: "transparent"
+            text: "color.text.primary"
+            border: { color: "color.border.default", width: 1 }
+          selected:
+            background: "color.brand.accent"
+            text: "color.brand.accent.on_color"
+            border: { color: "color.brand.accent", width: 1 }
       platform_mapping:
         ios: { shape: "RoundedCapShape(diagonal: .primary)" }
         android: { shape: "RoundedCapShape(diagonal = Primary)" }
@@ -71,6 +88,10 @@ action_trigger:
         background: "color.semantic.danger"
         text: "color.semantic.danger.on_color"
         shape: "2px 24px 2px 24px"
+        states:
+          disabled:
+            background: "color.surface.tertiary"
+            text: "color.text.tertiary"
       platform_mapping:
         ios: { shape: "RoundedCapShape(diagonal: .primary)", role: "destructive" }
         android: { shape: "RoundedCapShape(diagonal = Primary)" }

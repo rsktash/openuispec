@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://openuispec.org/schema/defs/validation.schema.json",
+  "$id": "https://openuispec.rsteam.uz/schema/defs/validation.schema.json",
   "title": "OpenUISpec Validation",
   "description": "Validation rule definitions for input_field contracts (Section 13)",
 

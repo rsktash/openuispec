@@ -1,13 +1,13 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://openuispec.org/schema/platform.schema.json",
+  "$id": "https://openuispec.rsteam.uz/schema/platform.schema.json",
   "title": "OpenUISpec Platform Adaptation",
   "description": "Platform-specific overrides, behaviors, and generation config. Root key is the platform name.",
   "type": "object",
   "minProperties": 1,
   "maxProperties": 1,
   "additionalProperties": {
-    "$ref": "https://openuispec.org/schema/platform.schema.json#/$defs/platform_def"
+    "$ref": "https://openuispec.rsteam.uz/schema/platform.schema.json#/$defs/platform_def"
   },
   "$defs": {
     "platform_def": {

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://openuispec.org/schema/tokens/themes.schema.json",
+  "$id": "https://openuispec.rsteam.uz/schema/tokens/themes.schema.json",
   "title": "OpenUISpec Themes",
   "description": "Theme variants with token overrides and platform capabilities",
   "type": "object",
@@ -20,7 +20,7 @@
           "type": "object",
           "description": "Named theme variants with token overrides",
           "additionalProperties": {
-            "$ref": "https://openuispec.org/schema/tokens/themes.schema.json#/$defs/theme_variant"
+            "$ref": "https://openuispec.rsteam.uz/schema/tokens/themes.schema.json#/$defs/theme_variant"
           }
         },
         "platform": {

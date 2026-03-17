@@ -16,6 +16,7 @@
   --color-border-default: #e0dcd6;
   --color-border-strong: #c5c0b8;
   --color-semantic-danger: #d43b3b;
+  --color-semantic-danger-on: #ffffff;
   color-scheme: light;
 }
 

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://openuispec.org/schema/openuispec.schema.json",
+  "$id": "https://openuispec.rsteam.uz/schema/openuispec.schema.json",
   "title": "OpenUISpec Root Manifest",
   "description": "Root manifest file (openuispec.yaml) defining project, includes, generation, data model, and API",
   "type": "object",
@@ -163,7 +163,7 @@
       "type": "object",
       "description": "Custom formatter definitions for format expressions",
       "additionalProperties": {
-        "$ref": "https://openuispec.org/schema/openuispec.schema.json#/$defs/formatter_def"
+        "$ref": "https://openuispec.rsteam.uz/schema/openuispec.schema.json#/$defs/formatter_def"
       }
     },
     "mappers": {
@@ -180,7 +180,7 @@
       "type": "object",
       "description": "Application data model definitions",
       "additionalProperties": {
-        "$ref": "https://openuispec.org/schema/openuispec.schema.json#/$defs/model_def"
+        "$ref": "https://openuispec.rsteam.uz/schema/openuispec.schema.json#/$defs/model_def"
       }
     },
     "custom_contracts": {
@@ -206,7 +206,7 @@
           "additionalProperties": {
             "type": "object",
             "additionalProperties": {
-              "$ref": "https://openuispec.org/schema/openuispec.schema.json#/$defs/endpoint_def"
+              "$ref": "https://openuispec.rsteam.uz/schema/openuispec.schema.json#/$defs/endpoint_def"
             }
           }
         }
@@ -246,7 +246,7 @@
       "type": "object",
       "description": "Data model \u2014 map of field names to field definitions",
       "additionalProperties": {
-        "$ref": "https://openuispec.org/schema/openuispec.schema.json#/$defs/field_def"
+        "$ref": "https://openuispec.rsteam.uz/schema/openuispec.schema.json#/$defs/field_def"
       }
     },
     "field_def": {

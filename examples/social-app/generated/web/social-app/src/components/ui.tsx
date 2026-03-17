@@ -73,7 +73,7 @@ export function ActionButton({
       : variant === "secondary"
         ? "rounded-cap-alternate border-[var(--color-border-strong)] bg-transparent text-[var(--color-text-primary)]"
         : variant === "destructive"
-          ? "rounded-cap-primary border-transparent bg-[var(--color-semantic-danger)] text-white"
+          ? "rounded-cap-primary border-transparent bg-[var(--color-semantic-danger)] text-[var(--color-semantic-danger-on)]"
           : variant === "fab"
             ? "rounded-cap-primary border-transparent bg-[var(--color-brand-primary)] text-[var(--color-brand-primary-on)] shadow-md"
           : selected

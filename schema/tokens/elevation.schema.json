@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://openuispec.org/schema/tokens/elevation.schema.json",
+  "$id": "https://openuispec.rsteam.uz/schema/tokens/elevation.schema.json",
   "title": "OpenUISpec Elevation Tokens",
   "description": "Elevation/shadow definitions with per-platform values",
   "type": "object",
@@ -12,7 +12,7 @@
     "elevation": {
       "type": "object",
       "additionalProperties": {
-        "$ref": "https://openuispec.org/schema/tokens/elevation.schema.json#/$defs/elevation_entry"
+        "$ref": "https://openuispec.rsteam.uz/schema/tokens/elevation.schema.json#/$defs/elevation_entry"
       }
     }
   },

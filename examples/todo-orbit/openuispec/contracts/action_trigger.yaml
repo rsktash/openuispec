@@ -5,11 +5,21 @@ action_trigger:
       text: "color.brand.primary.on_color"
       border: { width: 2, color: "color.brand.primary" }
       cut_size: "spacing.sm"
+      states:
+        disabled:
+          background: "color.surface.secondary"
+          text: "color.text.tertiary"
+          border: { width: 2, color: "color.border.default" }
     ghost:
       background: "color.surface.secondary"
       text: "color.text.primary"
       border: { width: 2, color: "color.brand.primary" }
       cut_size: "spacing.sm"
+      states:
+        disabled:
+          background: "color.surface.secondary"
+          text: "color.text.tertiary"
+          border: { width: 2, color: "color.border.default" }
   platform_mapping:
     ios:
       primary: { shape: "CutCornerShape", clip: true, style: ".plain" }

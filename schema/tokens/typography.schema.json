@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://openuispec.org/schema/tokens/typography.schema.json",
+  "$id": "https://openuispec.rsteam.uz/schema/tokens/typography.schema.json",
   "title": "OpenUISpec Typography Tokens",
   "description": "Font families and type scale definitions",
   "type": "object",
@@ -16,14 +16,14 @@
           "type": "object",
           "description": "Named font family definitions",
           "additionalProperties": {
-            "$ref": "https://openuispec.org/schema/tokens/typography.schema.json#/$defs/font_family_entry"
+            "$ref": "https://openuispec.rsteam.uz/schema/tokens/typography.schema.json#/$defs/font_family_entry"
           }
         },
         "scale": {
           "type": "object",
           "description": "Named type scale entries",
           "additionalProperties": {
-            "$ref": "https://openuispec.org/schema/tokens/typography.schema.json#/$defs/scale_entry"
+            "$ref": "https://openuispec.rsteam.uz/schema/tokens/typography.schema.json#/$defs/scale_entry"
           }
         }
       },
@@ -74,7 +74,7 @@
           "type": "string"
         },
         "size": {
-          "$ref": "https://openuispec.org/schema/defs/common.schema.json#/$defs/size_value"
+          "$ref": "https://openuispec.rsteam.uz/schema/defs/common.schema.json#/$defs/size_value"
         },
         "weight": {
           "type": "integer"

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://openuispec.org/schema/locale.schema.json",
+  "$id": "https://openuispec.rsteam.uz/schema/locale.schema.json",
   "title": "OpenUISpec Locale",
   "description": "Locale file with $locale, $direction, and translation key-value pairs (ICU MessageFormat)",
   "type": "object",
