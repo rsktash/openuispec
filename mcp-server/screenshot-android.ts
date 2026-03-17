@@ -276,11 +276,11 @@ export async function installAndLaunch(
   await adbShell(adb, serial, `am force-stop ${appInfo.applicationId}`);
 
   if (route) {
-    // Navigate via deep link
-    await adbShell(adb, serial, `am start -a android.intent.action.VIEW -d "${route}" ${appInfo.applicationId}`);
+    // Navigate via deep link — must specify component explicitly
+    await adbShell(adb, serial, `am start -W -a android.intent.action.VIEW -d "${route}" ${appInfo.applicationId}/${appInfo.launchActivity}`);
   } else {
     // Launch the main activity
-    await adbShell(adb, serial, `am start -n ${appInfo.applicationId}/${appInfo.launchActivity}`);
+    await adbShell(adb, serial, `am start -W -n ${appInfo.applicationId}/${appInfo.launchActivity}`);
   }
 }
 
