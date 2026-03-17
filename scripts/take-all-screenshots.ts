@@ -22,6 +22,7 @@ import {
   buildApk,
   navigateByTaps,
   captureScreenshot as captureAndroidScreenshot,
+  cleanEmulatorStorage,
 } from "../mcp-server/screenshot-android.js";
 import {
   type IOSAppInfo,
@@ -220,6 +221,10 @@ async function takeAndroidScreenshots(project: string, def: NonNullable<ProjectD
   const androidDir = join(ROOT, def.dir);
   const adb = findAdb();
   const serial = await getConnectedEmulator(adb);
+
+  // Free emulator storage before build/install
+  log(`Cleaning emulator storage...`);
+  await cleanEmulatorStorage(adb, serial);
 
   // Build and extract app info using shared helpers
   const appInfo = extractAndroidAppInfo(androidDir);

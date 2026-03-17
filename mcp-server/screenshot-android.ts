@@ -210,6 +210,23 @@ export async function adbExec(adb: string, serial: string, args: string): Promis
   return stdout.trim();
 }
 
+// ── emulator storage cleanup ─────────────────────────────────────────
+
+export async function cleanEmulatorStorage(adb: string, serial: string): Promise<void> {
+  try {
+    // Clear package manager cache
+    await adbShell(adb, serial, `pm trim-caches 512M`);
+  } catch { /* may require root, skip */ }
+  try {
+    // Remove leftover screenshot/temp files
+    await adbShell(adb, serial, `rm -f /sdcard/openuispec_screenshot.png /sdcard/ui_dump.xml /sdcard/screenshot.png`);
+  } catch { /* ignore */ }
+  try {
+    // Clear temp files
+    await adbShell(adb, serial, `rm -rf /data/local/tmp/*.apk`);
+  } catch { /* ignore */ }
+}
+
 // ── build APK ───────────────────────────────────────────────────────
 
 export async function buildApk(androidDir: string, moduleName: string): Promise<string> {
@@ -405,26 +422,29 @@ export async function takeAndroidScreenshot(
   const adb = findAdb();
   const serial = await getConnectedEmulator(adb);
 
-  // 3. Build APK
+  // 3. Free emulator storage before build/install
+  await cleanEmulatorStorage(adb, serial);
+
+  // 4. Build APK
   const apkPath = await buildApk(androidDir, appInfo.moduleName);
 
-  // 4. Set theme if requested
+  // 5. Set theme if requested
   if (theme) {
     await setTheme(adb, serial, theme);
   }
 
-  // 5. Install and launch
+  // 6. Install and launch
   await installAndLaunch(adb, serial, apkPath, appInfo, route);
 
-  // 6. Wait for app to be ready and content to load
+  // 7. Wait for app to be ready and content to load
   await waitForAppReady(adb, serial, appInfo.applicationId, wait_for);
 
-  // 7. Navigate via UI taps if specified
+  // 8. Navigate via UI taps if specified
   if (nav && nav.length > 0) {
     await navigateByTaps(adb, serial, nav);
   }
 
-  // 8. Capture screenshot
+  // 9. Capture screenshot
   const screenLabel = screen ?? "main";
   const themeLabel = theme ?? "default";
   const filename = `${screenLabel}_${themeLabel}.png`;
