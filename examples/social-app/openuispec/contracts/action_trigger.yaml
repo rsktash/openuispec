@@ -21,11 +21,13 @@ action_trigger:
         web: { style: "border-radius: 2px 24px 2px 24px" }
       generation:
         must_handle:
-          - "Rounded cap primary: TR and BL corners ~24px, TL and BR corners 2px"
-          - "Dark fill background with high-contrast white text"
-          - "Press state: scale down slightly with spring animation"
+          - "[common] Rounded cap primary: TR and BL corners ~24px, TL and BR corners 2px"
+          - "[common] Dark fill background with high-contrast white text"
+          - "[common] Press state: scale down slightly with spring animation"
+          - "[web] When action triggers are adjacent siblings, place them in an explicit group/container layout instead of raw inline text flow."
+          - "[web] Mixed icon-bearing and text-only actions keep consistent cross-axis alignment."
         should_handle:
-          - "Haptic feedback on press (iOS)"
+          - "[ios] Haptic feedback on press"
 
     secondary:
       semantic: "Secondary action — bordered, rounded cap alternate diagonal (mirrors primary)"
@@ -40,8 +42,10 @@ action_trigger:
         web: { style: "border-radius: 24px 2px 24px 2px" }
       generation:
         must_handle:
-          - "Rounded cap alternate: TL and BR corners ~24px, TR and BL corners 2px"
-          - "Visible border, no fill. Mirrors primary for visual rhythm."
+          - "[common] Rounded cap alternate: TL and BR corners ~24px, TR and BL corners 2px"
+          - "[common] Visible border, no fill. Mirrors primary for visual rhythm."
+          - "[web] When action triggers are adjacent siblings, place them in an explicit group/container layout instead of raw inline text flow."
+          - "[web] Mixed icon-bearing and text-only actions keep consistent cross-axis alignment."
 
     chip:
       semantic: "Chip / tag — rounded cap primary diagonal, accent fill when selected"
@@ -58,8 +62,8 @@ action_trigger:
         web: { style: "border-radius: 2px 24px 2px 24px" }
       generation:
         must_handle:
-          - "Same diagonal as primary, radius scales to chip height (~16-20px for 32-40px tall chips)"
-          - "Toggle between default (bordered) and selected (accent fill) states"
+          - "[common] Same diagonal as primary, radius scales to chip height (~16-20px for 32-40px tall chips)"
+          - "[common] Toggle between default (bordered) and selected (accent fill) states"
 
     destructive:
       semantic: "Destructive action — danger color, rounded cap primary diagonal"
@@ -71,3 +75,30 @@ action_trigger:
         ios: { shape: "RoundedCapShape(diagonal: .primary)", role: "destructive" }
         android: { shape: "RoundedCapShape(diagonal = Primary)" }
         web: { style: "border-radius: 2px 24px 2px 24px" }
+      generation:
+        must_handle:
+          - "[common] Danger color background with high-contrast on-color text."
+          - "[web] When action triggers are adjacent siblings, place them in an explicit group/container layout instead of raw inline text flow."
+          - "[web] Mixed icon-bearing and text-only actions keep consistent cross-axis alignment."
+
+    fab:
+      semantic: "Floating action button — elevated icon-only primary trigger"
+      tokens:
+        background: "color.brand.primary"
+        icon_color: "color.brand.primary.on_color"
+        shape: "2px 24px 2px 24px"
+        size: 56
+        icon_size: 24
+        elevation: "elevation.md"
+      platform_mapping:
+        ios: { shape: "RoundedCapShape(diagonal: .primary)", size: 56 }
+        android: { shape: "RoundedCapShape(diagonal = Primary)", size: "56.dp" }
+        web: { style: "border-radius: 2px 24px 2px 24px; width: 56px; height: 56px" }
+      generation:
+        must_handle:
+          - "[common] Rounded cap primary shape, icon-only centered layout"
+          - "[common] Brand primary background with white icon"
+          - "[common] Elevation shadow (md level)"
+          - "[common] Press state: scale down slightly with spring animation"
+        should_handle:
+          - "[ios] Haptic feedback on press"

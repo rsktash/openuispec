@@ -208,6 +208,8 @@ i18n:
 
 generation:
   targets: [${targetList}]
+  # extra_rules:                        # Optional: project-wide AI authoring conventions
+  #   - "Generation hint strings may start with [common], [ios], [android], or [web] to indicate scope."
   # output_dir:                          # Optional: map targets to code directories
   #   ios: "../ios-app/"                  # relative to this file
   #   android: "../android-app/"
@@ -272,10 +274,14 @@ When the openuispec MCP server is configured, AI assistants should use these too
 | \`openuispec_spec_schema\` | Get the full JSON schema for a specific spec type — exact structure, required fields, allowed values. |
 | \`openuispec_prepare\` | **Before any UI code generation.** Returns spec context, platform config, and constraints. |
 | \`openuispec_read_specs\` | Load spec file contents — the authoritative source for tokens, screens, contracts. |
-| \`openuispec_check\` | After editing spec files. Validates schema + semantics + readiness. |
+| \`openuispec_check\` | After editing spec files. Validates schema + semantics + readiness. Optional \`screens\`/\`contracts\` params scope the audit. |
 | \`openuispec_validate\` | Schema-only validation, optionally by group. |
 | \`openuispec_drift\` | Detect spec changes since last snapshot. |
 | \`openuispec_status\` | To understand cross-target state (baselines, drift, next steps). |
+| \`openuispec_get_screen\` | Get a single screen spec by name — faster than \`read_specs\` for targeted edits. |
+| \`openuispec_get_contract\` | Get a single contract spec, optionally filtered to one variant. |
+| \`openuispec_get_tokens\` | Get tokens for a specific category (color, typography, spacing, etc.). |
+| \`openuispec_get_locale\` | Get a single locale file, optionally filtered to specific keys. |
 
 ## CLI commands
 
@@ -344,6 +350,15 @@ Call these MCP tools directly. They return structured JSON with everything you n
 - Call \`openuispec_spec_types\` to discover available spec types.
 - Call \`openuispec_spec_schema\` with the specific type to get the full JSON schema.
 - Write the spec file following the schema exactly.
+
+**Focused getters (prefer these for incremental edits over \`read_specs\`):**
+- \`openuispec_get_screen(name)\` — single screen spec
+- \`openuispec_get_contract(name, variant?)\` — single contract, optionally one variant
+- \`openuispec_get_tokens(category)\` — single token category (color, typography, spacing, etc.)
+- \`openuispec_get_locale(locale, keys?)\` — single locale file, optionally filtered keys
+- \`openuispec_check(target, screens?, contracts?)\` — scoped audit for specific screens/contracts
+
+Use \`read_specs\` for full-project generation; use focused getters when editing one screen or contract.
 
 **Other tools:**
 - \`openuispec_status\` — cross-target summary, good starting point

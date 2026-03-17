@@ -2,7 +2,7 @@ import { useMemo, useState, startTransition } from "react";
 import { useNavigate } from "react-router";
 import { useI18n } from "../i18n";
 import { selectFeed, selectStories, selectUserById, useAppStore } from "../state/store";
-import { CreatorCard, PostCard, StoryCard } from "../components/cards";
+import { PostCard, StoryCard } from "../components/cards";
 import { ActionButton, EmptyState, ErrorState, ScreenScaffold, SectionTitle, SkeletonList } from "../components/ui";
 import { useSimulatedLoading, useUiScenario } from "../lib/utils";
 
@@ -56,15 +56,7 @@ export function HomeFeedScreen() {
       </section>
 
       <section className="space-y-4">
-        <SectionTitle
-          action={
-            <ActionButton variant="primary" icon="create_post" onClick={() => navigate("/create")}>
-              {t("nav.create")}
-            </ActionButton>
-          }
-        >
-          Feed
-        </SectionTitle>
+        <SectionTitle>Feed</SectionTitle>
 
         {scenario === "error" ? (
           <ErrorState title="Feed unavailable" description="The mock feed request failed. Remove `?ui=error` to restore the normal state." />
@@ -97,17 +89,15 @@ export function HomeFeedScreen() {
         )}
       </section>
 
-      <section className="space-y-4 xl:hidden">
-        <SectionTitle>Suggested Creators</SectionTitle>
-        <div className="no-scrollbar flex snap-x gap-3 overflow-x-auto pb-1">
-          {state.users
-            .filter((user) => user.id !== state.currentUserId)
-            .slice(0, 3)
-            .map((user) => (
-              <CreatorCard key={user.id} user={user} to={`/u/${user.id}`} />
-            ))}
-        </div>
-      </section>
+      <ActionButton
+        variant="fab"
+        icon="create_post"
+        aria-label={t("nav.create")}
+        className="fixed bottom-20 right-4 z-30 lg:bottom-8 lg:right-8"
+        onClick={() => navigate("/create")}
+      >
+        {t("nav.create")}
+      </ActionButton>
     </ScreenScaffold>
   );
 }

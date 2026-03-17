@@ -40,8 +40,17 @@ export function Surface({
   return <div className={cn("rounded-surface border border-[var(--color-border-default)] bg-[var(--color-surface-secondary)] shadow-sm", className)}>{children}</div>;
 }
 
+export function ActionGroup({
+  children,
+  className,
+}: PropsWithChildren<{
+  className?: string;
+}>) {
+  return <div className={cn("flex flex-col items-start gap-3", className)}>{children}</div>;
+}
+
 type ActionButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: "primary" | "secondary" | "chip" | "destructive";
+  variant?: "primary" | "secondary" | "chip" | "destructive" | "fab";
   icon?: Parameters<typeof Icon>[0]["name"];
   fullWidth?: boolean;
   selected?: boolean;
@@ -65,6 +74,8 @@ export function ActionButton({
         ? "rounded-cap-alternate border-[var(--color-border-strong)] bg-transparent text-[var(--color-text-primary)]"
         : variant === "destructive"
           ? "rounded-cap-primary border-transparent bg-[var(--color-semantic-danger)] text-white"
+          : variant === "fab"
+            ? "rounded-cap-primary border-transparent bg-[var(--color-brand-primary)] text-[var(--color-brand-primary-on)] shadow-md"
           : selected
             ? "rounded-cap-primary border-transparent bg-[var(--color-brand-accent)] text-[var(--color-brand-accent-on)]"
             : "rounded-cap-primary border-[var(--color-border-default)] bg-transparent text-[var(--color-text-primary)]";
@@ -72,7 +83,8 @@ export function ActionButton({
   return (
     <button
       className={cn(
-        "interactive-press inline-flex min-h-11 items-center justify-center gap-2 border px-4 py-3 text-sm font-semibold transition",
+        "interactive-press inline-flex min-h-11 shrink-0 items-center justify-center gap-2 whitespace-nowrap align-middle border px-4 py-3 text-sm font-semibold transition",
+        variant === "fab" && "h-14 w-14 gap-0 px-0 py-0",
         fullWidth && "w-full",
         variantClass,
         className,
@@ -80,7 +92,7 @@ export function ActionButton({
       {...props}
     >
       {icon ? <Icon name={icon} className="h-5 w-5" /> : null}
-      <span>{children}</span>
+      {variant === "fab" ? (children ? <span className="sr-only">{children}</span> : null) : <span>{children}</span>}
       {trailing}
     </button>
   );

@@ -83,6 +83,8 @@ includes:
 
 generation:
   targets: [ios, android, web]
+  extra_rules:
+    - "Generation hint strings may start with [common], [ios], [android], or [web] to indicate scope."
   ai_model: "any"                    # no model lock-in
   output_format:
     ios: { language: swift, framework: swiftui }
@@ -3247,6 +3249,17 @@ ios:
 - Implement items listed in `generation.may_handle`
 - Generate test code based on `test_cases`
 - Add platform-specific enhancements beyond what the contract specifies
+
+### Scoped generation hint labels
+
+Projects may declare authoring conventions in `generation.extra_rules` inside `openuispec.yaml`. One supported convention is prefixing generation hint strings with scope labels such as `[common]`, `[ios]`, `[android]`, and `[web]`. These labels are advisory authoring metadata for humans and AI; they do not change schema semantics unless downstream tooling chooses to interpret them.
+
+```yaml
+generation:
+  targets: [ios, android, web]
+  extra_rules:
+    - "Generation hint strings may start with [common], [ios], [android], or [web] to indicate scope."
+```
 
 ### 12.8 Extending standard contracts
 

@@ -133,19 +133,21 @@ fun SettingsScreen(
             )
 
             ContractSectionHeader(stringResource(R.string.settings_account))
-            ActionTriggerButton(
-                text = stringResource(R.string.settings_edit_profile),
-                onClick = onEditProfileClick,
-                variant = ActionTriggerVariant.Secondary,
-                fullWidth = true,
-                icon = { Icon(Icons.Default.Edit, contentDescription = null) },
-            )
-            ActionTriggerButton(
-                text = stringResource(R.string.settings_logout),
-                onClick = { showLogoutDialog = true },
-                variant = ActionTriggerVariant.Destructive,
-                fullWidth = true,
-            )
+            Column(verticalArrangement = Arrangement.spacedBy(Spacing.SM)) {
+                ActionTriggerButton(
+                    text = stringResource(R.string.settings_edit_profile),
+                    onClick = onEditProfileClick,
+                    variant = ActionTriggerVariant.Secondary,
+                    fullWidth = false,
+                    icon = { Icon(Icons.Default.Edit, contentDescription = null) },
+                )
+                ActionTriggerButton(
+                    text = stringResource(R.string.settings_logout),
+                    onClick = { showLogoutDialog = true },
+                    variant = ActionTriggerVariant.Destructive,
+                    fullWidth = false,
+                )
+            }
         }
     }
 

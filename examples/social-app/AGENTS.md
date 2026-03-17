@@ -38,6 +38,15 @@ Call these MCP tools directly. They return structured JSON with everything you n
 - Call `openuispec_spec_schema` with the specific type to get the full JSON schema.
 - Write the spec file following the schema exactly.
 
+**Focused getters (prefer these for incremental edits over `read_specs`):**
+- `openuispec_get_screen(name)` — single screen spec
+- `openuispec_get_contract(name, variant?)` — single contract, optionally one variant
+- `openuispec_get_tokens(category)` — single token category (color, typography, spacing, etc.)
+- `openuispec_get_locale(locale, keys?)` — single locale file, optionally filtered keys
+- `openuispec_check(target, screens?, contracts?)` — scoped audit for specific screens/contracts
+
+Use `read_specs` for full-project generation; use focused getters when editing one screen or contract.
+
 **Other tools:**
 - `openuispec_status` — cross-target summary, good starting point
 - `openuispec_drift` with `explain: true` — property-level spec changes

@@ -5,12 +5,11 @@ import { Icon } from "../lib/icons";
 import type { SizeClass } from "../lib/tokens";
 import { cn, useSizeClass } from "../lib/utils";
 import { selectUnreadNotifications, useAppStore } from "../state/store";
-import { ActionButton } from "./ui";
+import { ActionButton, ActionGroup } from "./ui";
 
 const primaryRoutes = [
   { to: "/home", icon: "home" as const, labelKey: "nav.home" },
   { to: "/discover", icon: "discover" as const, labelKey: "nav.discover" },
-  { to: "/create", icon: "create_post" as const, labelKey: "nav.create" },
   { to: "/notifications", icon: "notifications" as const, labelKey: "nav.notifications" },
   { to: "/profile", icon: "profile" as const, labelKey: "nav.profile" },
 ];
@@ -91,6 +90,19 @@ export function AppShell() {
         </main>
 
         {sizeClass !== "expanded" ? <BottomTabBar unreadCount={unreadCount} /> : null}
+
+        {location.pathname.startsWith("/home") || location.pathname === "/" ? (
+          <Link
+            to="/create"
+            className={cn(
+              "interactive-press fixed z-30 flex h-14 w-14 items-center justify-center rounded-cap-primary bg-[var(--color-brand-primary)] text-white shadow-md",
+              sizeClass === "expanded" ? "bottom-8 right-8" : "bottom-20 right-4",
+            )}
+            aria-label={t("nav.create")}
+          >
+            <Icon name="create_post" className="h-6 w-6" />
+          </Link>
+        ) : null}
       </div>
 
       {toast ? (
@@ -106,7 +118,7 @@ export function AppShell() {
           <div className="w-full max-w-md rounded-surface border border-[var(--color-border-default)] bg-[var(--color-surface-primary)] p-6 shadow-lg">
             <h2 className="text-xl font-semibold">{dialog.title}</h2>
             <p className="mt-2 text-sm leading-6 text-[var(--color-text-secondary)]">{dialog.message}</p>
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
+            <ActionGroup className="mt-6 sm:flex-row sm:items-center sm:justify-end">
               {dialog.actions.map((action) => (
                 <ActionButton
                   key={action.label}
@@ -119,7 +131,7 @@ export function AppShell() {
                   {action.label}
                 </ActionButton>
               ))}
-            </div>
+            </ActionGroup>
           </div>
         </div>
       ) : null}
@@ -131,7 +143,7 @@ function BottomTabBar({ unreadCount }: { unreadCount: number }) {
   const { t } = useI18n();
   return (
     <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-[var(--color-border-default)] bg-[color:rgba(250,248,245,0.94)] px-2 py-2 backdrop-blur-xl">
-      <div className="mx-auto grid max-w-xl grid-cols-5 gap-1">
+      <div className="mx-auto grid max-w-xl grid-cols-4 gap-1">
         {primaryRoutes.map((route) => (
           <NavLink
             key={route.to}

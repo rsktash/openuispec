@@ -35,10 +35,6 @@ home_feed:
           label: "$t:nav.discover"
           icon: "discover"
           destination: "screens/discover"
-        - id: "create"
-          label: "$t:nav.create"
-          icon: "create_post"
-          destination: "flows/create_post"
         - id: "notifications"
           label: "$t:nav.notifications"
           icon: "notifications"
@@ -121,3 +117,22 @@ home_feed:
         pagination:
           type: infinite_scroll
           cursor_field: "cursor"
+
+      - id: create_fab
+        contract: action_trigger
+        variant: fab
+        position: "floating"
+        props:
+          icon: "create_post"
+          label: "$t:nav.create"
+          aria_label: "$t:nav.create"
+        action:
+          type: navigate
+          destination: "flows/create_post"
+        adaptive:
+          compact:
+            position: "bottom-right"
+            inset: { bottom: 80, right: 16 }
+          expanded:
+            position: "bottom-right"
+            inset: { bottom: 32, right: 32 }

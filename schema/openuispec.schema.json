@@ -104,6 +104,13 @@
             "type": "string"
           }
         },
+        "extra_rules": {
+          "type": "array",
+          "description": "Project-wide authoring and generation conventions for AI, including optional scoped hint labels such as [common], [ios], [android], and [web].",
+          "items": {
+            "type": "string"
+          }
+        },
         "output_dir": {
           "type": "object",
           "description": "Per-target output directory (relative to openuispec.yaml). Defaults to generated/<target>/<project_name> if not set.",

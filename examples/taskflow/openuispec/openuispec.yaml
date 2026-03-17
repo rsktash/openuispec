@@ -31,6 +31,8 @@ i18n:
 
 generation:
   targets: [ios, android, web]
+  extra_rules:
+    - "Generation hint strings may start with [common], [ios], [android], or [web] to indicate scope."
   code_roots:
     backend: "../backend/"
   output_format:

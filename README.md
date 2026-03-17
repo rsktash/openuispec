@@ -115,10 +115,14 @@ Or run directly: `openuispec mcp`
 | `openuispec_spec_schema` | Before creating/editing spec files | Returns the full JSON schema for a specific spec type — exact structure, required fields, allowed values |
 | `openuispec_prepare` | Before UI code generation | Returns spec context, platform config, generation constraints |
 | `openuispec_read_specs` | Before and after generation | Loads spec file contents — the authoritative source for tokens, screens, contracts |
-| `openuispec_check` | After generation | Schema validation + concrete audit checklist from your spec |
+| `openuispec_check` | After generation | Schema validation + concrete audit checklist from your spec. Optional `screens`/`contracts` params scope the audit |
 | `openuispec_validate` | After spec edits | Schema-only validation, optionally filtered by group |
 | `openuispec_drift` | Before updates | Detect spec drift since last snapshot, with semantic explanation |
 | `openuispec_status` | Anytime | Cross-target summary: baselines, drift, next steps |
+| `openuispec_get_screen` | Incremental edits | Get a single screen spec by name — faster than `read_specs` for targeted work |
+| `openuispec_get_contract` | Incremental edits | Get a single contract spec, optionally filtered to one variant |
+| `openuispec_get_tokens` | Incremental edits | Get tokens for a specific category (color, typography, spacing, etc.) |
+| `openuispec_get_locale` | Incremental edits | Get a single locale file, optionally filtered to specific keys |
 
 The server includes **protocol-level instructions** that trigger on UI-related requests independently of CLAUDE.md rules — so even if CLAUDE.md is buried under other project rules, the MCP enforcement still works.
 
@@ -186,7 +190,7 @@ openuispec/
 │   ├── index.ts                        # Entry point
 │   └── init.ts                         # Project scaffolding + AI rules
 ├── mcp-server/                          # MCP server (openuispec-mcp)
-│   └── index.ts                        # Stdio transport, 8 tools
+│   └── index.ts                        # Stdio transport, 12 tools
 ├── check/                               # Composite validation command
 │   └── index.ts                        # Schema + semantic + readiness
 ├── drift/                               # Drift detection (spec change tracking)
@@ -245,6 +249,8 @@ By default, drift stores state in `generated/<target>/<project>/`. To point targ
 ```yaml
 generation:
   targets: [ios, android, web]
+  extra_rules:
+    - "Generation hint strings may start with [common], [ios], [android], or [web] to indicate scope."
   output_dir:
     web: "../web-ui/"
     android: "../kmp-ui/"
@@ -256,6 +262,8 @@ generation:
 Paths are relative to `openuispec.yaml`. The `.openuispec-state.json` file is stored inside each output directory and records spec file hashes plus the git baseline commit metadata captured at snapshot time.
 
 If `api.endpoints` are declared, `generation.code_roots.backend` is required. It should point at the backend folder the AI must inspect when generating API clients or wiring request/response behavior.
+
+`generation.extra_rules` can hold project-wide generation conventions for AI and humans. For example, projects may declare that generation hint strings use prefixes such as `[common]`, `[ios]`, `[android]`, and `[web]` to indicate scope.
 
 `openuispec drift --snapshot --target <target>` requires that target output directory to already exist. If it does not, generate the target code first, then snapshot the accepted baseline.
 

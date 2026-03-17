@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router";
 import { useI18n } from "../i18n";
-import { ActionButton, ScreenScaffold, SectionTitle, SelectField, ToggleField } from "../components/ui";
+import { ActionButton, ActionGroup, ScreenScaffold, SectionTitle, SelectField, ToggleField } from "../components/ui";
 import { useAppStore } from "../state/store";
 
 export function SettingsScreen() {
@@ -49,28 +49,30 @@ export function SettingsScreen() {
 
       <section className="space-y-4">
         <SectionTitle>{t("settings.account")}</SectionTitle>
-        <ActionButton variant="secondary" icon="edit" onClick={() => navigate("/profile/edit")}>
-          {t("settings.edit_profile")}
-        </ActionButton>
-        <ActionButton
-          variant="destructive"
-          onClick={() =>
-            state.openDialog({
-              title: t("settings.logout"),
-              message: t("settings.logout_confirm"),
-              actions: [
-                { label: t("common.cancel"), variant: "secondary", onPress: () => undefined },
-                {
-                  label: t("settings.logout"),
-                  variant: "destructive",
-                  onPress: () => state.logout(),
-                },
-              ],
-            })
-          }
-        >
-          {t("settings.logout")}
-        </ActionButton>
+        <ActionGroup className="gap-2">
+          <ActionButton variant="secondary" icon="edit" onClick={() => navigate("/profile/edit")}>
+            {t("settings.edit_profile")}
+          </ActionButton>
+          <ActionButton
+            variant="destructive"
+            onClick={() =>
+              state.openDialog({
+                title: t("settings.logout"),
+                message: t("settings.logout_confirm"),
+                actions: [
+                  { label: t("common.cancel"), variant: "secondary", onPress: () => undefined },
+                  {
+                    label: t("settings.logout"),
+                    variant: "destructive",
+                    onPress: () => state.logout(),
+                  },
+                ],
+              })
+            }
+          >
+            {t("settings.logout")}
+          </ActionButton>
+        </ActionGroup>
       </section>
     </ScreenScaffold>
   );

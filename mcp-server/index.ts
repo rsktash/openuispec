@@ -42,6 +42,12 @@ function getPackageVersion(): string {
   }
 }
 
+// ── spec directory resolver ─────────────────────────────────────────
+
+function resolveSpecDir(projectDir: string, manifest: any, key: string): string {
+  return resolve(projectDir, manifest.includes?.[key] ?? `./${key}/`);
+}
+
 // ── shared tool helpers ──────────────────────────────────────────────
 
 const targetSchema = z.enum(SUPPORTED_TARGETS).describe("Target platform");
@@ -60,7 +66,7 @@ function toolError(err: unknown): { content: [{ type: "text"; text: string }]; i
 
 // ── create server ────────────────────────────────────────────────────
 
-const server = new McpServer(
+export const server = new McpServer(
   {
     name: "openuispec",
     version: getPackageVersion(),
@@ -97,6 +103,14 @@ When you need to create or edit spec files and are unsure of the format:
 2. Call openuispec_spec_schema with the specific type to get the full JSON schema.
 3. Write the spec file following the schema exactly.
 
+FOCUSED GETTERS (prefer these for incremental edits over read_specs):
+- openuispec_get_screen(name) — single screen spec
+- openuispec_get_contract(name, variant?) — single contract, optionally one variant
+- openuispec_get_tokens(category) — single token category (color, typography, spacing, etc.)
+- openuispec_get_locale(locale, keys?) — single locale file, optionally filtered keys
+- openuispec_check(target, screens?, contracts?) — scoped audit for specific screens/contracts
+Use read_specs for full-project generation; use focused getters when editing one screen or contract.
+
 Skip these tools ONLY when the request is purely non-UI (API logic, database, infrastructure, etc.)
 or explicitly platform-specific polish that doesn't affect shared UI semantics.`,
   }
@@ -121,7 +135,7 @@ server.registerTool(
 
 // ── tool: openuispec_check ───────────────────────────────────────────
 
-function buildAuditChecklist(projectDir: string, target: string): string {
+function buildAuditChecklist(projectDir: string, target: string, screenFilter?: string[], contractFilter?: string[]): string {
   const lines: string[] = [
     "POST-GENERATION AUDIT — verify your code against these concrete spec requirements:",
     "",
@@ -133,7 +147,7 @@ function buildAuditChecklist(projectDir: string, target: string): string {
 
   // Extract must_handle from contracts
   const manifest = YAML.parse(fsReadFileSync(join(projectDir, "openuispec.yaml"), "utf-8"));
-  const contractsDir = resolve(projectDir, manifest.includes?.contracts ?? "./contracts/");
+  const contractsDir = resolveSpecDir(projectDir, manifest, "contracts");
 
   if (existsSync(contractsDir)) {
     lines.push("## Contract must_handle requirements");
@@ -141,6 +155,7 @@ function buildAuditChecklist(projectDir: string, target: string): string {
       try {
         const content = YAML.parse(fsReadFileSync(join(contractsDir, file), "utf-8"));
         const contractName = Object.keys(content)[0];
+        if (contractFilter && !contractFilter.includes(contractName)) continue;
         const contract = content[contractName];
         if (!contract?.variants) continue;
 
@@ -168,13 +183,14 @@ function buildAuditChecklist(projectDir: string, target: string): string {
   }
 
   // Extract screens and their sections
-  const screensDir = resolve(projectDir, manifest.includes?.screens ?? "./screens/");
+  const screensDir = resolveSpecDir(projectDir, manifest, "screens");
   if (existsSync(screensDir)) {
     lines.push("## Screens — verify all sections exist in generated code");
     for (const file of readdirSync(screensDir).filter(f => f.endsWith(".yaml")).sort()) {
       try {
         const content = YAML.parse(fsReadFileSync(join(screensDir, file), "utf-8"));
         const screenName = Object.keys(content)[0];
+        if (screenFilter && !screenFilter.includes(screenName)) continue;
         const screen = content[screenName];
         if (screen?.status === "stub") continue;
 
@@ -212,7 +228,7 @@ function buildAuditChecklist(projectDir: string, target: string): string {
   }
 
   // Locale keys count
-  const localesDir = resolve(projectDir, manifest.includes?.locales ?? "./locales/");
+  const localesDir = resolveSpecDir(projectDir, manifest, "locales");
   if (existsSync(localesDir)) {
     const localeFiles = readdirSync(localesDir).filter(f => f.endsWith(".json"));
     if (localeFiles.length > 0) {
@@ -228,7 +244,7 @@ function buildAuditChecklist(projectDir: string, target: string): string {
   }
 
   // Platform-specific checks
-  const platformDir = resolve(projectDir, manifest.includes?.platform ?? "./platform/");
+  const platformDir = resolveSpecDir(projectDir, manifest, "platform");
   const platformPath = join(platformDir, `${target}.yaml`);
   if (existsSync(platformPath)) {
     try {
@@ -254,14 +270,20 @@ function buildAuditChecklist(projectDir: string, target: string): string {
 server.registerTool(
   "openuispec_check",
   {
-    description: "Run composite validation + post-generation audit. Returns schema validation results AND a concrete audit checklist derived from your spec files — listing every contract must_handle item, every screen section, and every locale file that must exist in your generated code. Verify each item.",
-    inputSchema: { target: targetSchema },
+    description: "Run composite validation + post-generation audit. Returns schema validation results AND a concrete audit checklist derived from your spec files — listing every contract must_handle item, every screen section, and every locale file that must exist in your generated code. Verify each item. Use optional screens/contracts params to scope the audit to specific items (validation still runs on all files).",
+    inputSchema: {
+      target: targetSchema,
+      screens: z.array(z.string()).optional().describe("Screen names to audit (e.g. ['home_feed', 'settings']). If omitted, audits all screens."),
+      contracts: z.array(z.string()).optional().describe("Contract names to audit (e.g. ['action_trigger']). If omitted, audits all contracts."),
+    },
   },
-  async ({ target }) => {
+  async ({ target, screens, contracts }) => {
     try {
       const result = buildCheckResult(target, projectCwd);
       const projectDir = findProjectDir(projectCwd);
-      const audit = buildAuditChecklist(projectDir, target);
+      const screenFilter = screens && screens.length > 0 ? screens : undefined;
+      const contractFilter = contracts && contracts.length > 0 ? contracts : undefined;
+      const audit = buildAuditChecklist(projectDir, target, screenFilter, contractFilter);
       return {
         content: [
           { type: "text" as const, text: JSON.stringify(result, null, 2) },
@@ -426,6 +448,174 @@ server.registerTool(
       const schemaPath = join(__dirname, "..", "schema", entry.file);
       const schema = JSON.parse(readFileSync(schemaPath, "utf-8"));
       return toolResult({ type, title: entry.title, schema });
+    } catch (err) {
+      return toolError(err);
+    }
+  }
+);
+
+// ── tool: openuispec_get_screen ──────────────────────────────────────
+
+server.registerTool(
+  "openuispec_get_screen",
+  {
+    description: "Get the parsed content of a single screen spec file. Faster than read_specs when you only need one screen.",
+    inputSchema: {
+      name: z.string().describe("Screen name, e.g. 'home_feed' (matches filename without .yaml)"),
+    },
+  },
+  async ({ name }) => {
+    try {
+      const projectDir = findProjectDir(projectCwd);
+      const manifest = YAML.parse(fsReadFileSync(join(projectDir, "openuispec.yaml"), "utf-8"));
+      const screensDir = resolveSpecDir(projectDir, manifest, "screens");
+      const filePath = join(screensDir, `${name}.yaml`);
+      if (!existsSync(filePath)) {
+        return toolError(`Screen "${name}" not found. Expected file: ${filePath}`);
+      }
+      const content = fsReadFileSync(filePath, "utf-8");
+      return toolResult({ name, path: relative(projectDir, filePath), content });
+    } catch (err) {
+      return toolError(err);
+    }
+  }
+);
+
+// ── tool: openuispec_get_contract ───────────────────────────────────
+
+server.registerTool(
+  "openuispec_get_contract",
+  {
+    description: "Get a single contract spec, optionally filtered to one variant. Faster than read_specs when you only need one contract.",
+    inputSchema: {
+      name: z.string().describe("Contract name, e.g. 'action_trigger'"),
+      variant: z.string().optional().describe("Optional variant name, e.g. 'fab'. If given, returns only that variant's definition."),
+    },
+  },
+  async ({ name, variant }) => {
+    try {
+      const projectDir = findProjectDir(projectCwd);
+      const manifest = YAML.parse(fsReadFileSync(join(projectDir, "openuispec.yaml"), "utf-8"));
+      const contractsDir = resolveSpecDir(projectDir, manifest, "contracts");
+
+      if (!existsSync(contractsDir)) {
+        return toolError(`Contracts directory not found: ${contractsDir}`);
+      }
+
+      // Scan contract files for the matching contract key
+      for (const file of readdirSync(contractsDir).filter(f => f.endsWith(".yaml")).sort()) {
+        const filePath = join(contractsDir, file);
+        const raw = fsReadFileSync(filePath, "utf-8");
+        const content = YAML.parse(raw);
+        const contractName = Object.keys(content)[0];
+        if (contractName !== name) continue;
+
+        if (variant) {
+          const contract = content[contractName];
+          const variantDef = contract?.variants?.[variant];
+          if (!variantDef) {
+            return toolError(`Variant "${variant}" not found in contract "${name}". Available variants: ${Object.keys(contract?.variants ?? {}).join(", ")}`);
+          }
+          return toolResult({ name, variant, definition: variantDef });
+        }
+
+        return toolResult({ name, path: relative(projectDir, filePath), content: raw });
+      }
+
+      return toolError(`Contract "${name}" not found in ${contractsDir}`);
+    } catch (err) {
+      return toolError(err);
+    }
+  }
+);
+
+// ── tool: openuispec_get_tokens ─────────────────────────────────────
+
+server.registerTool(
+  "openuispec_get_tokens",
+  {
+    description: "Get tokens for a specific category (color, typography, spacing, elevation, motion, layout, themes, icons). Faster than read_specs when you only need one token file.",
+    inputSchema: {
+      category: z.string().describe("Token category, e.g. 'color', 'typography', 'spacing', 'elevation', 'motion', 'layout', 'themes', 'icons'"),
+    },
+  },
+  async ({ category }) => {
+    try {
+      const projectDir = findProjectDir(projectCwd);
+      const manifest = YAML.parse(fsReadFileSync(join(projectDir, "openuispec.yaml"), "utf-8"));
+      const tokensDir = resolveSpecDir(projectDir, manifest, "tokens");
+
+      if (!existsSync(tokensDir)) {
+        return toolError(`Tokens directory not found: ${tokensDir}`);
+      }
+
+      // Try exact match first, then scan for files containing the category name
+      const candidates = [
+        `${category}.yaml`,
+        `${category}.yml`,
+      ];
+
+      for (const candidate of candidates) {
+        const filePath = join(tokensDir, candidate);
+        if (existsSync(filePath)) {
+          const content = fsReadFileSync(filePath, "utf-8");
+          return toolResult({ category, path: relative(projectDir, filePath), content });
+        }
+      }
+
+      // List available token files for helpful error
+      const available = readdirSync(tokensDir)
+        .filter(f => f.endsWith(".yaml") || f.endsWith(".yml"))
+        .map(f => f.replace(/\.ya?ml$/, ""));
+      return toolError(`Token category "${category}" not found. Available: ${available.join(", ")}`);
+    } catch (err) {
+      return toolError(err);
+    }
+  }
+);
+
+// ── tool: openuispec_get_locale ─────────────────────────────────────
+
+server.registerTool(
+  "openuispec_get_locale",
+  {
+    description: "Get a single locale file, optionally filtered to specific keys. Faster than read_specs when you only need one locale or specific translation keys.",
+    inputSchema: {
+      locale: z.string().describe("Locale code, e.g. 'en', 'ru'"),
+      keys: z.array(z.string()).optional().describe("Optional list of keys to filter to, e.g. ['nav.home', 'nav.create']. If omitted, returns the full locale file."),
+    },
+  },
+  async ({ locale, keys }) => {
+    try {
+      const projectDir = findProjectDir(projectCwd);
+      const manifest = YAML.parse(fsReadFileSync(join(projectDir, "openuispec.yaml"), "utf-8"));
+      const localesDir = resolveSpecDir(projectDir, manifest, "locales");
+      const filePath = join(localesDir, `${locale}.json`);
+
+      if (!existsSync(filePath)) {
+        if (existsSync(localesDir)) {
+          const available = readdirSync(localesDir)
+            .filter(f => f.endsWith(".json"))
+            .map(f => f.replace(/\.json$/, ""));
+          return toolError(`Locale "${locale}" not found. Available: ${available.join(", ")}`);
+        }
+        return toolError(`Locales directory not found: ${localesDir}`);
+      }
+
+      const raw = fsReadFileSync(filePath, "utf-8");
+      const content = JSON.parse(raw);
+
+      if (keys && keys.length > 0) {
+        const filtered: Record<string, unknown> = {};
+        for (const key of keys) {
+          if (key in content) {
+            filtered[key] = content[key];
+          }
+        }
+        return toolResult({ locale, path: relative(projectDir, filePath), content: filtered });
+      }
+
+      return toolResult({ locale, path: relative(projectDir, filePath), content });
     } catch (err) {
       return toolError(err);
     }

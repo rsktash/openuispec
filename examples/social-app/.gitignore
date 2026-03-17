@@ -11,6 +11,7 @@
 .gemini/
 .kotlin/
 .claude/
+.gradle-home/
 
 # Logs
 *.log

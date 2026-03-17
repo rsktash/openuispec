@@ -64,9 +64,13 @@ settings:
 
       - id: account
         header: "$t:settings.account"
+        layout:
+          type: stack
+          spacing: "sm"
         children:
           - contract: action_trigger
             variant: secondary
+            full_width: false
             props:
               label: "$t:settings.edit_profile"
               icon: "edit"
@@ -76,6 +80,7 @@ settings:
 
           - contract: action_trigger
             variant: destructive
+            full_width: false
             props:
               label: "$t:settings.logout"
             action:

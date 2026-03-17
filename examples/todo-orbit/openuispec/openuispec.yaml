@@ -25,6 +25,8 @@ i18n:
 
 generation:
   targets: [ios, android, web]
+  extra_rules:
+    - "Generation hint strings may start with [common], [ios], [android], or [web] to indicate scope."
   # output_dir:                          # Optional: map targets to code directories
   #   ios: "../ios-app/"                  # relative to this file
   #   android: "../android-app/"
