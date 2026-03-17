@@ -246,17 +246,23 @@ export async function takeScreenshot(
 
 // ── cleanup ─────────────────────────────────────────────────────────
 
-export function shutdownAll() {
+export async function shutdownAll() {
   for (const [, instance] of servers) {
     try { instance.process.kill(); } catch { /* already dead */ }
   }
   servers.clear();
   if (browserInstance) {
-    try { browserInstance.close(); } catch { /* ignore */ }
+    try { await browserInstance.close(); } catch { /* ignore */ }
     browserInstance = null;
   }
 }
 
-process.on("exit", shutdownAll);
-process.on("SIGINT", () => { shutdownAll(); process.exit(0); });
-process.on("SIGTERM", () => { shutdownAll(); process.exit(0); });
+process.on("exit", () => {
+  // Sync-only fallback for process exit
+  for (const [, instance] of servers) {
+    try { instance.process.kill(); } catch { /* already dead */ }
+  }
+  servers.clear();
+});
+process.on("SIGINT", () => { shutdownAll().then(() => process.exit(0)); });
+process.on("SIGTERM", () => { shutdownAll().then(() => process.exit(0)); });

@@ -23,7 +23,7 @@ before(async () => {
 });
 
 after(async () => {
-  shutdownAll();
+  await shutdownAll();
   await client.close();
   await server.close();
   delete process.env.OPENUISPEC_PROJECT_DIR;
