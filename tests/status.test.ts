@@ -70,7 +70,7 @@ test("status summarizes target baselines and behind state", () => {
     assert.equal(android.output_exists, true);
     assert.equal(android.snapshot, false);
     assert.equal(android.status, "needs baseline");
-    assert.equal(android.note, "No snapshot found for this target.");
+    assert.equal(android.note, "Baseline pending — generated code exists but user has not yet confirmed it with a snapshot.");
     assert.match(android.recommended_next_step, /openuispec drift --snapshot --target android/);
 
     const ios = status.targets.find((entry: any) => entry.target === "ios");

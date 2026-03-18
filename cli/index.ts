@@ -332,6 +332,7 @@ async function main(): Promise<void> {
           width: parseInt(getOption(rest, "--width") ?? "1280"),
           height: parseInt(getOption(rest, "--height") ?? "800"),
         },
+        scale: parseFloat(getOption(rest, "--scale") ?? "2"),
         theme: getOption(rest, "--theme") as "light" | "dark" | undefined,
         wait_for: parseInt(getOption(rest, "--wait-for") ?? "1000"),
         full_page: getFlag(rest, "--full-page"),
@@ -382,6 +383,7 @@ async function main(): Promise<void> {
       const result = await takeScreenshotBatch(cwd, {
         captures,
         viewport: config.viewport,
+        scale: parseFloat(getOption(rest, "--scale") ?? config.scale ?? "2"),
         theme: (getOption(rest, "--theme") ?? config.theme) as "light" | "dark" | undefined,
         output_dir: getOption(rest, "--output-dir") ?? config.output_dir ?? undefined,
       });
@@ -459,14 +461,14 @@ Spec access:
   openuispec spec-schema <type>             Get full JSON schema for a spec type
 
 Screenshots (single):
-  openuispec screenshot [--route /path] [--theme light|dark] [--output-dir dir]
+  openuispec screenshot [--route /path] [--width px] [--height px] [--scale n] [--theme light|dark] [--output-dir dir]
   openuispec screenshot-android [--screen name] [--project-dir path] [--module name]
       [--route deeplink] [--nav Step1,Step2] [--theme light|dark] [--output-dir dir]
   openuispec screenshot-ios [--screen name] [--project-dir path] [--scheme name]
       [--bundle-id id] [--device name] [--nav Step1,Step2] [--theme light|dark]
 
 Screenshots (batch — build once, capture many):
-  openuispec screenshot-web-batch --config captures.json [--theme light|dark] [--output-dir dir]
+  openuispec screenshot-web-batch --config captures.json [--scale n] [--theme light|dark] [--output-dir dir]
   openuispec screenshot-android-batch --config captures.json [--project-dir path]
       [--module name] [--theme light|dark] [--output-dir dir]
   openuispec screenshot-ios-batch --config captures.json [--project-dir path]

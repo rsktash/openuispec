@@ -538,19 +538,28 @@ function normalizeEntry(value: string | FileEntry): FileEntry {
 
 // ── snapshot ──────────────────────────────────────────────────────────
 
-function snapshot(cwd: string, projectDir: string, target: string): void {
+export interface SnapshotResult {
+  target: string;
+  snapshot_at: string;
+  files_hashed: number;
+  stubs: number;
+  state_path: string;
+  baseline: string | null;
+}
+
+export function createSnapshot(cwd: string, target: string): SnapshotResult {
+  const projectDir = findProjectDir(cwd);
   const projectName = readProjectName(projectDir);
   const outDir = resolveOutputDir(projectDir, projectName, target);
   if (!existsSync(outDir)) {
-    console.error(
-      `Error: Output directory not found: ${relative(cwd, outDir)}\n` +
+    throw new Error(
+      `Output directory not found: ${relative(cwd, outDir)}\n` +
         `Run code generation for "${target}" first.`
     );
-    process.exit(1);
   }
 
+  const manifest = readManifest(projectDir);
   const files = discoverSpecFiles(projectDir);
-  const doc = YAML.parse(readFileSync(join(projectDir, "openuispec.yaml"), "utf-8"));
   const baseline = captureBaseline(projectDir, files);
 
   const entries: Record<string, FileEntry> = {};
@@ -564,7 +573,7 @@ function snapshot(cwd: string, projectDir: string, target: string): void {
   }
 
   const state: StateFile = {
-    spec_version: doc.spec_version ?? "0.1",
+    spec_version: manifest.spec_version ?? "0.1",
     snapshot_at: new Date().toISOString(),
     target,
     baseline,
@@ -573,15 +582,32 @@ function snapshot(cwd: string, projectDir: string, target: string): void {
 
   const outPath = stateFilePath(projectDir, projectName, target);
   writeFileSync(outPath, JSON.stringify(state, null, 2) + "\n");
-  console.log(`Snapshot saved: ${relative(cwd, outPath)}`);
-  console.log(`  ${Object.keys(entries).length} files hashed`);
-  if (stubCount > 0) {
-    console.log(`  ${stubCount} stubs (not tracked for drift)`);
-  }
-  console.log(`  target: ${target}`);
-  const baselineLabel = formatBaseline(baseline);
-  if (baselineLabel) {
-    console.log(`  baseline: ${baselineLabel}`);
+
+  return {
+    target,
+    snapshot_at: state.snapshot_at,
+    files_hashed: Object.keys(entries).length,
+    stubs: stubCount,
+    state_path: relative(cwd, outPath),
+    baseline: formatBaseline(baseline),
+  };
+}
+
+function snapshot(cwd: string, projectDir: string, target: string): void {
+  try {
+    const result = createSnapshot(cwd, target);
+    console.log(`Snapshot saved: ${result.state_path}`);
+    console.log(`  ${result.files_hashed} files hashed`);
+    if (result.stubs > 0) {
+      console.log(`  ${result.stubs} stubs (not tracked for drift)`);
+    }
+    console.log(`  target: ${result.target}`);
+    if (result.baseline) {
+      console.log(`  baseline: ${result.baseline}`);
+    }
+  } catch (err) {
+    console.error(`Error: ${err instanceof Error ? err.message : String(err)}`);
+    process.exit(1);
   }
 }
 

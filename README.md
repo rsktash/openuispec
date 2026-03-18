@@ -74,7 +74,7 @@ OpenUISpec includes an **MCP server** that AI assistants call automatically duri
 openuispec init → configures MCP for your agent → AI calls tools automatically
 ```
 
-When you ask your AI to "add a settings page" or "update the home feed," the MCP server provides spec context before generation, feeds authoritative spec contents during generation, and returns a concrete audit checklist after generation.
+When you ask your AI to "add a settings page" or "update the home feed," the MCP server provides spec context before generation, feeds authoritative spec contents during generation, validates spec integrity after edits, and returns a spec-derived checklist for the AI to review the generated code against.
 
 15 tools are available as both MCP tools and CLI commands — see the [full reference](./docs/cli.md).
 
@@ -89,6 +89,8 @@ When you ask your AI to "add a settings page" or "update the home feed," the MCP
 | [TaskFlow](./examples/taskflow/openuispec/) | iOS, Android, Web | Compact reference covering all 7 contract families |
 | [Todo Orbit](./examples/todo-orbit/openuispec/) | iOS, Android, Web | Bilingual task app with localization, custom contracts |
 | [Social App](./examples/social-app/openuispec/) | Android, Web | Trilingual social app with feeds, messaging, profiles |
+
+Screenshots of the generated apps are in the [artifacts](./artifacts/) directory.
 
 ## Documentation
 

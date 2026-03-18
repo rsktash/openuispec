@@ -106,6 +106,7 @@ fun SearchResultsScreen(
                                 commentCount = post.commentCount,
                                 timestamp = post.timestamp,
                                 mediaUrl = post.mediaUrl,
+                                onClick = { onPostClick(post.id) },
                                 onLikeClick = {},
                                 onCommentClick = { onPostClick(post.id) },
                                 onAuthorClick = { onUserClick(post.authorId) }

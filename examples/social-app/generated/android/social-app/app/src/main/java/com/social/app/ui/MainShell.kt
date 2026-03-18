@@ -12,7 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.AddCircle
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Notifications
@@ -34,6 +34,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -102,6 +104,7 @@ fun MainShell(
     val scope = rememberCoroutineScope()
     val createPostSuccessMessage = stringResource(R.string.create_post_success)
     val activeDestination = activeDestinationFor(mainChild)
+    val showHomeFab = mainChild is RootComponent.Child.Home
     val primaryScreen =
         mainChild is RootComponent.Child.Home ||
             mainChild is RootComponent.Child.Discover ||
@@ -120,12 +123,6 @@ fun MainShell(
             labelRes = R.string.nav_discover,
             icon = { Icon(Icons.Default.Explore, contentDescription = null) },
             onClick = root::onDiscoverTabClicked,
-        ),
-        NavItem(
-            destination = null,
-            labelRes = R.string.nav_create,
-            icon = { Icon(Icons.Default.AddCircle, contentDescription = null) },
-            onClick = root::onCreatePostClicked,
         ),
         NavItem(
             destination = MainDestination.Notifications,
@@ -157,6 +154,19 @@ fun MainShell(
         modifier = Modifier.fillMaxSize(),
         snackbarHost = {
             ContractSnackbarHost(hostState = snackbarHostState)
+        },
+        floatingActionButton = {
+            if (showHomeFab) {
+                FloatingActionButton(
+                    onClick = root::onCreatePostClicked,
+                    shape = Shapes.RoundedCapPrimary,
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    elevation = FloatingActionButtonDefaults.elevation(),
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = stringResource(R.string.nav_create))
+                }
+            }
         },
         bottomBar = {
             if (primaryScreen && !isExpanded) {

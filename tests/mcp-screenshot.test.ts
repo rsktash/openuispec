@@ -48,6 +48,7 @@ describe("openuispec_screenshot", () => {
     assert.equal(meta.route, "/home");
     assert.equal(meta.viewport.width, 1280);
     assert.equal(meta.viewport.height, 800);
+    assert.equal(meta.scale, 2);
   });
 
   test("captures with mobile viewport", async () => {
@@ -60,6 +61,18 @@ describe("openuispec_screenshot", () => {
     const meta = JSON.parse(result.content[1].text);
     assert.equal(meta.viewport.width, 375);
     assert.equal(meta.viewport.height, 812);
+    assert.equal(meta.scale, 2);
+  });
+
+  test("captures with explicit higher scale", async () => {
+    const result: any = await client.callTool({
+      name: "openuispec_screenshot",
+      arguments: { route: "/home", scale: 3, wait_for: 1500 },
+    });
+
+    assert.ok(!result.isError, `expected no error, got: ${result.content?.[0]?.text}`);
+    const meta = JSON.parse(result.content[1].text);
+    assert.equal(meta.scale, 3);
   });
 
   test("captures with dark theme", async () => {

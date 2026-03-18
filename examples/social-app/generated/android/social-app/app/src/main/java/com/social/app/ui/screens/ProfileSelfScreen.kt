@@ -100,11 +100,13 @@ fun ProfileSelfScreen(
                     PostItem(
                         authorName = post.authorName,
                         authorHandle = post.authorHandle,
+                        authorAvatar = post.authorAvatar,
                         body = post.body,
                         likeCount = post.likeCount,
                         commentCount = post.commentCount,
                         timestamp = post.timestamp,
                         mediaUrl = post.mediaUrl,
+                        onClick = { onPostClick(post.id) },
                         onLikeClick = {},
                         onAuthorClick = {},
                         onCommentClick = { onPostClick(post.id) },

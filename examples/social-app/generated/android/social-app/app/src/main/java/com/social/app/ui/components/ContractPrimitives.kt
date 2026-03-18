@@ -4,6 +4,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -356,36 +358,53 @@ fun ProfileHeroCard(
         shape = Shapes.HeroShape,
         color = MaterialTheme.colorScheme.surfaceVariant,
     ) {
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(Spacing.LG),
-            verticalArrangement = Arrangement.spacedBy(Spacing.MD),
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(Spacing.MD),
-                verticalAlignment = Alignment.CenterVertically,
+        BoxWithConstraints {
+            val useCompactActionRow = maxWidth < 520.dp
+
+            Column(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(Spacing.LG),
+                verticalArrangement = Arrangement.spacedBy(Spacing.MD),
             ) {
-                RoundedCapAvatar(
-                    imageUrl = avatarUrl,
-                    contentDescription = title,
-                    size = 88.dp,
-                )
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = title,
-                        style = MaterialTheme.typography.headlineLarge,
-                        color = MaterialTheme.colorScheme.onSurface,
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.MD),
+                    verticalAlignment = Alignment.Top,
+                ) {
+                    RoundedCapAvatar(
+                        imageUrl = avatarUrl,
+                        contentDescription = title,
+                        size = 88.dp,
                     )
-                    Text(
-                        text = subtitle,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(Spacing.XS),
+                    ) {
+                        Text(
+                            text = title,
+                            style = MaterialTheme.typography.headlineLarge,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                        Text(
+                            text = subtitle,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    if (!useCompactActionRow && actionLabel != null && onActionClick != null) {
+                        ActionTriggerButton(
+                            text = actionLabel,
+                            onClick = onActionClick,
+                            variant = actionVariant,
+                            icon = actionIcon,
+                            modifier = Modifier.widthIn(max = 220.dp),
+                        )
+                    }
                 }
-                if (actionLabel != null && onActionClick != null) {
+
+                if (useCompactActionRow && actionLabel != null && onActionClick != null) {
                     ActionTriggerButton(
                         text = actionLabel,
                         onClick = onActionClick,
@@ -393,14 +412,14 @@ fun ProfileHeroCard(
                         icon = actionIcon,
                     )
                 }
-            }
 
-            if (!body.isNullOrBlank()) {
-                Text(
-                    text = body,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                if (!body.isNullOrBlank()) {
+                    Text(
+                        text = body,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
         }
     }

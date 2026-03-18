@@ -19,7 +19,10 @@
     "schema/",
     "spec/",
     "docs/",
-    "examples/",
+    "examples/*/openuispec/**",
+    "examples/*/openuispec.yaml",
+    "examples/*/README.md",
+    "scripts/",
     "README.md",
     "LICENSE"
   ],

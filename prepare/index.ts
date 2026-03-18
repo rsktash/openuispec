@@ -135,6 +135,11 @@ export interface PrepareResult {
     commit: string | null;
     branch: string | null;
   };
+  baseline_status?: {
+    output_exists: boolean;
+    snapshot_exists: boolean;
+    action_needed: string | null;
+  };
   summary: {
     changed: number;
     added: number;
@@ -1103,6 +1108,10 @@ function buildBootstrapPrepareResult(cwd: string, target: string, includeContent
     );
   }
 
+  const outputDirExists = existsSync(outputDir);
+  const snapshotPath = join(outputDir, ".openuispec-state.json");
+  const snapshotFileExists = existsSync(snapshotPath);
+
   return {
     mode: "bootstrap",
     project: projectName,
@@ -1115,6 +1124,13 @@ function buildBootstrapPrepareResult(cwd: string, target: string, includeContent
       kind: null,
       commit: null,
       branch: null,
+    },
+    baseline_status: {
+      output_exists: outputDirExists,
+      snapshot_exists: snapshotFileExists,
+      action_needed: outputDirExists && !snapshotFileExists
+        ? `Baseline pending — when satisfied with the generated output, run: openuispec drift --snapshot --target ${target}`
+        : null,
     },
     summary: {
       changed: 0,

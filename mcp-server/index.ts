@@ -13,17 +13,14 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
-import { readFileSync } from "node:fs";
-import { join, dirname } from "node:path";
+import { readFileSync, existsSync, readdirSync } from "node:fs";
+import { join, dirname, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { SUPPORTED_TARGETS, findProjectDir, discoverSpecFiles } from "../drift/index.js";
+import { SUPPORTED_TARGETS, findProjectDir, discoverSpecFiles, readProjectName, resolveOutputDir, stateFilePath, loadTargetDrift, createSnapshot } from "../drift/index.js";
 import { buildPrepareResult } from "../prepare/index.js";
 import { buildCheckResult } from "../check/index.js";
 import { buildStatusResult } from "../status/index.js";
 import { buildValidateResult } from "../schema/validate.js";
-import { loadTargetDrift } from "../drift/index.js";
-import { readFileSync as fsReadFileSync, existsSync, readdirSync } from "node:fs";
-import { relative, resolve } from "node:path";
 import YAML from "yaml";
 import { takeScreenshot, takeScreenshotBatch } from "./screenshot.js";
 import { takeAndroidScreenshot, takeAndroidScreenshotBatch } from "./screenshot-android.js";
@@ -59,8 +56,14 @@ function formatError(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
 }
 
-function toolResult(data: unknown): { content: [{ type: "text"; text: string }] } {
-  return { content: [{ type: "text" as const, text: JSON.stringify(data, null, 2) }] };
+function toolResult(data: unknown, hint?: string): { content: { type: "text"; text: string }[] } {
+  const parts: { type: "text"; text: string }[] = [
+    { type: "text" as const, text: JSON.stringify(data) },
+  ];
+  if (hint) {
+    parts.push({ type: "text" as const, text: hint });
+  }
+  return { content: parts };
 }
 
 function toolError(err: unknown): { content: [{ type: "text"; text: string }]; isError: true } {
@@ -108,58 +111,21 @@ export const server = new McpServer(
     version: getPackageVersion(),
   },
   {
-    instructions: `This project uses OpenUISpec — a semantic UI specification format.
-Spec files (YAML) are the single source of truth for all UI across platforms.
+    instructions: `OpenUISpec — semantic UI spec format. Spec files (YAML) are the single source of truth for all UI.
 
-MANDATORY WORKFLOW for any UI-related request (screens, navigation, layout, tokens, flows, localization):
+WORKFLOW — each tool response includes a next_tool hint, follow it:
+1. openuispec_prepare(target) → get context + platform config (include_specs=true to embed content)
+2. openuispec_read_specs(paths) → load spec content (omit paths for listing only)
+3. Generate/update code
+4. openuispec_check(target) → validate spec files (audit=true for review checklist, not code inspection)
+5. Remind the user to baseline when satisfied: openuispec drift --snapshot --target <t>
+   Do not baseline on your own initiative — the user decides when output is accepted.
 
-PRE-GENERATION:
-1. Call openuispec_prepare with the target platform.
-2. Call openuispec_read_specs to load the spec file contents you need.
-   Use the returned contents as the AUTHORITATIVE source — do NOT paraphrase from memory.
-   Cross-reference exact token values, contract must_handle lists, and locale keys from the content.
-3. If the request requires spec changes, update the spec files FIRST, then call openuispec_check.
-4. Generate or update the platform UI code based on the spec contents.
+FOCUSED GETTERS (prefer for incremental edits): get_screen, get_contract, get_tokens, get_locale
+SPEC AUTHORING: spec_types → spec_schema(type, summary?) → write YAML
+SCREENSHOTS: screenshot (web), screenshot_android, screenshot_ios — single + batch variants
 
-POST-GENERATION (do this EVERY TIME after writing UI code):
-5. Call openuispec_check to validate spec integrity.
-6. Call openuispec_read_specs for the screens/contracts you just generated code for.
-7. Audit your generated code against the spec contents. For each screen, verify:
-   - Every field/action in the spec has a corresponding UI element
-   - Token values (colors, spacing, radii) match the spec exactly, not approximations
-   - Contract must_handle states are all implemented (loading, error, empty, etc.)
-   - Adaptive breakpoints match the layout size_classes in the spec
-   - Locale keys match $t: references in the spec
-   - Navigation targets match flow definitions
-   Report any real gaps found and fix them before finishing.
-
-CREATING NEW SPEC FILES:
-When you need to create or edit spec files and are unsure of the format:
-1. Call openuispec_spec_types to discover available spec types.
-2. Call openuispec_spec_schema with the specific type to get the full JSON schema.
-3. Write the spec file following the schema exactly.
-
-FOCUSED GETTERS (prefer these for incremental edits over read_specs):
-- openuispec_get_screen(name) — single screen spec
-- openuispec_get_contract(name, variant?) — single contract, optionally one variant
-- openuispec_get_tokens(category) — single token category (color, typography, spacing, etc.)
-- openuispec_get_locale(locale, keys?) — single locale file, optionally filtered keys
-- openuispec_check(target, screens?, contracts?) — scoped audit for specific screens/contracts
-Use read_specs for full-project generation; use focused getters when editing one screen or contract.
-
-VISUAL VERIFICATION:
-- openuispec_screenshot(route, viewport?, theme?) — screenshot the generated web app at a route.
-  Starts the dev server automatically. Use after generation to visually verify UI matches the spec.
-  Requires puppeteer (npm install -g puppeteer).
-- openuispec_screenshot_android(screen?, theme?, wait_for?) — screenshot the generated Android app.
-  Builds APK, installs on emulator, and captures via adb screencap.
-  Shows the real app with navigation, images, and themes. Requires a running emulator.
-- openuispec_screenshot_ios(screen?, device?, nav?, theme?, wait_for?) — screenshot the generated iOS app.
-  Builds with xcodebuild, installs on simulator, and captures via xcrun simctl.
-  Shows the real app with navigation, images, and themes. Requires Xcode.
-
-Skip these tools ONLY when the request is purely non-UI (API logic, database, infrastructure, etc.)
-or explicitly platform-specific polish that doesn't affect shared UI semantics.`,
+Skip only for purely non-UI requests.`,
   }
 );
 
@@ -168,12 +134,23 @@ or explicitly platform-specific polish that doesn't affect shared UI semantics.`
 server.registerTool(
   "openuispec_prepare",
   {
-    description: "Build AI-ready work bundle for a target platform. REQUIRED before any UI code generation. Returns spec context, platform config, semantic changes, and generation constraints. Call openuispec_read_specs afterward to load the actual spec file contents you need for generation.",
-    inputSchema: { target: targetSchema },
+    description: "Build AI-ready work bundle for a target platform. REQUIRED before any UI code generation. Returns spec context, platform config, semantic changes, and generation constraints.",
+    inputSchema: {
+      target: targetSchema,
+      include_specs: z.boolean().optional().default(false).describe("Embed all spec file contents in the response. Saves a separate read_specs call but increases response size."),
+    },
   },
-  async ({ target }) => {
+  async ({ target, include_specs }) => {
     try {
-      return toolResult(buildPrepareResult(target, projectCwd));
+      const result = buildPrepareResult(target, projectCwd, include_specs);
+      const baselinePending = result.baseline_status?.output_exists && !result.baseline_status?.snapshot_exists;
+      const baselineReminder = baselinePending
+        ? " ⚠ Baseline pending — remind user to run `openuispec drift --snapshot --target " + target + "` when satisfied."
+        : "";
+      const hint = (include_specs
+        ? "next_tool: openuispec_check (after generating code)"
+        : "next_tool: openuispec_read_specs (load spec contents for generation)") + baselineReminder;
+      return toolResult(result, hint);
     } catch (err) {
       return toolError(err);
     }
@@ -184,23 +161,24 @@ server.registerTool(
 
 function buildAuditChecklist(projectDir: string, target: string, screenFilter?: string[], contractFilter?: string[]): string {
   const lines: string[] = [
-    "POST-GENERATION AUDIT — verify your code against these concrete spec requirements:",
+    "SPEC-DERIVED CHECKLIST — this is extracted from the spec files, NOT from generated code.",
+    "Use it as a guide when you manually review the generated code.",
     "",
-    "HOW TO AUDIT: For each item below, READ the generated component/screen file,",
-    "find the code that implements it, and confirm the values match exactly.",
-    "If you cannot find the implementation, it is a REAL GAP — fix it.",
+    "For each item below, read the generated component/screen file,",
+    "find the code that implements it, and confirm the values match.",
+    "If you cannot find the implementation, it is a gap — fix it.",
     "",
   ];
 
   // Extract must_handle from contracts
-  const manifest = YAML.parse(fsReadFileSync(join(projectDir, "openuispec.yaml"), "utf-8"));
+  const manifest = YAML.parse(readFileSync(join(projectDir, "openuispec.yaml"), "utf-8"));
   const contractsDir = resolveSpecDir(projectDir, manifest, "contracts");
 
   if (existsSync(contractsDir)) {
     lines.push("## Contract must_handle requirements");
     for (const file of readdirSync(contractsDir).filter(f => f.endsWith(".yaml")).sort()) {
       try {
-        const content = YAML.parse(fsReadFileSync(join(contractsDir, file), "utf-8"));
+        const content = YAML.parse(readFileSync(join(contractsDir, file), "utf-8"));
         const contractName = Object.keys(content)[0];
         if (contractFilter && !contractFilter.includes(contractName)) continue;
         const contract = content[contractName];
@@ -254,7 +232,7 @@ function buildAuditChecklist(projectDir: string, target: string, screenFilter?: 
     lines.push("## Screens — verify all sections exist in generated code");
     for (const file of readdirSync(screensDir).filter(f => f.endsWith(".yaml")).sort()) {
       try {
-        const content = YAML.parse(fsReadFileSync(join(screensDir, file), "utf-8"));
+        const content = YAML.parse(readFileSync(join(screensDir, file), "utf-8"));
         const screenName = Object.keys(content)[0];
         if (screenFilter && !screenFilter.includes(screenName)) continue;
         const screen = content[screenName];
@@ -301,7 +279,7 @@ function buildAuditChecklist(projectDir: string, target: string, screenFilter?: 
       lines.push("## Locales — verify all locale files are wired");
       for (const file of localeFiles) {
         try {
-          const keys = Object.keys(JSON.parse(fsReadFileSync(join(localesDir, file), "utf-8")));
+          const keys = Object.keys(JSON.parse(readFileSync(join(localesDir, file), "utf-8")));
           lines.push(`- [ ] ${file}: ${keys.length} keys loaded at runtime`);
         } catch { /* skip */ }
       }
@@ -314,7 +292,7 @@ function buildAuditChecklist(projectDir: string, target: string, screenFilter?: 
   const platformPath = join(platformDir, `${target}.yaml`);
   if (existsSync(platformPath)) {
     try {
-      const platformDoc = YAML.parse(fsReadFileSync(platformPath, "utf-8"));
+      const platformDoc = YAML.parse(readFileSync(platformPath, "utf-8"));
       const platformDef = platformDoc?.[target];
       if (platformDef?.generation) {
         lines.push("## Platform generation requirements");
@@ -336,26 +314,49 @@ function buildAuditChecklist(projectDir: string, target: string, screenFilter?: 
 server.registerTool(
   "openuispec_check",
   {
-    description: "Run composite validation + post-generation audit. Returns schema validation results AND a concrete audit checklist derived from your spec files — listing every contract must_handle item, every screen section, and every locale file that must exist in your generated code. Verify each item. Use optional screens/contracts params to scope the audit to specific items (validation still runs on all files).",
+    description: "Validate spec files (schema + semantic lint) and check prepare readiness. Does NOT inspect generated code. With audit=true, returns a spec-derived checklist of must_handle items, screen sections, and locale files — use it as a guide when YOU manually review the generated code.",
     inputSchema: {
       target: targetSchema,
-      screens: z.array(z.string()).optional().describe("Screen names to audit (e.g. ['home_feed', 'settings']). If omitted, audits all screens."),
-      contracts: z.array(z.string()).optional().describe("Contract names to audit (e.g. ['action_trigger']). If omitted, audits all contracts."),
+      audit: z.boolean().optional().default(false).describe("Include the full audit checklist. Omit for a compact pass/fail summary."),
+      screens: z.array(z.string()).optional().describe("Screen names to audit (e.g. ['home_feed']). Requires audit=true."),
+      contracts: z.array(z.string()).optional().describe("Contract names to audit (e.g. ['action_trigger']). Requires audit=true."),
     },
   },
-  async ({ target, screens, contracts }) => {
+  async ({ target, audit: includeAudit, screens, contracts }) => {
     try {
       const result = buildCheckResult(target, projectCwd);
+      const totalErrors = result.validation.total_errors + result.semantic.total_errors;
+      const passing = totalErrors === 0 && result.prepare.ready;
+
+      // bootstrap mode = no snapshot exists yet
+      const baselineHint = result.prepare.mode === "bootstrap"
+        ? `⚠ BASELINE PENDING: Remind the user to run \`openuispec drift --snapshot --target ${target}\` when satisfied with the output.`
+        : "";
+
+      if (passing && !includeAudit) {
+        const compact = {
+          target,
+          status: "PASS",
+          validation_errors: 0,
+          semantic_errors: 0,
+          prepare: { mode: result.prepare.mode, ready: true },
+        };
+        return toolResult(compact, baselineHint || `Remind the user to baseline: openuispec drift --snapshot --target ${target}`);
+      }
+
       const projectDir = findProjectDir(projectCwd);
-      const screenFilter = screens && screens.length > 0 ? screens : undefined;
-      const contractFilter = contracts && contracts.length > 0 ? contracts : undefined;
-      const audit = buildAuditChecklist(projectDir, target, screenFilter, contractFilter);
-      return {
-        content: [
-          { type: "text" as const, text: JSON.stringify(result, null, 2) },
-          { type: "text" as const, text: audit },
-        ],
-      };
+      const hints: string[] = [JSON.stringify(result)];
+
+      if (includeAudit) {
+        const screenFilter = screens && screens.length > 0 ? screens : undefined;
+        const contractFilter = contracts && contracts.length > 0 ? contracts : undefined;
+        hints.push(buildAuditChecklist(projectDir, target, screenFilter, contractFilter));
+      }
+
+      if (baselineHint) hints.push(baselineHint);
+      hints.push(passing ? "next_tool: openuispec_drift --snapshot (to create/update baseline)" : "Fix validation errors, then re-run openuispec_check.");
+
+      return { content: hints.map(text => ({ type: "text" as const, text })) };
     } catch (err) {
       return toolError(err);
     }
@@ -371,7 +372,7 @@ server.registerTool(
   },
   async () => {
     try {
-      return toolResult(buildStatusResult(projectCwd));
+      return toolResult(buildStatusResult(projectCwd), "next_tool: openuispec_prepare for any target that is 'behind' or 'needs generation'");
     } catch (err) {
       return toolError(err);
     }
@@ -393,7 +394,8 @@ server.registerTool(
   },
   async ({ groups }) => {
     try {
-      return toolResult(buildValidateResult(groups, projectCwd));
+      const result = buildValidateResult(groups, projectCwd);
+      return toolResult(result, "next_tool: openuispec_check (for full validation + prepare readiness)");
     } catch (err) {
       return toolError(err);
     }
@@ -405,31 +407,41 @@ server.registerTool(
 server.registerTool(
   "openuispec_read_specs",
   {
-    description: "Read the full contents of spec files. Call after openuispec_prepare to load the actual YAML/JSON content. Pass specific file paths from the prepare output, or omit to read all spec files. Use these contents as the authoritative source — do NOT paraphrase from memory.",
+    description: "Read spec file contents. Pass specific paths to load those files. If no paths given, returns a listing of all spec files (path + category, no content) — use that to pick which files to load.",
     inputSchema: {
       paths: z
         .array(z.string())
         .optional()
-        .describe("Specific spec file paths to read (relative to spec root, e.g. 'screens/home.yaml'). If omitted, reads all spec files."),
+        .describe("Spec file paths to read (relative, e.g. 'screens/home.yaml'). If omitted, returns listing only."),
     },
   },
   async ({ paths }) => {
     try {
       const projectDir = findProjectDir(projectCwd);
       const allFiles = discoverSpecFiles(projectDir);
-      const filesToRead = paths && paths.length > 0
-        ? allFiles.filter((f) => {
-            const rel = relative(projectDir, f);
-            return paths.some((p) => rel === p || rel.endsWith(p));
-          })
-        : allFiles;
+
+      if (!paths || paths.length === 0) {
+        // Listing mode — paths + categories, no content
+        const listing = allFiles.map((f) => {
+          const rel = relative(projectDir, f);
+          const dir = dirname(rel);
+          const category = rel === "openuispec.yaml" ? "manifest" : (dir || "other");
+          return { path: rel, category };
+        });
+        return toolResult(listing, "next_tool: openuispec_read_specs with specific paths to load content");
+      }
+
+      const filesToRead = allFiles.filter((f) => {
+        const rel = relative(projectDir, f);
+        return paths.some((p) => rel === p || rel.endsWith(p));
+      });
 
       const contents = filesToRead.map((f) => ({
         path: relative(projectDir, f),
-        content: fsReadFileSync(f, "utf-8"),
+        content: readFileSync(f, "utf-8"),
       }));
 
-      return toolResult(contents);
+      return toolResult(contents, "next_tool: generate/update code, then openuispec_check");
     } catch (err) {
       return toolError(err);
     }
@@ -441,16 +453,26 @@ server.registerTool(
 server.registerTool(
   "openuispec_drift",
   {
-    description: "Detect spec drift since last snapshot. Shows which spec files changed, were added, or removed. Use explain to see property-level changes.",
+    description: "Detect spec drift since last snapshot, or create a new snapshot. Shows which spec files changed, were added, or removed. Use explain for property-level changes. Use snapshot=true after generation to create/update the baseline.",
     inputSchema: {
       target: targetSchema,
       explain: z.boolean().optional().default(false).describe("Include semantic explanation of changes"),
+      snapshot: z.boolean().optional().default(false).describe("Create a new snapshot (baseline) instead of checking drift. Use after code generation is complete and verified."),
     },
   },
-  async ({ target, explain }) => {
+  async ({ target, explain, snapshot: doSnapshot }) => {
     try {
+      if (doSnapshot) {
+        const result = createSnapshot(projectCwd, target);
+        return toolResult(result, "Baseline created. next_tool: openuispec_status (to verify all targets)");
+      }
       const { result } = loadTargetDrift(projectCwd, target, false, explain);
-      return toolResult(result);
+      const d = result.drift;
+      const hasDrift = d.changed.length > 0 || d.added.length > 0 || d.removed.length > 0;
+      const hint = hasDrift
+        ? "next_tool: openuispec_prepare (to build work bundle for pending changes)"
+        : "No drift detected. Target is up to date.";
+      return toolResult(result, hint);
     } catch (err) {
       return toolError(err);
     }
@@ -490,7 +512,7 @@ server.registerTool(
       title: info.title,
       description: info.description,
     }));
-    return toolResult(types);
+    return toolResult(types, "next_tool: openuispec_spec_schema(type) for the full schema of a specific type");
   }
 );
 
@@ -499,12 +521,13 @@ server.registerTool(
 server.registerTool(
   "openuispec_spec_schema",
   {
-    description: "Get the full JSON schema for a specific OpenUISpec spec type. Returns the complete schema definition so you know the exact format when creating or editing spec files. Call openuispec_spec_types first to see available types.",
+    description: "Get the JSON schema for a specific OpenUISpec spec type. Returns the complete schema definition so you know the exact format when creating or editing spec files.",
     inputSchema: {
-      type: z.string().describe("Spec type to get schema for (e.g. 'screen', 'tokens/color', 'contract'). Use openuispec_spec_types to list all available types."),
+      type: z.string().describe("Spec type (e.g. 'screen', 'tokens/color', 'contract'). Use openuispec_spec_types to list all."),
+      summary: z.boolean().optional().default(false).describe("Return only top-level property names and types instead of the full schema. Useful for a quick overview."),
     },
   },
-  async ({ type }) => {
+  async ({ type, summary }) => {
     const entry = SCHEMA_CATALOG[type];
     if (!entry) {
       return toolError(`Unknown spec type "${type}". Call openuispec_spec_types to see available types.`);
@@ -513,6 +536,19 @@ server.registerTool(
       const __dirname = dirname(fileURLToPath(import.meta.url));
       const schemaPath = join(__dirname, "..", "schema", entry.file);
       const schema = JSON.parse(readFileSync(schemaPath, "utf-8"));
+
+      if (summary) {
+        // Extract top-level properties summary
+        const props = schema.properties ?? schema.patternProperties ?? {};
+        const topLevel: Record<string, string> = {};
+        for (const [key, val] of Object.entries(props)) {
+          const v = val as any;
+          topLevel[key] = v.type ?? (v.$ref ? `ref:${v.$ref}` : "object");
+        }
+        return toolResult({ type, title: entry.title, required: schema.required ?? [], properties: topLevel },
+          "Use summary=false for the full schema when creating/editing spec files.");
+      }
+
       return toolResult({ type, title: entry.title, schema });
     } catch (err) {
       return toolError(err);
@@ -533,13 +569,13 @@ server.registerTool(
   async ({ name }) => {
     try {
       const projectDir = findProjectDir(projectCwd);
-      const manifest = YAML.parse(fsReadFileSync(join(projectDir, "openuispec.yaml"), "utf-8"));
+      const manifest = YAML.parse(readFileSync(join(projectDir, "openuispec.yaml"), "utf-8"));
       const screensDir = resolveSpecDir(projectDir, manifest, "screens");
       const filePath = join(screensDir, `${name}.yaml`);
       if (!existsSync(filePath)) {
         return toolError(`Screen "${name}" not found. Expected file: ${filePath}`);
       }
-      const content = fsReadFileSync(filePath, "utf-8");
+      const content = readFileSync(filePath, "utf-8");
       return toolResult({ name, path: relative(projectDir, filePath), content });
     } catch (err) {
       return toolError(err);
@@ -561,7 +597,7 @@ server.registerTool(
   async ({ name, variant }) => {
     try {
       const projectDir = findProjectDir(projectCwd);
-      const manifest = YAML.parse(fsReadFileSync(join(projectDir, "openuispec.yaml"), "utf-8"));
+      const manifest = YAML.parse(readFileSync(join(projectDir, "openuispec.yaml"), "utf-8"));
       const contractsDir = resolveSpecDir(projectDir, manifest, "contracts");
 
       if (!existsSync(contractsDir)) {
@@ -571,7 +607,7 @@ server.registerTool(
       // Scan contract files for the matching contract key
       for (const file of readdirSync(contractsDir).filter(f => f.endsWith(".yaml")).sort()) {
         const filePath = join(contractsDir, file);
-        const raw = fsReadFileSync(filePath, "utf-8");
+        const raw = readFileSync(filePath, "utf-8");
         const content = YAML.parse(raw);
         const contractName = Object.keys(content)[0];
         if (contractName !== name) continue;
@@ -608,7 +644,7 @@ server.registerTool(
   async ({ category }) => {
     try {
       const projectDir = findProjectDir(projectCwd);
-      const manifest = YAML.parse(fsReadFileSync(join(projectDir, "openuispec.yaml"), "utf-8"));
+      const manifest = YAML.parse(readFileSync(join(projectDir, "openuispec.yaml"), "utf-8"));
       const tokensDir = resolveSpecDir(projectDir, manifest, "tokens");
 
       if (!existsSync(tokensDir)) {
@@ -624,7 +660,7 @@ server.registerTool(
       for (const candidate of candidates) {
         const filePath = join(tokensDir, candidate);
         if (existsSync(filePath)) {
-          const content = fsReadFileSync(filePath, "utf-8");
+          const content = readFileSync(filePath, "utf-8");
           return toolResult({ category, path: relative(projectDir, filePath), content });
         }
       }
@@ -654,7 +690,7 @@ server.registerTool(
   async ({ locale, keys }) => {
     try {
       const projectDir = findProjectDir(projectCwd);
-      const manifest = YAML.parse(fsReadFileSync(join(projectDir, "openuispec.yaml"), "utf-8"));
+      const manifest = YAML.parse(readFileSync(join(projectDir, "openuispec.yaml"), "utf-8"));
       const localesDir = resolveSpecDir(projectDir, manifest, "locales");
       const filePath = join(localesDir, `${locale}.json`);
 
@@ -668,7 +704,7 @@ server.registerTool(
         return toolError(`Locales directory not found: ${localesDir}`);
       }
 
-      const raw = fsReadFileSync(filePath, "utf-8");
+      const raw = readFileSync(filePath, "utf-8");
       const content = JSON.parse(raw);
 
       if (keys && keys.length > 0) {
@@ -700,6 +736,7 @@ server.registerTool(
         width: z.number().default(1280),
         height: z.number().default(800),
       }).optional().describe("Viewport dimensions. Defaults to 1280x800. Use {width: 375, height: 812} for mobile."),
+      scale: z.number().optional().default(2).describe("Device pixel ratio used for capture. Higher values produce sharper screenshots (default 2)."),
       theme: z.enum(["light", "dark"]).optional().describe("Force a color scheme via prefers-color-scheme emulation"),
       wait_for: z.number().optional().default(1000).describe("Milliseconds to wait after page load before screenshotting (default 1000)"),
       full_page: z.boolean().optional().default(false).describe("Capture the full scrollable page instead of just the viewport"),
@@ -707,11 +744,12 @@ server.registerTool(
       output_dir: z.string().optional().describe("Directory to save the screenshot PNG (relative to web app root). E.g. 'screenshots'. If omitted, only returns base64 in response."),
     },
   },
-  async ({ route, viewport, theme, wait_for, full_page, selector, output_dir }) => {
+  async ({ route, viewport, scale, theme, wait_for, full_page, selector, output_dir }) => {
     try {
       return await takeScreenshot(projectCwd, {
         route,
         viewport,
+        scale,
         theme,
         wait_for,
         full_page,
@@ -794,13 +832,14 @@ server.registerTool(
     inputSchema: {
       captures: z.array(webBatchCaptureSchema).describe("Array of captures — each with screen name and route"),
       viewport: z.object({ width: z.number().default(1280), height: z.number().default(800) }).optional().describe("Viewport dimensions for all captures"),
+      scale: z.number().optional().default(2).describe("Device pixel ratio for all captures (default 2)"),
       theme: z.enum(["light", "dark"]).optional().describe("Force color scheme for all captures"),
       output_dir: z.string().optional().describe("Directory to save all PNGs (relative to web app root)"),
     },
   },
-  async ({ captures, viewport, theme, output_dir }) => {
+  async ({ captures, viewport, scale, theme, output_dir }) => {
     try {
-      return await takeScreenshotBatch(projectCwd, { captures, viewport, theme, output_dir });
+      return await takeScreenshotBatch(projectCwd, { captures, viewport, scale, theme, output_dir });
     } catch (err) {
       return toolError(err);
     }

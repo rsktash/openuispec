@@ -12,6 +12,8 @@
 .kotlin/
 .claude/
 .gradle-home/
+screenshots/
+.screenshot-uitest/
 
 # Logs
 *.log

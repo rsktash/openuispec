@@ -147,6 +147,7 @@ fun HomeFeedScreen(
                         commentCount = post.commentCount,
                         timestamp = post.timestamp,
                         mediaUrl = post.mediaUrl,
+                        onClick = { onPostClick(post.id) },
                         onAuthorClick = { onUserClick(post.authorId) },
                         onLikeClick = {},
                         onCommentClick = { onPostClick(post.id) },

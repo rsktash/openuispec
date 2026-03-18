@@ -106,6 +106,7 @@ fun PostItem(
     commentCount: Int,
     timestamp: String,
     mediaUrl: String? = null,
+    onClick: (() -> Unit)? = null,
     onAuthorClick: () -> Unit = {},
     onLikeClick: () -> Unit = {},
     onCommentClick: () -> Unit = {}
@@ -113,7 +114,8 @@ fun PostItem(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = Spacing.MD, vertical = Spacing.XS),
+            .padding(horizontal = Spacing.MD, vertical = Spacing.XS)
+            .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier),
         shape = Shapes.CardShape,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant

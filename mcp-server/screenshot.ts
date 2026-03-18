@@ -17,6 +17,7 @@ import { findProjectDir } from "../drift/index.js";
 export interface ScreenshotOptions {
   route: string;
   viewport?: { width: number; height: number };
+  scale?: number;
   theme?: "light" | "dark";
   wait_for?: number;
   full_page?: boolean;
@@ -177,6 +178,7 @@ export async function takeScreenshot(
   const {
     route = "/",
     viewport = { width: 1280, height: 800 },
+    scale = 2,
     theme,
     wait_for = 1000,
     full_page = false,
@@ -192,7 +194,11 @@ export async function takeScreenshot(
   // 2. Navigate
   const page = await browser.newPage();
   try {
-    await page.setViewport({ width: viewport.width, height: viewport.height });
+    await page.setViewport({
+      width: viewport.width,
+      height: viewport.height,
+      deviceScaleFactor: scale,
+    });
 
     if (theme) {
       await page.emulateMediaFeatures([
@@ -245,6 +251,7 @@ export async function takeScreenshot(
             route,
             url: targetUrl,
             viewport,
+            scale,
             theme: theme ?? "default",
             full_page,
             selector: selector ?? null,
@@ -271,6 +278,7 @@ export interface WebBatchCapture {
 export interface WebScreenshotBatchOptions {
   captures: WebBatchCapture[];
   viewport?: { width: number; height: number };
+  scale?: number;
   theme?: "light" | "dark";
   output_dir?: string;
 }
@@ -281,7 +289,7 @@ export async function takeScreenshotBatch(
   projectCwd: string,
   options: WebScreenshotBatchOptions,
 ): Promise<ScreenshotResult> {
-  const { captures, viewport = { width: 1280, height: 800 }, theme, output_dir } = options;
+  const { captures, viewport = { width: 1280, height: 800 }, scale = 2, theme, output_dir } = options;
 
   if (captures.length === 0) {
     return { content: [{ type: "text", text: "No web captures specified." }], isError: true };
@@ -293,7 +301,11 @@ export async function takeScreenshotBatch(
   const page = await browser.newPage();
 
   try {
-    await page.setViewport({ width: viewport.width, height: viewport.height });
+    await page.setViewport({
+      width: viewport.width,
+      height: viewport.height,
+      deviceScaleFactor: scale,
+    });
     if (theme) {
       await page.emulateMediaFeatures([{ name: "prefers-color-scheme", value: theme }]);
     }
@@ -330,7 +342,10 @@ export async function takeScreenshotBatch(
     const content: ScreenshotResult["content"] = [];
     for (const s of snapshots) {
       content.push({ type: "image" as const, data: s.data, mimeType: "image/png" });
-      content.push({ type: "text" as const, text: JSON.stringify({ screen: s.screen, path: s.path, theme: themeLabel }, null, 2) });
+      content.push({
+        type: "text" as const,
+        text: JSON.stringify({ screen: s.screen, path: s.path, viewport, scale, theme: themeLabel }, null, 2),
+      });
     }
     return { content };
   } finally {

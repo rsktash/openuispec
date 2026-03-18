@@ -100,10 +100,10 @@ function buildTargetStatus(cwd: string, projectDir: string, projectName: string,
       explain_available: false,
       status: outputExists ? "needs baseline" : "needs generation",
       recommended_next_step: outputExists
-        ? `Run \`openuispec drift --snapshot --target ${target}\` after reviewing the generated output.`
+        ? `Review the generated output, then run \`openuispec drift --snapshot --target ${target}\` to create the baseline.`
         : `Run code generation for "${target}", then \`openuispec prepare --target ${target}\` to build the target work bundle.`,
       note: outputExists
-        ? "No snapshot found for this target."
+        ? "Baseline pending — generated code exists but user has not yet confirmed it with a snapshot."
         : `Output directory not found. Run code generation for "${target}" first.`,
     };
   }

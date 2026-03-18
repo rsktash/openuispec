@@ -112,6 +112,7 @@ fun UserProfileScreen(
                         commentCount = post.commentCount,
                         timestamp = post.timestamp,
                         mediaUrl = post.mediaUrl,
+                        onClick = { onPostClick(post.id) },
                         onLikeClick = {},
                         onAuthorClick = {},
                         onCommentClick = { onPostClick(post.id) },

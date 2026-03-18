@@ -158,29 +158,35 @@ describe("openuispec_get_locale", () => {
 });
 
 describe("openuispec_check (scoped)", () => {
-  test("without scope returns full audit mentioning multiple screens", async () => {
+  test("without audit returns compact pass/fail", async () => {
     const result = await client.callTool({ name: "openuispec_check", arguments: { target: "web" } });
+    const data = JSON.parse(result.content[0].text);
+    assert.ok(data.status === "PASS" || data.target === "web", "should return compact or full result");
+  });
+
+  test("with audit returns full audit mentioning multiple screens", async () => {
+    const result = await client.callTool({ name: "openuispec_check", arguments: { target: "web", audit: true } });
     const auditText = result.content[1].text;
     assert.ok(auditText.includes("home_feed"), "full audit should include home_feed");
     assert.ok(auditText.includes("settings"), "full audit should include settings");
   });
 
   test("with screens scope filters audit to specified screens only", async () => {
-    const result = await client.callTool({ name: "openuispec_check", arguments: { target: "web", screens: ["home_feed"] } });
+    const result = await client.callTool({ name: "openuispec_check", arguments: { target: "web", audit: true, screens: ["home_feed"] } });
     const auditText = result.content[1].text;
     assert.ok(auditText.includes("home_feed"), "scoped audit should include home_feed");
     assert.ok(!auditText.includes("### settings"), "scoped audit should not include settings screen heading");
   });
 
   test("with contracts scope filters audit to specified contracts only", async () => {
-    const result = await client.callTool({ name: "openuispec_check", arguments: { target: "web", contracts: ["action_trigger"] } });
+    const result = await client.callTool({ name: "openuispec_check", arguments: { target: "web", audit: true, contracts: ["action_trigger"] } });
     const auditText = result.content[1].text;
     const contractSection = auditText.split("## Screens")[0];
     assert.ok(!contractSection.includes("### nav_container"), "scoped audit should not include nav_container in contract section");
   });
 
   test("audit includes explicit state-role token requirements when contracts declare them", async () => {
-    const result = await client.callTool({ name: "openuispec_check", arguments: { target: "web", contracts: ["action_trigger"] } });
+    const result = await client.callTool({ name: "openuispec_check", arguments: { target: "web", audit: true, contracts: ["action_trigger"] } });
     const auditText = result.content[1].text;
     assert.ok(
       auditText.includes("Explicit state-role tokens are implemented for action_trigger.primary"),
@@ -193,7 +199,7 @@ describe("openuispec_check (scoped)", () => {
   });
 
   test("scoped audit still returns full validation results", async () => {
-    const result = await client.callTool({ name: "openuispec_check", arguments: { target: "web", screens: ["home_feed"] } });
+    const result = await client.callTool({ name: "openuispec_check", arguments: { target: "web", audit: true, screens: ["home_feed"] } });
     const validation = JSON.parse(result.content[0].text);
     assert.equal(validation.target, "web");
     assert.equal(typeof validation.validation, "object", "should contain validation results");

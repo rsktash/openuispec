@@ -8,6 +8,8 @@
 *.swo
 .gradle/
 .build/
+screenshots/
+.screenshot-uitest/
 
 # Logs
 *.log

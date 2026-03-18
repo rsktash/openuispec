@@ -1,5 +1,5 @@
 <!-- openuispec-rules-start -->
-<!-- openuispec-rules-version: 0.2.4 -->
+<!-- openuispec-rules-version: 0.2.9 -->
 # OpenUISpec — AI Assistant Rules
 # ================================
 # This project uses OpenUISpec to define UI as a semantic spec.
