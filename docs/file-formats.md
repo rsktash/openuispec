@@ -77,7 +77,7 @@ generation:
       language: kotlin
       root: "../shared"
       scope: "Business logic, data models, repositories, API clients, view models. No UI rendering."
-      # tracks: [manifest, contracts]   # optional — enables hash-based drift detection for this layer
+      # tracks: [manifest]              # optional — enables hash-based drift detection for this layer
       paths:
         domain: "commonMain/domain/"
         features: "commonMain/features/"

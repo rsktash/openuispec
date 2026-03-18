@@ -46,7 +46,7 @@ This scaffolds a spec directory, starter tokens, and **configures the MCP server
 ## Key concepts
 
 - **Tokens** — design values (color, typography, spacing, elevation, motion) with semantic names and constrained ranges
-- **Contracts** — 7 behavioral component families defined by role, props, state machines, and accessibility
+- **Contracts** — 7 reusable UI component families defined by role, props, interaction states, and accessibility
 - **Screens** — compositions of contracts with data bindings, adaptive layout, and conditional rendering
 - **Flows** — multi-screen navigation journeys, intent-based and platform-agnostic
 - **Actions** — 13 typed action types with composition, error handling, and optimistic updates
@@ -80,7 +80,7 @@ When you ask your AI to "add a settings page" or "update the home feed," the MCP
 
 **Using without MCP?** You can provide spec context to any AI manually:
 
-> Generate a native iOS app from this OpenUISpec. Follow all contract state machines, apply token ranges for iOS, and implement navigation flows as defined.
+> Generate a native iOS app from this OpenUISpec. Follow all contract UI states, apply token ranges for iOS, and implement navigation flows as defined.
 
 ## Examples
 

@@ -87,7 +87,7 @@ taskflow/
 
 Pass the entire `taskflow/` directory as context to an AI code generator with the prompt:
 
-> Generate a native {ios|android|web} application from this OpenUISpec. Follow all contract state machines, apply token ranges for the target platform, and implement the navigation flows as defined. Use the platform adaptation file for target-specific overrides.
+> Generate a native {ios|android|web} application from this OpenUISpec. Follow all contract UI states, apply token ranges for the target platform, and implement the navigation flows as defined. Use the platform adaptation file for target-specific overrides.
 
 The AI should produce:
 1. Compilable platform code (Swift/Kotlin/TypeScript)

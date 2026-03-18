@@ -38,22 +38,28 @@
       "description": "Paths to spec component directories",
       "properties": {
         "tokens": {
-          "type": "string"
+          "type": "string",
+          "description": "Visual design tokens — colors, typography, spacing, elevation, motion. Affects UI rendering only, not business logic."
         },
         "contracts": {
-          "type": "string"
+          "type": "string",
+          "description": "Reusable UI component definitions — buttons, inputs, lists, surfaces. Each contract specifies visual props, UI interaction states (pressed, disabled, loading), and accessibility. These are UI rendering specifications, not business logic or domain state machines."
         },
         "screens": {
-          "type": "string"
+          "type": "string",
+          "description": "Screen layouts composed from contracts — defines what UI components appear on each screen, their data bindings, and visual arrangement."
         },
         "flows": {
-          "type": "string"
+          "type": "string",
+          "description": "Multi-screen navigation journeys — defines screen sequences, transitions, and navigation triggers. UI navigation structure, not business workflow logic."
         },
         "platform": {
-          "type": "string"
+          "type": "string",
+          "description": "Per-target platform overrides — native UI behavior, framework-specific generation config. One file per target (ios.yaml, android.yaml, web.yaml)."
         },
         "locales": {
-          "type": "string"
+          "type": "string",
+          "description": "Localization string files — one JSON file per supported locale containing translated UI text."
         }
       },
       "required": [
@@ -175,7 +181,7 @@
               },
               "tracks": {
                 "type": "array",
-                "description": "Spec categories this shared layer tracks for drift. Must be explicit — choose which categories actually affect the shared code.",
+                "description": "Spec categories this shared layer tracks for hash-based drift detection. Optional — when omitted, the layer relies on scope alone. Categories: manifest (project config, data models, API endpoints), tokens (visual design tokens — UI only), contracts (reusable UI component definitions — UI only, not business logic), screens (screen layouts — UI only), flows (navigation journeys — UI only), platform (per-target overrides — UI only), locales (translated UI strings).",
                 "items": {
                   "type": "string",
                   "enum": ["manifest", "tokens", "contracts", "screens", "flows", "platform", "locales"]

@@ -19,7 +19,7 @@ OpenUISpec is a shared UI sync language for native products, optimized for solo 
 
 1. **Semantic over visual.** The spec defines behavioral intent, not pixel layouts. A "primary action trigger" maps to `Button` in SwiftUI, `Button` in Compose, and `<button>` in HTML — the spec never says "button."
 2. **Constrained freedom.** Tokens use ranges, not exact values. Close enough to be recognizably the same brand; loose enough for each platform to feel native.
-3. **Contract-driven.** Every component is a behavioral contract with typed props, a state machine, and accessibility requirements. If a state exists in the spec, the generated code must handle it.
+3. **Contract-driven.** Every UI component is a reusable contract with typed props, UI interaction states (pressed, disabled, loading, error — not business logic states), and accessibility requirements. If a UI state exists in the spec, the generated code must handle it.
 4. **AI-first authoring.** The spec is structured for machine consumption: strongly typed, validatable, with generation hints that tell AI what it must, should, and may produce.
 5. **Platform respect.** iOS should feel like iOS. Android should feel like Android. Web should feel like the web. The spec preserves platform identity; it does not erase it.
 
@@ -555,7 +555,7 @@ The `custom` section follows the same shape as `registry` categories. App-specif
 
 ## 4. Component contracts
 
-Each contract defines a **behavioral family** — a category of UI elements that share the same role, props shape, state machine, and accessibility pattern. The AI maps each contract to the most appropriate native widget per platform.
+Each contract defines a **reusable UI component family** — a category of UI elements that share the same role, props shape, UI interaction states, and accessibility pattern. The AI maps each contract to the most appropriate native widget per platform. Contracts describe how components look and respond to user interaction — they are UI rendering specifications, not business logic or domain state machines.
 
 ### Contract anatomy
 
@@ -565,7 +565,7 @@ Every contract contains:
 |---------|---------|----------|
 | `semantic` | Human-readable description of what this family does | Yes |
 | `props` | Typed inputs the component accepts | Yes |
-| `states` | Finite state machine with valid transitions | Yes |
+| `states` | UI interaction states (e.g. idle, pressed, disabled, loading, error) with valid transitions | Yes |
 | `a11y` | Accessibility role, label pattern, focus behavior | Yes |
 | `tokens` | Visual token bindings per variant | Yes |
 | `platform_mapping` | Default native widget per platform | Yes |
@@ -1765,7 +1765,7 @@ When omitted, the item contract's default variant is used.
 
 #### `state_binding`
 
-Binds a contract's state machine states to data paths. This allows screen-level data to drive contract states declaratively, without requiring an explicit action.
+Binds a contract's UI interaction states to data paths. This allows screen-level data to drive contract states declaratively, without requiring an explicit action.
 
 ```yaml
 - contract: action_trigger
@@ -1783,7 +1783,7 @@ Binds a contract's state machine states to data paths. This allows screen-level 
 - Values must be data paths that resolve to `bool`
 - When the bound value is `true`, the contract transitions to that state
 - When the bound value returns to `false`, the contract transitions back to `default`
-- If multiple state bindings are `true` simultaneously, priority follows the contract's state machine (e.g., `loading` takes precedence over `disabled`)
+- If multiple state bindings are `true` simultaneously, priority follows the contract's state priority order (e.g., `loading` takes precedence over `disabled`)
 
 ---
 
@@ -2966,7 +2966,7 @@ props:
 condition: "tasks.$empty"
 ```
 
-Collection contracts handle `$loading`, `$error`, and `$empty` automatically via their state machines (see Section 4.7). For non-collection data, screens can use `condition:` to show appropriate UI.
+Collection contracts handle `$loading`, `$error`, and `$empty` automatically via their built-in UI states (see Section 4.7). For non-collection data, screens can use `condition:` to show appropriate UI.
 
 ### 10.9 AI generation requirements
 
@@ -3161,7 +3161,7 @@ Custom contracts allow spec authors to define domain-specific component families
 Use a custom contract when the component:
 
 - Has domain-specific behavior that doesn't map cleanly to any built-in family
-- Requires a dedicated state machine (e.g., play/pause/seek for media)
+- Requires dedicated UI interaction states (e.g., play/pause/seek for media)
 - Needs platform-specific libraries or frameworks not covered by core contracts
 - Would clutter the core spec if included as a built-in
 
@@ -3327,7 +3327,7 @@ ios:
 
 **MUST:**
 - Read and parse all registered custom contract definitions before generating code
-- Handle every declared state in the state machine
+- Handle every declared UI interaction state
 - Apply `platform_mapping` to select the correct native component
 - Include all `dependencies` in the generated project configuration (Package.swift, build.gradle, package.json)
 - Implement all items listed in `generation.must_handle`
@@ -3822,7 +3822,7 @@ A drift detector compares:
 - **Spec → Code**: Does the generated code match what the spec describes? (e.g., a button's action type, a screen's data sources, a flow's step order)
 - **Code → Spec**: Does the current platform code contain UI decisions not reflected in the spec? (e.g., a new field added to a form, a navigation path changed)
 
-Drift detection is scoped to the semantic layer — it compares behavioral intent (contracts, props, state machines, data bindings), not visual details (padding values, animation curves). Platform-specific polish is expected to diverge from the spec; behavioral contracts are not.
+Drift detection is scoped to the semantic layer — it compares behavioral intent (contracts, props, UI interaction states, data bindings), not visual details (padding values, animation curves). Platform-specific polish is expected to diverge from the spec; behavioral contracts are not.
 
 Resolution strategies:
 - **Update spec** — The code change is intentional; update the spec to match

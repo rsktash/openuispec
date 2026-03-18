@@ -30,7 +30,7 @@
         },
         "states": {
           "type": "object",
-          "description": "State machine definition — each key is a state name",
+          "description": "UI interaction states (e.g. idle, active, disabled, loading, error) — each key is a state name. These are visual/interaction states, not business logic states.",
           "additionalProperties": {
             "$ref": "https://openuispec.rsteam.uz/schema/custom-contract.schema.json#/$defs/state_def"
           }
@@ -165,7 +165,7 @@
     },
     "state_def": {
       "type": "object",
-      "description": "A single state in the state machine",
+      "description": "A single UI interaction state",
       "properties": {
         "semantic": {
           "type": "string"
