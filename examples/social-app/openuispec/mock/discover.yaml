@@ -1,0 +1,17 @@
+# Mock data for the discover screen
+data:
+  creators:
+    - { id: "u5", display_name: "Alex Rivera", handle: "alexr", bio: "Tech writer & developer", followers_count: 12400, avatar_url: null }
+    - { id: "u6", display_name: "Jordan Lee", handle: "jordanlee", bio: "Photographer & traveler", followers_count: 8900, avatar_url: null }
+    - { id: "u7", display_name: "Priya Patel", handle: "priyap", bio: "Food blogger & chef", followers_count: 23100, avatar_url: null }
+
+  trends:
+    - { id: "tr1", label: "#TechTuesday", post_count: 1240 }
+    - { id: "tr2", label: "#MorningRoutine", post_count: 890 }
+    - { id: "tr3", label: "#BookClub", post_count: 567 }
+    - { id: "tr4", label: "#FitnessGoals", post_count: 2100 }
+
+  tags:
+    - { id: "tg1", name: "Technology", post_count: 45200 }
+    - { id: "tg2", name: "Photography", post_count: 32100 }
+    - { id: "tg3", name: "Food", post_count: 28900 }

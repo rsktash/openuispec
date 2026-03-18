@@ -1,0 +1,7 @@
+# Mock data for the settings screen
+data:
+  preferences:
+    theme: "system"
+    notifications_enabled: true
+    language: "en"
+    private_account: false

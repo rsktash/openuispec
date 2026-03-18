@@ -1,0 +1,6 @@
+# Mock data for the profile_edit screen
+data:
+  user:
+    name: "Jane Doe"
+    email: "jane@example.com"
+    avatar: null

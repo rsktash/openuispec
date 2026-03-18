@@ -1,0 +1,64 @@
+# Mock data for the home screen
+data:
+  user:
+    id: "u1"
+    name: "Alex Chen"
+    first_name: "Alex"
+    email: "alex@example.com"
+
+  tasks:
+    - id: "task-1"
+      title: "Review Q4 roadmap"
+      status: in_progress
+      priority: high
+      due_date: "2026-03-20"
+      project: { id: "p1", name: "Platform" }
+      tags: ["planning", "q4"]
+      created_at: "2026-03-10"
+
+    - id: "task-2"
+      title: "Fix login bug on mobile"
+      status: todo
+      priority: urgent
+      due_date: "2026-03-19"
+      project: { id: "p2", name: "Mobile App" }
+      tags: ["bug"]
+      created_at: "2026-03-15"
+
+    - id: "task-3"
+      title: "Write API documentation"
+      status: todo
+      priority: medium
+      due_date: "2026-03-22"
+      project: { id: "p1", name: "Platform" }
+      tags: ["docs"]
+      created_at: "2026-03-12"
+
+    - id: "task-4"
+      title: "Design onboarding flow"
+      status: done
+      priority: high
+      due_date: "2026-03-18"
+      project: { id: "p3", name: "Design System" }
+      tags: ["design", "ux"]
+      created_at: "2026-03-08"
+
+    - id: "task-5"
+      title: "Update dependencies"
+      status: todo
+      priority: low
+      due_date: "2026-03-25"
+      project: { id: "p1", name: "Platform" }
+      tags: ["maintenance"]
+      created_at: "2026-03-16"
+
+  task_counts:
+    all: 24
+    today: 3
+    upcoming: 12
+    done: 9
+
+  projects:
+    - { id: "p1", name: "Platform", color: "#5B4FE8", icon: "server", task_count: 12 }
+    - { id: "p2", name: "Mobile App", color: "#E8634F", icon: "phone", task_count: 8 }
+    - { id: "p3", name: "Design System", color: "#2D9D5E", icon: "palette", task_count: 4 }

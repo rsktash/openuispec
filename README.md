@@ -76,7 +76,7 @@ openuispec init → configures MCP for your agent → AI calls tools automatical
 
 When you ask your AI to "add a settings page" or "update the home feed," the MCP server provides spec context before generation, feeds authoritative spec contents during generation, validates spec integrity after edits, and returns a spec-derived checklist for the AI to review the generated code against.
 
-15 tools are available as both MCP tools and CLI commands — see the [full reference](./docs/cli.md).
+16 tools are available as both MCP tools and CLI commands — see the [full reference](./docs/cli.md).
 
 **Using without MCP?** You can provide spec context to any AI manually:
 
@@ -110,7 +110,7 @@ Screenshots of the generated apps are in the [artifacts](./artifacts/) directory
 - [x] Token system, 7 contract families, adaptive layout, action system
 - [x] Data binding, i18n, form validation, custom contract extensions
 - [x] JSON Schema validation, CLI tool, MCP server
-- [x] Drift detection, visual verification (screenshots)
+- [x] Drift detection, visual verification (screenshots, preview)
 - [x] Example apps: TaskFlow, Todo Orbit, Social App
 - [ ] More example apps (e-commerce, dashboard)
 

@@ -1,0 +1,32 @@
+# Mock data for the home_feed screen
+data:
+  stories:
+    - { id: "s1", author: { display_name: "Sara" }, preview_url: null, has_new: true }
+    - { id: "s2", author: { display_name: "Mike" }, preview_url: null, has_new: true }
+    - { id: "s3", author: { display_name: "Lena" }, preview_url: null, has_new: false }
+
+  feed:
+    - id: "p1"
+      author: { id: "u2", display_name: "Sara Kim", handle: "sarakim", avatar_url: null }
+      body: "Just shipped a new feature! The team worked incredibly hard on this one. So proud of everyone involved."
+      media_url: null
+      like_count: 42
+      comment_count: 7
+      is_liked: false
+      published_at: "2026-03-18T10:30:00Z"
+    - id: "p2"
+      author: { id: "u3", display_name: "Mike Chen", handle: "mikechen", avatar_url: null }
+      body: "Beautiful morning for a run. Hit a new personal best today!"
+      media_url: null
+      like_count: 128
+      comment_count: 23
+      is_liked: true
+      published_at: "2026-03-18T08:15:00Z"
+    - id: "p3"
+      author: { id: "u4", display_name: "Lena Park", handle: "lenapark", avatar_url: null }
+      body: "Reading recommendations for the weekend? I just finished 'Project Hail Mary' and need something new."
+      media_url: null
+      like_count: 15
+      comment_count: 31
+      is_liked: false
+      published_at: "2026-03-17T22:00:00Z"

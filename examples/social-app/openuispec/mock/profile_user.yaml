@@ -1,0 +1,32 @@
+# Mock data for the profile_user screen
+data:
+  profile:
+    id: "u2"
+    display_name: "Sara Kim"
+    handle: "sarakim"
+    bio: "Product engineer at Acme. Coffee enthusiast."
+    website: "https://sarakim.io"
+    avatar_url: null
+    followers_count: 3200
+    following_count: 560
+    posts_count: 142
+    is_following: true
+
+  posts:
+    - id: "p1"
+      author: { id: "u2", display_name: "Sara Kim", handle: "sarakim" }
+      body: "Just shipped a new feature! The team worked incredibly hard on this one."
+      media_url: null
+      like_count: 42
+      comment_count: 7
+      published_at: "2026-03-18T10:30:00Z"
+    - id: "p12"
+      author: { id: "u2", display_name: "Sara Kim", handle: "sarakim" }
+      body: "Coffee shop recommendations in SF anyone?"
+      media_url: null
+      like_count: 19
+      comment_count: 15
+      published_at: "2026-03-16T14:00:00Z"
+
+params:
+  user_id: "u2"

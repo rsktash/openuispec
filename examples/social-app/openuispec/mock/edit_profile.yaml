@@ -1,0 +1,9 @@
+# Mock data for the edit_profile screen
+data:
+  profile:
+    id: "u1"
+    display_name: "Jamie Taylor"
+    handle: "jamiet"
+    bio: "Designer & developer. Building things that matter."
+    website: "https://jamietaylor.dev"
+    avatar_url: null

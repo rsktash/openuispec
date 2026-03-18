@@ -1,0 +1,26 @@
+# Mock data for the post_detail screen
+data:
+  post:
+    id: "p1"
+    author: { id: "u2", display_name: "Sara Kim", handle: "sarakim", avatar_url: null }
+    body: "Just shipped a new feature! The team worked incredibly hard on this one. So proud of everyone involved."
+    media_url: null
+    like_count: 42
+    comment_count: 7
+    is_liked: false
+    published_at: "2026-03-18T10:30:00Z"
+
+  comments:
+    - id: "cm1"
+      author: { id: "u3", display_name: "Mike Chen", handle: "mikechen", avatar_url: null }
+      body: "Congrats! What was the hardest part?"
+      created_at: "2026-03-18T11:00:00Z"
+      like_count: 5
+    - id: "cm2"
+      author: { id: "u4", display_name: "Lena Park", handle: "lenapark", avatar_url: null }
+      body: "Amazing work, well deserved!"
+      created_at: "2026-03-18T11:30:00Z"
+      like_count: 3
+
+params:
+  post_id: "p1"

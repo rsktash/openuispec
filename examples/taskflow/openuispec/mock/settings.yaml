@@ -1,0 +1,13 @@
+# Mock data for the settings screen
+data:
+  user:
+    id: "u1"
+    name: "Alex Chen"
+    email: "alex@example.com"
+    avatar: null
+
+  preferences:
+    theme: "system"
+    default_priority: "medium"
+    notifications_enabled: true
+    reminders_enabled: false

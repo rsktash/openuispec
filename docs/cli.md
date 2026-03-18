@@ -58,6 +58,7 @@ Or run directly: `openuispec mcp`
 | `openuispec_screenshot_web_batch` | Visual verification | Multiple web screenshots in one server session |
 | `openuispec_screenshot_android_batch` | Visual verification | Multiple Android screenshots in one build+install cycle |
 | `openuispec_screenshot_ios_batch` | Visual verification | Multiple iOS screenshots in one build+install cycle |
+| `openuispec_preview` | For future use | Render a screen spec as HTML with mock data and return a screenshot — no app build needed. **Experimental**: output is a visual approximation, not pixel-accurate. |
 
 The server includes **protocol-level instructions** that trigger on UI-related requests independently of CLAUDE.md rules.
 
@@ -145,6 +146,30 @@ Each capture supports:
 - `wait_for`: per-capture wait time in ms
 - `selector`: CSS selector to screenshot a specific element (web only)
 - `full_page`: capture full scrollable page (web only)
+
+### Preview (experimental)
+
+> **Note:** The preview renderer produces a _visual approximation_ of the spec — it maps contracts to semantic HTML+CSS and applies token values, but does not match the fidelity of a real generated app. Intended for **human inspection only** — AI agents should not use this tool for UI verification and should use `openuispec_screenshot` (or the batch/platform variants) against the real built app instead.
+
+```bash
+# MCP tool (intended for human review, not AI verification)
+openuispec_preview screen=home size_class=compact theme=light
+
+# No CLI equivalent yet — preview is MCP-only.
+```
+
+Parameters:
+
+| Param | Default | Purpose |
+|-------|---------|---------|
+| `screen` | (required) | Screen name matching `screens/<name>.yaml` |
+| `size_class` | `compact` | Adaptive breakpoint: `compact`, `regular`, `expanded` |
+| `theme` | `light` | Color theme: `light` or `dark` |
+| `locale` | `en` | Locale code for i18n string resolution |
+| `viewport` | auto | Custom `{width, height}` — overrides `size_class` defaults |
+| `include_html` | `false` | Also return the rendered HTML string |
+
+Preview reads mock data from `openuispec/mock/<screen>.yaml` — see [File Formats](./file-formats.md) for the mock data convention.
 
 ## Target Update Workflow
 

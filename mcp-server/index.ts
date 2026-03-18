@@ -25,6 +25,7 @@ import YAML from "yaml";
 import { takeScreenshot, takeScreenshotBatch } from "./screenshot.js";
 import { takeAndroidScreenshot, takeAndroidScreenshotBatch } from "./screenshot-android.js";
 import { takeIOSScreenshot, takeIOSScreenshotBatch } from "./screenshot-ios.js";
+import { renderPreview } from "./preview.js";
 
 // ── resolve project cwd ──────────────────────────────────────────────
 
@@ -123,6 +124,7 @@ WORKFLOW — each tool response includes a next_tool hint, follow it:
 
 FOCUSED GETTERS (prefer for incremental edits): get_screen, get_contract, get_tokens, get_locale
 SPEC AUTHORING: spec_types → spec_schema(type, summary?) → write YAML
+PREVIEW: openuispec_preview(screen) → render spec as HTML with mock data, returns screenshot (no app needed)
 SCREENSHOTS: screenshot (web), screenshot_android, screenshot_ios — single + batch variants
 
 Skip only for purely non-UI requests.`,
@@ -922,6 +924,33 @@ server.registerTool(
   async ({ captures, device, theme, output_dir, project_dir, scheme, bundle_id }) => {
     try {
       return await takeIOSScreenshotBatch(projectCwd, { captures, device, theme, output_dir, project_dir, scheme, bundle_id });
+    } catch (err) {
+      return toolError(err);
+    }
+  }
+);
+
+// ── tool: openuispec_preview ────────────────────────────────────────────
+
+server.registerTool(
+  "openuispec_preview",
+  {
+    description: "Render a screen spec as an HTML preview with mock data and return a screenshot. Uses token values, locale strings, and contract-to-HTML mapping to produce a visual approximation without generating a full app. Mock data should be placed in openuispec/mock/<screen>.yaml.",
+    inputSchema: {
+      screen: z.string().describe("Screen name (e.g. 'home', 'settings', 'task_detail')"),
+      size_class: z.enum(["compact", "regular", "expanded"]).optional().default("compact").describe("Adaptive size class — compact (phone), regular (tablet), expanded (desktop)"),
+      theme: z.enum(["light", "dark"]).optional().default("light").describe("Color theme"),
+      locale: z.string().optional().default("en").describe("Locale code for i18n strings"),
+      viewport: z.object({
+        width: z.number(),
+        height: z.number(),
+      }).optional().describe("Custom viewport size (overrides size_class default)"),
+      include_html: z.boolean().optional().default(false).describe("Also return the rendered HTML string in the response"),
+    },
+  },
+  async ({ screen, size_class, theme, locale, viewport, include_html }) => {
+    try {
+      return await renderPreview(projectCwd, { screen, size_class, theme, locale, viewport, include_html });
     } catch (err) {
       return toolError(err);
     }

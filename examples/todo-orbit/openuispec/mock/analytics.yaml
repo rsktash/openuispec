@@ -1,0 +1,26 @@
+# Mock data for the analytics screen
+data:
+  overview:
+    completed_today: 3
+    open_tasks: 8
+    overdue_tasks: 2
+    completion_rate: 67
+
+  trend:
+    - { label: "Mon", completed: 4, created: 2 }
+    - { label: "Tue", completed: 3, created: 5 }
+    - { label: "Wed", completed: 6, created: 3 }
+    - { label: "Thu", completed: 2, created: 4 }
+    - { label: "Fri", completed: 5, created: 1 }
+    - { label: "Sat", completed: 1, created: 0 }
+    - { label: "Sun", completed: 0, created: 2 }
+
+  overdue:
+    - id: "t6"
+      title: "Submit tax forms"
+      priority: high
+      due_date: "2026-03-15"
+    - id: "t7"
+      title: "Renew gym membership"
+      priority: low
+      due_date: "2026-03-14"

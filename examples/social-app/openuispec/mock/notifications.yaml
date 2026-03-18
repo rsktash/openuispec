@@ -1,0 +1,30 @@
+# Mock data for the notifications screen
+data:
+  notifications:
+    - id: "n1"
+      type: like
+      actor: { id: "u2", display_name: "Sara Kim", avatar_url: null }
+      message: "liked your post"
+      post: { id: "p10", title: "My weekend project" }
+      created_at: "2026-03-18T11:00:00Z"
+      is_read: false
+    - id: "n2"
+      type: comment
+      actor: { id: "u3", display_name: "Mike Chen", avatar_url: null }
+      message: "commented: This looks amazing!"
+      post: { id: "p10", title: "My weekend project" }
+      created_at: "2026-03-18T09:30:00Z"
+      is_read: false
+    - id: "n3"
+      type: follow
+      actor: { id: "u5", display_name: "Alex Rivera", avatar_url: null }
+      message: "started following you"
+      created_at: "2026-03-17T18:00:00Z"
+      is_read: true
+    - id: "n4"
+      type: mention
+      actor: { id: "u4", display_name: "Lena Park", avatar_url: null }
+      message: "mentioned you in a post"
+      post: { id: "p8", title: "Team outing photos" }
+      created_at: "2026-03-17T14:00:00Z"
+      is_read: true

@@ -1,0 +1,7 @@
+# Mock data for the settings screen
+data:
+  preferences:
+    locale: "en"
+    theme: "light"
+    reminders_enabled: true
+    daily_summary_enabled: false

@@ -1,0 +1,14 @@
+# Mock data for the task_detail screen
+data:
+  task:
+    id: "t1"
+    title: "Buy groceries"
+    status: open
+    priority: high
+    due_date: "2026-03-18"
+    notes: "Get milk, eggs, bread, and vegetables. Check the weekly deals at the store."
+    created_at: "2026-03-10"
+    updated_at: "2026-03-17"
+
+params:
+  task_id: "t1"

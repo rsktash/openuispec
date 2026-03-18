@@ -1,0 +1,17 @@
+# Mock data for the search_results screen
+data:
+  results:
+    - id: "p20"
+      title: "Mike Chen"
+      subtitle: "@mikechen"
+      body: "Best running apps for 2026 — a comprehensive review"
+      avatar_url: null
+    - id: "u8"
+      title: "Taylor Swift"
+      subtitle: "@taylorswift"
+      body: "Singer-songwriter"
+      avatar_url: null
+
+params:
+  query: "running"
+  tab: "posts"

@@ -21,6 +21,7 @@ Every file type has a corresponding JSON Schema in `schema/`. **Read the schema 
 | `tokens/layout.yaml` | `tokens/layout.schema.json` | `layout` | [layout.yaml](../examples/taskflow/openuispec/tokens/layout.yaml) |
 | `tokens/themes.yaml` | `tokens/themes.schema.json` | `themes` | [themes.yaml](../examples/taskflow/openuispec/tokens/themes.yaml) |
 | `tokens/icons.yaml` | `tokens/icons.schema.json` | `icons` | [icons.yaml](../examples/taskflow/openuispec/tokens/icons.yaml) |
+| `mock/<screen>.yaml` | — | `data` / `params` | [analytics.yaml](../examples/todo-orbit/openuispec/mock/analytics.yaml) |
 
 Every token file **must** have a single root wrapper key matching its type:
 
@@ -99,6 +100,20 @@ generation:
 - **`structure`** — when present, overrides the heuristic code root discovery for a target. Paths are relative to `root`.
 - Shared layers are not targets — they are tracked alongside targets in `prepare` and `status` output.
 - `openuispec init --with-shared` scaffolds KMP defaults when both ios and android targets are selected.
+
+## Mock data (preview)
+
+The preview renderer reads mock data from `openuispec/mock/<screen>.yaml`. Each file has two optional top-level keys:
+
+```yaml
+data:
+  tasks: [...]          # binds to $data.tasks in the screen spec
+  user: { name: "..." } # binds to $data.user
+params:
+  id: "task-1"          # binds to $params.id
+```
+
+Mock files are not validated by `openuispec validate` and are excluded from drift detection. They exist solely to feed the preview renderer with realistic placeholder data. Preview is intended for **human inspection only** — AI agents should not use it for UI verification.
 
 ## Spec sections overview
 

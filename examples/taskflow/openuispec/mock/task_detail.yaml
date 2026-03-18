@@ -1,0 +1,18 @@
+# Mock data for the task_detail screen
+data:
+  task:
+    id: "task-1"
+    title: "Review Q4 roadmap"
+    description: "Go through the Q4 roadmap document and identify any gaps in the timeline. Focus on the platform team deliverables and cross-team dependencies."
+    status: in_progress
+    priority: high
+    due_date: "2026-03-20"
+    project_id: "p1"
+    project: { id: "p1", name: "Platform" }
+    assignee: { id: "u1", name: "Alex Chen", email: "alex@example.com" }
+    tags: ["planning", "q4"]
+    created_at: "2026-03-10"
+    updated_at: "2026-03-17"
+
+params:
+  task_id: "task-1"

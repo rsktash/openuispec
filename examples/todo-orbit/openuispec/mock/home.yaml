@@ -1,0 +1,33 @@
+# Mock data for the home screen
+data:
+  tasks:
+    - id: "t1"
+      title: "Buy groceries"
+      due_date: "2026-03-18"
+      status: open
+      priority: high
+    - id: "t2"
+      title: "Finish project proposal"
+      due_date: "2026-03-19"
+      status: open
+      priority: medium
+    - id: "t3"
+      title: "Call dentist"
+      due_date: "2026-03-20"
+      status: done
+      priority: low
+    - id: "t4"
+      title: "Review pull request"
+      due_date: "2026-03-18"
+      status: open
+      priority: high
+    - id: "t5"
+      title: "Clean apartment"
+      due_date: "2026-03-21"
+      status: open
+      priority: medium
+
+  task_counts:
+    all: 12
+    open: 8
+    done: 4

@@ -1,0 +1,33 @@
+# Mock data for the project_detail screen
+data:
+  project:
+    id: "proj-1"
+    name: "Website Redesign"
+    icon: "folder"
+    color: "#4A90D9"
+    task_count: 5
+
+  tasks:
+    - id: "t1"
+      title: "Design homepage layout"
+      due_date: "2026-03-25T00:00:00Z"
+      priority: high
+    - id: "t2"
+      title: "Set up CI pipeline"
+      due_date: "2026-04-01T00:00:00Z"
+      priority: medium
+    - id: "t3"
+      title: "Implement auth flow"
+      due_date: "2026-03-28T00:00:00Z"
+      priority: high
+    - id: "t4"
+      title: "Write API documentation"
+      due_date: "2026-04-05T00:00:00Z"
+      priority: low
+    - id: "t5"
+      title: "Performance audit"
+      due_date: "2026-04-10T00:00:00Z"
+      priority: medium
+
+params:
+  project_id: "proj-1"

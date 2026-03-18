@@ -1,0 +1,25 @@
+# Mock data for the chat_detail screen
+data:
+  conversation:
+    id: "c1"
+    participant: { id: "u2", display_name: "Sara Kim", avatar_url: null }
+
+  messages:
+    - id: "m1"
+      sender: { display_name: "Sara Kim" }
+      body: "Hey! Are you coming to the meetup tomorrow?"
+      created_at: "2026-03-18T10:30:00Z"
+      is_mine: false
+    - id: "m2"
+      sender: { display_name: "Jamie Taylor" }
+      body: "Yes, definitely! What time does it start?"
+      created_at: "2026-03-18T10:35:00Z"
+      is_mine: true
+    - id: "m3"
+      sender: { display_name: "Sara Kim" }
+      body: "6 PM at the usual place. See you there!"
+      created_at: "2026-03-18T10:45:00Z"
+      is_mine: false
+
+params:
+  conversation_id: "c1"

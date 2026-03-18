@@ -1,0 +1,28 @@
+# Mock data for the profile_self screen
+data:
+  profile:
+    id: "u1"
+    display_name: "Jamie Taylor"
+    handle: "jamiet"
+    bio: "Designer & developer. Building things that matter."
+    website: "https://jamietaylor.dev"
+    avatar_url: null
+    followers_count: 1240
+    following_count: 380
+    posts_count: 86
+
+  posts:
+    - id: "p10"
+      author: { display_name: "Jamie Taylor" }
+      body: "My weekend project — a mini weather station with Raspberry Pi"
+      media_url: null
+      like_count: 28
+      comment_count: 12
+      published_at: "2026-03-17T16:00:00Z"
+    - id: "p11"
+      author: { display_name: "Jamie Taylor" }
+      body: "New blog post about design tokens and how they simplify theming across platforms"
+      media_url: null
+      like_count: 64
+      comment_count: 8
+      published_at: "2026-03-15T09:00:00Z"

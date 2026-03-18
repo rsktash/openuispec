@@ -8,6 +8,44 @@ import { createHash } from "node:crypto";
 import YAML from "yaml";
 import { findProjectDir } from "../drift/index.js";
 
+// ── shared browser manager ──────────────────────────────────────────
+
+let browserInstance: any = null;
+let launchPromise: Promise<any> | null = null;
+
+export async function getBrowser(): Promise<any> {
+  if (browserInstance?.connected) return browserInstance;
+
+  if (!launchPromise) {
+    launchPromise = (async () => {
+      let puppeteer: any;
+      try {
+        puppeteer = await import("puppeteer");
+      } catch {
+        throw new Error(
+          "puppeteer is not installed. Run:\n  npm install -g puppeteer\n" +
+          "or add it to your project's devDependencies.",
+        );
+      }
+
+      browserInstance = await puppeteer.launch({
+        headless: true,
+        args: ["--no-sandbox", "--disable-setuid-sandbox"],
+      });
+      return browserInstance;
+    })();
+  }
+  return launchPromise;
+}
+
+export async function closeBrowser(): Promise<void> {
+  launchPromise = null;
+  if (browserInstance) {
+    try { await browserInstance.close(); } catch { /* ignore */ }
+    browserInstance = null;
+  }
+}
+
 // ── shared result type ──────────────────────────────────────────────
 
 export interface ScreenshotResult {

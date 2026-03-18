@@ -11,6 +11,7 @@ import { join, resolve } from "node:path";
 import { createServer, type AddressInfo } from "node:net";
 import YAML from "yaml";
 import { findProjectDir } from "../drift/index.js";
+import { getBrowser, closeBrowser, type ScreenshotResult } from "./screenshot-shared.js";
 
 // ── types ───────────────────────────────────────────────────────────
 
@@ -23,11 +24,6 @@ export interface ScreenshotOptions {
   full_page?: boolean;
   selector?: string;
   output_dir?: string;
-}
-
-export interface ScreenshotResult {
-  content: Array<{ type: "text"; text: string } | { type: "image"; data: string; mimeType: string }>;
-  isError?: true;
 }
 
 // ── free port finder ────────────────────────────────────────────────
@@ -145,29 +141,7 @@ async function startDevServer(webDir: string): Promise<ServerInstance> {
   return instance;
 }
 
-// ── browser manager ─────────────────────────────────────────────────
-
-let browserInstance: any = null;
-
-async function getBrowser(): Promise<any> {
-  if (browserInstance?.connected) return browserInstance;
-
-  let puppeteer: any;
-  try {
-    puppeteer = await import("puppeteer");
-  } catch {
-    throw new Error(
-      "puppeteer is not installed. Run:\n  npm install -g puppeteer\n" +
-      "or add it to your project's devDependencies.",
-    );
-  }
-
-  browserInstance = await puppeteer.launch({
-    headless: true,
-    args: ["--no-sandbox", "--disable-setuid-sandbox"],
-  });
-  return browserInstance;
-}
+// ── browser manager (imported from screenshot-shared.ts) ────────────
 
 // ── screenshot capture ──────────────────────────────────────────────
 
@@ -360,10 +334,7 @@ export async function shutdownAll() {
     try { instance.process.kill(); } catch { /* already dead */ }
   }
   servers.clear();
-  if (browserInstance) {
-    try { await browserInstance.close(); } catch { /* ignore */ }
-    browserInstance = null;
-  }
+  await closeBrowser();
 }
 
 process.on("exit", () => {
