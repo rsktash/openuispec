@@ -84,3 +84,53 @@ test("status summarizes target baselines and behind state", () => {
     rmSync(sandbox, { recursive: true, force: true });
   }
 });
+
+test("status includes shared layer info when configured", () => {
+  const sandbox = mkdtempSync(join(tmpdir(), "openuispec-status-shared-"));
+
+  try {
+    cpSync(join(repoRoot, "examples", "todo-orbit", "openuispec"), join(sandbox, "openuispec"), {
+      recursive: true,
+    });
+    cpSync(
+      join(repoRoot, "examples", "todo-orbit", "generated", "web", "Todo Orbit"),
+      join(sandbox, "generated", "ios", "Todo Orbit"),
+      { recursive: true }
+    );
+
+    // Add shared layer config (insert under generation block, before formatters)
+    const manifestPath = join(sandbox, "openuispec", "openuispec.yaml");
+    const manifest = readFileSync(manifestPath, "utf-8");
+    writeFileSync(
+      manifestPath,
+      manifest.replace(
+        "\nformatters:",
+        `\n  shared:\n    mobile_common:\n      platforms: [ios, android]\n      language: kotlin\n      root: "../kmp-shared"\n      tracks: [manifest, contracts]\n      scope: \"Shared business logic.\"\n\nformatters:`
+      )
+    );
+
+    mkdirSync(join(sandbox, "kmp-shared"), { recursive: true });
+
+    run(sandbox, "git", ["init"]);
+    run(sandbox, "git", ["config", "user.email", "tests@openuispec.local"]);
+    run(sandbox, "git", ["config", "user.name", "OpenUISpec Tests"]);
+    run(sandbox, "git", ["add", "."]);
+    run(sandbox, "git", ["commit", "-m", "baseline"]);
+
+    // Snapshot ios — should auto-create shared layer state
+    run(sandbox, nodeBin, tsxArgs(driftScript, ["--snapshot", "--target", "ios"]));
+
+    const output = run(sandbox, nodeBin, tsxArgs(statusScript, ["--json"]));
+    const status = JSON.parse(output);
+
+    assert.ok(status.shared_layers, "status should include shared_layers");
+    assert.equal(status.shared_layers.length, 1);
+    assert.equal(status.shared_layers[0].name, "mobile_common");
+    assert.deepEqual(status.shared_layers[0].platforms, ["ios", "android"]);
+    assert.equal(status.shared_layers[0].snapshot, true);
+    assert.equal(status.shared_layers[0].generated_by_target, "ios");
+    assert.equal(status.shared_layers[0].status, "up to date");
+  } finally {
+    rmSync(sandbox, { recursive: true, force: true });
+  }
+});

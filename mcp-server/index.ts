@@ -147,9 +147,12 @@ server.registerTool(
       const baselineReminder = baselinePending
         ? " ⚠ Baseline pending — remind user to run `openuispec drift --snapshot --target " + target + "` when satisfied."
         : "";
+      const sharedHint = result.shared_layers?.length
+        ? ` ℹ ${result.shared_layers.length} shared layer(s) detected — check shared_layers for generation guidance.`
+        : "";
       const hint = (include_specs
         ? "next_tool: openuispec_check (after generating code)"
-        : "next_tool: openuispec_read_specs (load spec contents for generation)") + baselineReminder;
+        : "next_tool: openuispec_read_specs (load spec contents for generation)") + baselineReminder + sharedHint;
       return toolResult(result, hint);
     } catch (err) {
       return toolError(err);
@@ -676,6 +679,25 @@ server.registerTool(
   }
 );
 
+// ── locale key lookup (supports both flat dotted keys and nested objects) ──
+
+function lookupLocaleKey(content: Record<string, unknown>, key: string): { found: boolean; value: unknown } {
+  // 1. Try flat (literal) key first: { "nav.tasks": "Tasks" }
+  if (key in content) {
+    return { found: true, value: content[key] };
+  }
+  // 2. Try nested path: { nav: { tasks: "Tasks" } }
+  const parts = key.split(".");
+  let current: unknown = content;
+  for (const part of parts) {
+    if (current === null || current === undefined || typeof current !== "object" || Array.isArray(current)) {
+      return { found: false, value: undefined };
+    }
+    current = (current as Record<string, unknown>)[part];
+  }
+  return current !== undefined ? { found: true, value: current } : { found: false, value: undefined };
+}
+
 // ── tool: openuispec_get_locale ─────────────────────────────────────
 
 server.registerTool(
@@ -710,9 +732,8 @@ server.registerTool(
       if (keys && keys.length > 0) {
         const filtered: Record<string, unknown> = {};
         for (const key of keys) {
-          if (key in content) {
-            filtered[key] = content[key];
-          }
+          const { found, value } = lookupLocaleKey(content, key);
+          if (found) filtered[key] = value;
         }
         return toolResult({ locale, path: relative(projectDir, filePath), content: filtered });
       }

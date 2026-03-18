@@ -95,6 +95,19 @@ function checkRulesVersion(): void {
 
 // ── spec helpers (shared with MCP server) ────────────────────────────
 
+function lookupLocaleKey(content: Record<string, unknown>, key: string): { found: boolean; value: unknown } {
+  if (key in content) return { found: true, value: content[key] };
+  const parts = key.split(".");
+  let current: unknown = content;
+  for (const part of parts) {
+    if (current === null || current === undefined || typeof current !== "object" || Array.isArray(current)) {
+      return { found: false, value: undefined };
+    }
+    current = (current as Record<string, unknown>)[part];
+  }
+  return current !== undefined ? { found: true, value: current } : { found: false, value: undefined };
+}
+
 function resolveSpecDir(projectDir: string, manifest: any, key: string): string {
   return resolve(projectDir, manifest.includes?.[key] ?? `./${key}/`);
 }
@@ -293,7 +306,10 @@ async function main(): Promise<void> {
       const content = JSON.parse(readFileSync(filePath, "utf-8"));
       if (keys) {
         const filtered: Record<string, unknown> = {};
-        for (const key of keys) { if (key in content) filtered[key] = content[key]; }
+        for (const key of keys) {
+          const result = lookupLocaleKey(content, key);
+          if (result.found) filtered[key] = result.value;
+        }
         console.log(JSON.stringify(filtered, null, 2));
       } else {
         console.log(JSON.stringify(content, null, 2));

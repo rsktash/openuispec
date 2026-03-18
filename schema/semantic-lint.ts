@@ -5,6 +5,23 @@ import { listFiles, readManifest } from "../drift/index.js";
 
 type UnknownRecord = Record<string, unknown>;
 
+/** Collect all locale keys from a JSON object, supporting both flat dotted keys and nested objects. */
+function collectLocaleKeys(data: unknown, prefix = ""): string[] {
+  if (!data || typeof data !== "object" || Array.isArray(data)) return [];
+  const keys: string[] = [];
+  for (const [key, value] of Object.entries(data as UnknownRecord)) {
+    if (key.startsWith("$")) continue; // skip $locale, $direction
+    const fullKey = prefix ? `${prefix}.${key}` : key;
+    if (typeof value === "string") {
+      keys.push(fullKey);
+    } else if (typeof value === "object" && value !== null && !Array.isArray(value)) {
+      // Nested object — recurse to flatten
+      keys.push(...collectLocaleKeys(value, fullKey));
+    }
+  }
+  return keys;
+}
+
 export interface Includes {
   tokens: string;
   contracts: string;
@@ -212,7 +229,14 @@ function buildContext(projectDir: string, includes: Includes, manifest: UnknownR
   for (const filePath of listFiles(localeDir, ".json")) {
     const localeName = basename(filePath, ".json");
     const data = loadJson(filePath);
-    localeFiles.set(localeName, new Set(Object.keys(data)));
+    // Support both flat dotted keys ("nav.home": "Home") and nested objects ({ nav: { home: "Home" } })
+    const flatKeys = Object.keys(data as object).filter(k => !k.startsWith("$"));
+    const hasNestedObjects = flatKeys.some(k => {
+      const v = (data as UnknownRecord)[k];
+      return typeof v === "object" && v !== null && !Array.isArray(v);
+    });
+    const allKeys = hasNestedObjects ? collectLocaleKeys(data) : flatKeys;
+    localeFiles.set(localeName, new Set(allKeys));
   }
 
   const formatterNames = new Set<string>([

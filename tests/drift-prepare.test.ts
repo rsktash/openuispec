@@ -547,6 +547,141 @@ test("prepare recognizes vue as a known web framework with vue-specific constrai
   }
 });
 
+test("snapshot for ios creates shared layer state file and prepare --target android sees it as already generated", () => {
+  const sandbox = mkdtempSync(join(tmpdir(), "openuispec-shared-layer-"));
+
+  try {
+    cpSync(join(repoRoot, "examples", "todo-orbit", "openuispec"), join(sandbox, "openuispec"), {
+      recursive: true,
+    });
+    mkdirSync(join(sandbox, "backend"), { recursive: true });
+
+    // Add shared layer config to manifest (insert before formatters which is after generation block)
+    const manifestPath = join(sandbox, "openuispec", "openuispec.yaml");
+    const manifest = readFileSync(manifestPath, "utf-8");
+    writeFileSync(
+      manifestPath,
+      manifest.replace(
+        "\nformatters:",
+        `\n  shared:\n    mobile_common:\n      platforms: [ios, android]\n      language: kotlin\n      root: "../kmp-shared"\n      tracks: [manifest, contracts, flows]\n      scope: \"Business logic, data models, repositories. No UI.\"\n      paths:\n        domain: "common/domain/"\n        features: "common/features/"\n  structure:\n    ios:\n      root: "../kmp-shared"\n      paths:\n        ui: "iosApp/ui/"\n\nformatters:`
+      )
+    );
+
+    // Create the shared layer root and generated output dirs
+    mkdirSync(join(sandbox, "kmp-shared", "common", "domain"), { recursive: true });
+    mkdirSync(join(sandbox, "kmp-shared", "common", "features"), { recursive: true });
+    mkdirSync(join(sandbox, "kmp-shared", "iosApp", "ui"), { recursive: true });
+    cpSync(
+      join(repoRoot, "examples", "todo-orbit", "generated", "web", "Todo Orbit"),
+      join(sandbox, "generated", "ios", "Todo Orbit"),
+      { recursive: true }
+    );
+
+    run(sandbox, "git", ["init"]);
+    run(sandbox, "git", ["config", "user.email", "tests@openuispec.local"]);
+    run(sandbox, "git", ["config", "user.name", "OpenUISpec Tests"]);
+    run(sandbox, "git", ["add", "."]);
+    run(sandbox, "git", ["commit", "-m", "baseline"]);
+
+    // Snapshot for ios should auto-create shared layer state
+    run(sandbox, nodeBin, tsxArgs(driftScript, ["--snapshot", "--target", "ios"]));
+
+    // Verify shared layer state file was created
+    const sharedStatePath = join(sandbox, "kmp-shared", ".openuispec-shared-mobile_common.json");
+    assert.ok(
+      readFileSync(sharedStatePath, "utf-8").includes('"generated_by_target":"ios"') ||
+      readFileSync(sharedStatePath, "utf-8").includes('"generated_by_target": "ios"'),
+      "shared state file should record ios as the generating target"
+    );
+
+    // Now prepare for android — shared layer should show as already generated
+    const prepareOutput = run(sandbox, nodeBin, tsxArgs(prepareScript, ["--target", "android", "--json"]));
+    const prepared = JSON.parse(prepareOutput);
+
+    assert.ok(prepared.shared_layers, "should have shared_layers in prepare result");
+    assert.equal(prepared.shared_layers.length, 1);
+    assert.equal(prepared.shared_layers[0].name, "mobile_common");
+    assert.equal(prepared.shared_layers[0].already_generated, true);
+    assert.equal(prepared.shared_layers[0].generated_by_target, "ios");
+    assert.ok(prepared.shared_layers[0].guidance.includes("already generated"));
+
+    // Generation rules should mention the shared layer
+    assert.ok(
+      prepared.bootstrap.generation_rules.some((rule: string) =>
+        rule.includes("mobile_common") && rule.includes("already generated")
+      )
+    );
+  } finally {
+    rmSync(sandbox, { recursive: true, force: true });
+  }
+});
+
+test("spec change causes drift on shared layer", () => {
+  const sandbox = mkdtempSync(join(tmpdir(), "openuispec-shared-drift-"));
+
+  try {
+    cpSync(join(repoRoot, "examples", "todo-orbit", "openuispec"), join(sandbox, "openuispec"), {
+      recursive: true,
+    });
+    mkdirSync(join(sandbox, "backend"), { recursive: true });
+
+    // Add shared layer config (insert under generation block, before formatters)
+    const manifestPath = join(sandbox, "openuispec", "openuispec.yaml");
+    const manifest = readFileSync(manifestPath, "utf-8");
+    writeFileSync(
+      manifestPath,
+      manifest.replace(
+        "\nformatters:",
+        `\n  shared:\n    mobile_common:\n      platforms: [ios, android]\n      language: kotlin\n      root: "../kmp-shared"\n      tracks: [manifest, contracts, flows]\n      scope: \"Business logic, data models, repositories. No UI.\"\n\nformatters:`
+      )
+    );
+
+    mkdirSync(join(sandbox, "kmp-shared"), { recursive: true });
+    cpSync(
+      join(repoRoot, "examples", "todo-orbit", "generated", "web", "Todo Orbit"),
+      join(sandbox, "generated", "ios", "Todo Orbit"),
+      { recursive: true }
+    );
+
+    run(sandbox, "git", ["init"]);
+    run(sandbox, "git", ["config", "user.email", "tests@openuispec.local"]);
+    run(sandbox, "git", ["config", "user.name", "OpenUISpec Tests"]);
+    run(sandbox, "git", ["add", "."]);
+    run(sandbox, "git", ["commit", "-m", "baseline"]);
+
+    run(sandbox, nodeBin, tsxArgs(driftScript, ["--snapshot", "--target", "ios"]));
+
+    // Modify a screen file — should NOT cause drift on shared layer (screens not in default tracks)
+    const screenFile = join(sandbox, "openuispec", "screens", "task_detail.yaml");
+    const screenContent = readFileSync(screenFile, "utf-8").replace(
+      'title: "$t:task_detail.title"',
+      'title: "$t:task_detail.more_info"'
+    );
+    writeFileSync(screenFile, screenContent);
+
+    const noDriftOutput = run(sandbox, nodeBin, tsxArgs(prepareScript, ["--target", "ios", "--json"]));
+    const noDrift = JSON.parse(noDriftOutput);
+    assert.ok(noDrift.shared_layers, "shared_layers should be present");
+    assert.equal(noDrift.shared_layers[0].has_drift, false, "screen change should not cause shared layer drift");
+
+    // Now modify a contract file (tracked by default shared layer) to cause drift
+    const contractFile = join(sandbox, "openuispec", "contracts", "action_trigger.yaml");
+    const contractContent = readFileSync(contractFile, "utf-8");
+    writeFileSync(contractFile, contractContent + "\n# drift test change\n");
+
+    // Prepare for ios should show shared layer with drift
+    const prepareOutput = run(sandbox, nodeBin, tsxArgs(prepareScript, ["--target", "ios", "--json"]));
+    const prepared = JSON.parse(prepareOutput);
+
+    // In update mode, shared_layers should still appear if configured
+    assert.ok(prepared.shared_layers, "shared_layers should be present");
+    assert.equal(prepared.shared_layers[0].has_drift, true);
+    assert.ok(prepared.shared_layers[0].guidance.includes("drifted"));
+  } finally {
+    rmSync(sandbox, { recursive: true, force: true });
+  }
+});
+
 test("prepare includes tailwind refs when css is configured", () => {
   const sandbox = mkdtempSync(join(tmpdir(), "openuispec-prepare-tailwind-"));
 

@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { cpSync, mkdirSync, mkdtempSync, rmSync } from "node:fs";
+import { cpSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -154,6 +154,31 @@ describe("openuispec_get_locale", () => {
     const text = getToolText(result);
     assert.ok(text.includes("not found"));
     assert.ok(text.includes("Available"), "should list available locales");
+  });
+
+  test("with keys filter resolves dotted keys in flat format", async () => {
+    // en.json uses flat dotted keys like "nav.home": "Home"
+    const result = await client.callTool({ name: "openuispec_get_locale", arguments: { locale: "en", keys: ["nav.home"] } });
+    const parsed = parseToolText(result);
+    assert.equal(parsed.content["nav.home"], "Home");
+  });
+
+  test("with keys filter resolves dotted keys in nested object format", async () => {
+    // Write a nested-format locale file
+    writeFileSync(
+      join(sandbox, "openuispec", "locales", "nested.json"),
+      JSON.stringify({
+        "$locale": "nested",
+        "$direction": "ltr",
+        "nav": { "home": "Home Nested", "settings": "Settings Nested" },
+        "profile": { "title": "Profile", "bio": { "label": "Bio" } },
+      }),
+    );
+    const result = await client.callTool({ name: "openuispec_get_locale", arguments: { locale: "nested", keys: ["nav.home", "profile.bio.label", "nav.missing"] } });
+    const parsed = parseToolText(result);
+    assert.equal(parsed.content["nav.home"], "Home Nested", "should resolve nested nav.home");
+    assert.equal(parsed.content["profile.bio.label"], "Bio", "should resolve deeply nested key");
+    assert.ok(!("nav.missing" in parsed.content), "should omit missing nested key");
   });
 });
 

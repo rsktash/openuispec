@@ -73,6 +73,33 @@ export interface ExplainResult {
   files: FileExplanation[];
 }
 
+// ── shared layer types ───────────────────────────────────────────────
+
+export interface SharedLayerConfig {
+  name: string;
+  platforms: string[];
+  language: string;
+  root: string;           // resolved absolute path
+  paths: Record<string, string>;
+  tracks: string[];       // spec categories to track for drift
+  scope: string;          // what code belongs in this layer
+}
+
+export interface SharedLayerState {
+  spec_version: string;
+  snapshot_at: string;
+  layer_name: string;
+  generated_by_target: string;
+  baseline?: BaselineRef;
+  files: Record<string, FileEntry>;
+}
+
+export interface SharedLayerDriftResult {
+  layer: SharedLayerConfig;
+  drift: DriftResult;
+  state: SharedLayerState | null;
+}
+
 // ── helpers ───────────────────────────────────────────────────────────
 
 export function listFiles(dir: string, ext: string): string[] {
@@ -166,16 +193,43 @@ export function discoverSpecFiles(projectDir: string): string[] {
   return files;
 }
 
-function categorize(relPath: string): string {
-  if (relPath === "openuispec.yaml") return "Manifest";
+/** Classify a relative spec path into a lowercase category. */
+export function specCategory(relPath: string): string {
+  if (relPath === "openuispec.yaml") return "manifest";
   const dir = dirname(relPath);
-  if (dir === "tokens") return "Tokens";
-  if (dir === "screens") return "Screens";
-  if (dir === "flows") return "Flows";
-  if (dir === "platform") return "Platform";
-  if (dir === "locales") return "Locales";
-  if (dir === "contracts") return "Contracts";
-  return "Other";
+  if (dir === "tokens") return "tokens";
+  if (dir === "screens") return "screens";
+  if (dir === "flows") return "flows";
+  if (dir === "platform") return "platform";
+  if (dir === "locales") return "locales";
+  if (dir === "contracts") return "contracts";
+  return "other";
+}
+
+function categorize(relPath: string): string {
+  const cat = specCategory(relPath);
+  return cat.charAt(0).toUpperCase() + cat.slice(1);
+}
+
+/** Returns true when a DriftResult contains any changes. */
+export function hasDriftChanges(d: DriftResult): boolean {
+  return d.changed.length > 0 || d.added.length > 0 || d.removed.length > 0;
+}
+
+/** Hash spec files into FileEntry records keyed by relative path. */
+export function buildFileEntries(
+  projectDir: string,
+  files: string[]
+): { entries: Record<string, FileEntry>; stubs: number } {
+  const entries: Record<string, FileEntry> = {};
+  let stubs = 0;
+  for (const f of files) {
+    const rel = relative(projectDir, f);
+    const status = hasStatusSemantics(rel) ? readStatus(f) : "ready";
+    entries[rel] = { hash: hashFile(f), status };
+    if (status === "stub") stubs++;
+  }
+  return { entries, stubs };
 }
 
 function runGit(args: string[], cwd: string): string | null {
@@ -536,6 +590,158 @@ function normalizeEntry(value: string | FileEntry): FileEntry {
   return value;
 }
 
+// ── shared layers ────────────────────────────────────────────────────
+
+/** Parse `generation.shared` from the manifest and resolve roots to absolute paths. */
+export function readSharedLayers(projectDir: string): SharedLayerConfig[] {
+  const manifest = readManifest(projectDir);
+  const shared = manifest.generation?.shared;
+  if (!shared || typeof shared !== "object") return [];
+
+  return Object.entries(shared).map(([name, config]) => {
+    const cfg = config as Record<string, any>;
+    return {
+      name,
+      platforms: Array.isArray(cfg.platforms) ? cfg.platforms : [],
+      language: typeof cfg.language === "string" ? cfg.language : "",
+      root: resolve(projectDir, cfg.root ?? "."),
+      paths: typeof cfg.paths === "object" && cfg.paths !== null ? cfg.paths : {},
+      tracks: Array.isArray(cfg.tracks) ? cfg.tracks : [],
+      scope: typeof cfg.scope === "string" ? cfg.scope : "",
+    };
+  });
+}
+
+/** Return shared layers whose `platforms` array includes the given target. */
+export function sharedLayersForTarget(projectDir: string, target: string): SharedLayerConfig[] {
+  return readSharedLayers(projectDir).filter((layer) => layer.platforms.includes(target));
+}
+
+/** Returns the state file path for a shared layer. */
+export function sharedLayerStatePath(layer: SharedLayerConfig): string {
+  return join(layer.root, `.openuispec-shared-${layer.name}.json`);
+}
+
+/** Read an existing shared layer state file, or null if it doesn't exist. */
+export function readSharedLayerState(layer: SharedLayerConfig): SharedLayerState | null {
+  try {
+    return JSON.parse(readFileSync(sharedLayerStatePath(layer), "utf-8"));
+  } catch {
+    return null;
+  }
+}
+
+/** Filter spec files to only those in the given categories. */
+function filterSpecFilesByCategories(
+  projectDir: string,
+  files: string[],
+  categories: string[]
+): string[] {
+  const catSet = new Set(categories);
+  return files.filter((f) => catSet.has(specCategory(relative(projectDir, f))));
+}
+
+/** Create a snapshot of spec state for a shared layer. */
+export function createSharedSnapshot(
+  cwd: string,
+  layerName: string,
+  generatedByTarget: string
+): SnapshotResult {
+  const projectDir = findProjectDir(cwd);
+  const layers = readSharedLayers(projectDir);
+  const layer = layers.find((l) => l.name === layerName);
+  if (!layer) {
+    throw new Error(`Shared layer "${layerName}" not found in generation.shared`);
+  }
+
+  const manifest = readManifest(projectDir);
+  const allFiles = discoverSpecFiles(projectDir);
+  const files = filterSpecFilesByCategories(projectDir, allFiles, layer.tracks);
+  const baseline = captureBaseline(projectDir, allFiles);
+
+  const { entries, stubs: stubCount } = buildFileEntries(projectDir, files);
+
+  const state: SharedLayerState = {
+    spec_version: manifest.spec_version ?? "0.1",
+    snapshot_at: new Date().toISOString(),
+    layer_name: layerName,
+    generated_by_target: generatedByTarget,
+    baseline,
+    files: entries,
+  };
+
+  const outPath = sharedLayerStatePath(layer);
+  writeFileSync(outPath, JSON.stringify(state, null, 2) + "\n");
+
+  return {
+    target: `shared:${layerName}`,
+    snapshot_at: state.snapshot_at,
+    files_hashed: Object.keys(entries).length,
+    stubs: stubCount,
+    state_path: relative(cwd, outPath),
+    baseline: formatBaseline(baseline),
+  };
+}
+
+/** Compute drift for a shared layer against its saved state. */
+export function computeSharedDrift(
+  projectDir: string,
+  layer: SharedLayerConfig
+): SharedLayerDriftResult {
+  const state = readSharedLayerState(layer);
+  if (!state) {
+    return {
+      layer,
+      drift: { changed: [], added: [], removed: [], unchanged: [] },
+      state: null,
+    };
+  }
+
+  const allFiles = discoverSpecFiles(projectDir);
+  const files = filterSpecFilesByCategories(projectDir, allFiles, layer.tracks);
+  const { entries: current } = buildFileEntries(projectDir, files);
+
+  const drift: DriftResult = { changed: [], added: [], removed: [], unchanged: [] };
+
+  for (const [rel, entry] of Object.entries(current)) {
+    const snapshotEntry = state.files[rel]
+      ? normalizeEntry(state.files[rel] as string | FileEntry)
+      : null;
+    if (!snapshotEntry) {
+      drift.added.push(rel);
+    } else if (snapshotEntry.hash !== entry.hash) {
+      drift.changed.push(rel);
+    } else {
+      drift.unchanged.push(rel);
+    }
+  }
+
+  for (const rel of Object.keys(state.files)) {
+    if (!(rel in current)) {
+      drift.removed.push(rel);
+    }
+  }
+
+  return { layer, drift, state };
+}
+
+/** Read `generation.structure[target]` from the manifest. */
+export function readTargetStructure(
+  projectDir: string,
+  target: string
+): { root: string; paths: Record<string, string>; scope: string } | null {
+  const manifest = readManifest(projectDir);
+  const structure = manifest.generation?.structure?.[target];
+  if (!structure || typeof structure !== "object" || typeof structure.root !== "string") {
+    return null;
+  }
+  return {
+    root: resolve(projectDir, structure.root),
+    paths: typeof structure.paths === "object" && structure.paths !== null ? structure.paths : {},
+    scope: typeof structure.scope === "string" ? structure.scope : "",
+  };
+}
+
 // ── snapshot ──────────────────────────────────────────────────────────
 
 export interface SnapshotResult {
@@ -561,16 +767,7 @@ export function createSnapshot(cwd: string, target: string): SnapshotResult {
   const manifest = readManifest(projectDir);
   const files = discoverSpecFiles(projectDir);
   const baseline = captureBaseline(projectDir, files);
-
-  const entries: Record<string, FileEntry> = {};
-  let stubCount = 0;
-
-  for (const f of files) {
-    const rel = relative(projectDir, f);
-    const status = hasStatusSemantics(rel) ? readStatus(f) : "ready";
-    entries[rel] = { hash: hashFile(f), status };
-    if (status === "stub") stubCount++;
-  }
+  const { entries, stubs: stubCount } = buildFileEntries(projectDir, files);
 
   const state: StateFile = {
     spec_version: manifest.spec_version ?? "0.1",
@@ -582,6 +779,20 @@ export function createSnapshot(cwd: string, target: string): SnapshotResult {
 
   const outPath = stateFilePath(projectDir, projectName, target);
   writeFileSync(outPath, JSON.stringify(state, null, 2) + "\n");
+
+  // Auto-snapshot shared layers with tracks for this target if their state file doesn't exist yet
+  const sharedLayers = sharedLayersForTarget(projectDir, target);
+  for (const layer of sharedLayers) {
+    if (layer.tracks.length === 0) continue;
+    const layerStatePath = sharedLayerStatePath(layer);
+    if (!existsSync(layerStatePath) && existsSync(layer.root)) {
+      try {
+        createSharedSnapshot(cwd, layer.name, target);
+      } catch {
+        // Non-fatal: shared layer snapshot is best-effort during target snapshot
+      }
+    }
+  }
 
   return {
     target,
@@ -619,6 +830,7 @@ export interface CheckResult {
   stubDrift: DriftResult;
   statuses: Record<string, string>;
   explanation?: ExplainResult;
+  shared_layer_drift?: SharedLayerDriftResult[];
 }
 
 export function computeDrift(
@@ -627,13 +839,7 @@ export function computeDrift(
   includeAll: boolean
 ): CheckResult {
   const files = discoverSpecFiles(projectDir);
-
-  const current: Record<string, FileEntry> = {};
-  for (const f of files) {
-    const rel = relative(projectDir, f);
-    const status = hasStatusSemantics(rel) ? readStatus(f) : "ready";
-    current[rel] = { hash: hashFile(f), status };
-  }
+  const { entries: current } = buildFileEntries(projectDir, files);
 
   const drift: DriftResult = { changed: [], added: [], removed: [], unchanged: [] };
   const stubDrift: DriftResult = { changed: [], added: [], removed: [], unchanged: [] };
@@ -686,6 +892,15 @@ export function loadTargetDrift(
   const result = computeDrift(projectDir, state, includeAll);
   if (explainOutput) {
     result.explanation = explainDrift(projectDir, result);
+  }
+
+  // Include shared layer drift for this target (only layers with tracks configured)
+  const sharedLayers = sharedLayersForTarget(projectDir, target);
+  const trackingLayers = sharedLayers.filter((l) => l.tracks.length > 0);
+  if (trackingLayers.length > 0) {
+    result.shared_layer_drift = trackingLayers.map((layer) =>
+      computeSharedDrift(projectDir, layer)
+    );
   }
 
   return { projectDir, projectName, statePath, result };

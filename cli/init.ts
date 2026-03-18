@@ -33,6 +33,7 @@ export type InitOptionsResponse = {
     options?: string[];
   }>;
   configure_targets_note: string;
+  shared_layer_note?: string;
 };
 
 export function listInitOptions(): InitOptionsResponse {
@@ -78,9 +79,17 @@ export function listInitOptions(): InitOptionsResponse {
         type: "yes_no",
         default: defaults.configureTargets,
       },
+      {
+        key: "with_shared",
+        prompt: "Does the project share code between platforms (e.g. KMP commonMain)?",
+        type: "yes_no",
+        default: false,
+      },
     ],
     configure_targets_note:
       "If configure_targets is true, use `openuispec configure-target <target> --list-options` for each target after init to present stack choices to the user.",
+    shared_layer_note:
+      "If with_shared is true, add shared layer config to generation.shared in the manifest. Each shared layer needs: name, platforms (subset of targets), language, root (path relative to openuispec.yaml), tracks (spec categories: manifest, contracts, flows, screens, tokens, platform, locales), and scope (what code belongs there). Also add generation.structure entries for each target to define where platform-specific UI code goes and its scope.",
   };
 }
 
@@ -171,7 +180,12 @@ function getPackageVersion(): string {
 function manifestTemplate(
   name: string,
   targets: string[],
-  options: { withApi: boolean; backendPath: string | null }
+  options: {
+    withApi: boolean;
+    backendPath: string | null;
+    sharedLayers: SharedLayerAnswers[];
+    structures: StructureAnswers[];
+  }
 ): string {
   const targetList = targets.join(", ");
   const outputLines = targets
@@ -185,6 +199,38 @@ function manifestTemplate(
       return `    ${t}: {}`;
     })
     .join("\n");
+
+  function yamlPathsBlock(paths: Record<string, string>): string {
+    const entries = Object.entries(paths);
+    return entries.length > 0
+      ? `\n      paths:\n${entries.map(([k, v]) => `        ${k}: "${v}"`).join("\n")}`
+      : "";
+  }
+
+  let sharedBlock = "";
+  if (options.sharedLayers.length > 0) {
+    const layers = options.sharedLayers.map((layer) => {
+      const tracksLine = layer.tracks.length > 0
+        ? `\n      tracks: [${layer.tracks.join(", ")}]`
+        : "";
+      return `    ${layer.name}:
+      platforms: [${layer.platforms.join(", ")}]
+      language: ${layer.language}
+      root: "${layer.root}"
+      scope: "${layer.scope}"${tracksLine}${yamlPathsBlock(layer.paths)}`;
+    }).join("\n");
+    sharedBlock = `  shared:\n${layers}\n`;
+  }
+
+  let structureBlock = "";
+  if (options.structures.length > 0) {
+    const entries = options.structures.map((s) => {
+      const scopeLine = s.scope ? `\n      scope: "${s.scope}"` : "";
+      return `    ${s.target}:
+      root: "${s.root}"${scopeLine}${yamlPathsBlock(s.paths)}`;
+    }).join("\n");
+    structureBlock = `  structure:\n${entries}\n`;
+  }
 
   return `# ${name} — OpenUISpec v0.1
 spec_version: "0.1"
@@ -218,7 +264,7 @@ ${options.withApi ? `  code_roots:
     backend: "${options.backendPath}"                # Required when api.endpoints are declared
 ` : ""}  output_format:
 ${outputLines}
-
+${sharedBlock}${structureBlock}
 data_model: {}
 
 api:
@@ -679,6 +725,23 @@ export function extractRulesVersion(filePath: string): string | null {
 
 export { getPackageVersion };
 
+interface SharedLayerAnswers {
+  name: string;
+  platforms: string[];
+  language: string;
+  root: string;
+  tracks: string[];
+  scope: string;
+  paths: Record<string, string>;
+}
+
+interface StructureAnswers {
+  target: string;
+  root: string;
+  scope: string;
+  paths: Record<string, string>;
+}
+
 interface InitOptions {
   defaults: boolean;
   quiet: boolean;
@@ -688,6 +751,7 @@ interface InitOptions {
   withApi?: boolean;
   backendPath?: string;
   configureTargets?: boolean;
+  withShared?: boolean;
 }
 
 interface InitAnswers {
@@ -697,6 +761,8 @@ interface InitAnswers {
   withApi: boolean;
   backendPath: string | null;
   configureTargets: boolean;
+  sharedLayers: SharedLayerAnswers[];
+  structures: StructureAnswers[];
 }
 
 function parseTargetsValue(raw: string): string[] {
@@ -752,6 +818,12 @@ function parseInitArgs(argv: string[]): InitOptions {
       case "--no-configure-targets":
         options.configureTargets = false;
         break;
+      case "--with-shared":
+        options.withShared = true;
+        break;
+      case "--no-shared":
+        options.withShared = false;
+        break;
       default:
         if (arg.startsWith("--")) {
           console.error(`Error: Unknown init option: ${arg}`);
@@ -773,7 +845,125 @@ function collectDefaults(): InitAnswers {
     withApi: true,
     backendPath: "../backend/",
     configureTargets: true,
+    sharedLayers: [],
+    structures: [],
   };
+}
+
+const SHARED_LAYER_DEFAULTS: Record<string, {
+  language: string;
+  root: string;
+  tracks: string[];
+  scope: string;
+  paths: Record<string, string>;
+  structureScope: Record<string, string>;
+}> = {
+  kmp: {
+    language: "kotlin",
+    root: "../shared",
+    tracks: [],
+    scope: "Business logic, data models, repositories, API clients, view models/stores. No UI rendering.",
+    paths: { domain: "commonMain/domain/", features: "commonMain/features/" },
+    structureScope: {
+      ios: "Pure SwiftUI views and navigation. All business logic comes from the shared layer.",
+      android: "Pure Compose UI and navigation. All business logic comes from the shared layer.",
+    },
+  },
+};
+
+function defaultSharedConfig(targets: string[]): {
+  sharedLayers: SharedLayerAnswers[];
+  structures: StructureAnswers[];
+} {
+  const mobilePlatforms = targets.filter((t) => t === "ios" || t === "android");
+  if (mobilePlatforms.length < 2) {
+    return { sharedLayers: [], structures: [] };
+  }
+
+  const preset = SHARED_LAYER_DEFAULTS.kmp;
+  const sharedLayers: SharedLayerAnswers[] = [{
+    name: "mobile_common",
+    platforms: mobilePlatforms,
+    language: preset.language,
+    root: preset.root,
+    tracks: preset.tracks,
+    scope: preset.scope,
+    paths: preset.paths,
+  }];
+
+  const structures: StructureAnswers[] = mobilePlatforms.map((t) => ({
+    target: t,
+    root: preset.root,
+    scope: preset.structureScope[t] ?? `Pure ${t} UI. Business logic comes from the shared layer.`,
+    paths: { ui: `${t}App/ui/` },
+  }));
+
+  return { sharedLayers, structures };
+}
+
+async function collectSharedLayerAnswers(
+  rl: ReturnType<typeof createInterface>,
+  targets: string[],
+): Promise<{ sharedLayers: SharedLayerAnswers[]; structures: StructureAnswers[] }> {
+  const withShared = await askYesNo(rl, "\nShare code between platforms (e.g. KMP commonMain)?", false);
+  if (!withShared) return { sharedLayers: [], structures: [] };
+
+  const defaults = defaultSharedConfig(targets);
+  const defaultLayer = defaults.sharedLayers[0];
+  if (!defaultLayer) return { sharedLayers: [], structures: [] };
+
+  console.log("\n  Shared layer defaults (KMP):");
+  console.log(`    platforms: ${defaultLayer.platforms.join(", ")}`);
+  console.log(`    language: ${defaultLayer.language}`);
+  console.log(`    root: ${defaultLayer.root}`);
+  console.log(`    scope: ${defaultLayer.scope}`);
+
+  const useDefaults = await askYesNo(rl, "  Use these defaults?", true);
+  if (useDefaults) return defaults;
+
+  const layerName = await ask(rl, "  Shared layer name", defaultLayer.name);
+  const platformsRaw = await askList(rl, "  Platforms", targets, defaultLayer.platforms);
+  const language = await ask(rl, "  Language", defaultLayer.language);
+  const root = await ask(rl, "  Root path (relative to openuispec.yaml)", defaultLayer.root);
+  const scope = await ask(rl, "  Scope (what code belongs here)", defaultLayer.scope);
+  const wantTracks = await askYesNo(rl, "  Enable hash-based drift tracking for this layer?", false);
+  const tracksRaw = wantTracks
+    ? await askList(
+        rl,
+        "  Tracked spec categories",
+        ["manifest", "tokens", "contracts", "screens", "flows", "platform", "locales"],
+        ["manifest", "contracts", "flows"]
+      )
+    : [];
+
+  const sharedLayers: SharedLayerAnswers[] = [{
+    name: layerName,
+    platforms: platformsRaw,
+    language,
+    root,
+    tracks: tracksRaw,
+    scope,
+    paths: defaultLayer.paths,
+  }];
+
+  const structures: StructureAnswers[] = [];
+  for (const t of platformsRaw) {
+    const defaultStructure = defaults.structures.find((s) => s.target === t);
+    const structRoot = await ask(rl, `  ${t} structure root`, defaultStructure?.root ?? root);
+    const structScope = await ask(
+      rl,
+      `  ${t} scope (what code belongs in the ${t} target)`,
+      defaultStructure?.scope ?? `Pure ${t} UI rendering.`
+    );
+    structures.push({
+      target: t,
+      root: structRoot,
+      scope: structScope,
+      paths: defaultStructure?.paths ?? { ui: `${t}App/ui/` },
+    });
+  }
+
+  return { sharedLayers, structures };
 }
 
 async function collectInteractiveAnswers(rl: ReturnType<typeof createInterface>): Promise<InitAnswers> {
@@ -792,6 +982,7 @@ async function collectInteractiveAnswers(rl: ReturnType<typeof createInterface>)
     ? await ask(rl, "Backend folder path relative to openuispec.yaml", defaults.backendPath ?? "../backend/")
     : null;
   const configureTargets = await askYesNo(rl, "Configure target stacks now?", defaults.configureTargets);
+  const { sharedLayers, structures } = await collectSharedLayerAnswers(rl, targets);
 
   return {
     name,
@@ -800,6 +991,8 @@ async function collectInteractiveAnswers(rl: ReturnType<typeof createInterface>)
     withApi,
     backendPath,
     configureTargets,
+    sharedLayers,
+    structures,
   };
 }
 
@@ -823,6 +1016,8 @@ function collectNonInteractiveAnswers(argv: string[]): InitAnswers {
 
   const withApi = parsed.withApi ?? defaults.withApi;
   const backendPath = withApi ? parsed.backendPath ?? defaults.backendPath : null;
+  const withShared = parsed.withShared ?? false;
+  const { sharedLayers, structures } = withShared ? defaultSharedConfig(targets) : { sharedLayers: [], structures: [] };
 
   return {
     name: parsed.name ?? defaults.name,
@@ -831,6 +1026,8 @@ function collectNonInteractiveAnswers(argv: string[]): InitAnswers {
     withApi,
     backendPath,
     configureTargets: parsed.configureTargets ?? defaults.configureTargets,
+    sharedLayers,
+    structures,
   };
 }
 
@@ -879,6 +1076,8 @@ export async function init(argv: string[] = []): Promise<void> {
       manifestTemplate(answers.name, answers.targets, {
         withApi: answers.withApi,
         backendPath: answers.backendPath,
+        sharedLayers: answers.sharedLayers,
+        structures: answers.structures,
       }),
       quiet
     );

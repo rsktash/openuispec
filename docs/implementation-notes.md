@@ -87,6 +87,13 @@
   - backend generation context
     - if the manifest declares `api.endpoints`, `generation.code_roots.backend` is required
     - `prepare` should surface the resolved backend root so AI can inspect backend code when generating API clients
+- Shared code layers (`generation.shared`):
+  - when configured, `prepare` includes `shared_layers` in its output with per-layer `scope`, `already_generated`, and `guidance`
+  - `scope` tells AI what code belongs in the shared layer vs the platform target — this is the primary routing mechanism
+  - optional `tracks` enables hash-based drift detection scoped to specific spec categories
+  - `generation.structure` overrides heuristic code root discovery when present, and its `scope` field tells AI what goes in the platform-specific target
+  - `suggestCodeRoots` includes shared layer roots and structure paths alongside target output directories
+  - generation rules include shared layer and target scope descriptions
 - Important positioning:
   - `prepare` does not generate code
   - `prepare` does not verify code correctness

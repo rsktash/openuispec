@@ -14,10 +14,13 @@ import { existsSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import YAML from "yaml";
 import {
+  computeSharedDrift,
   findProjectDir,
+  hasDriftChanges,
   readManifest,
   readProjectName,
   resolveOutputDir,
+  sharedLayersForTarget,
 } from "../drift/index.js";
 import {
   buildAjv,
@@ -151,6 +154,20 @@ function determinePrepare(
     warnings.push(
       `Target stack for "${target}" requires explicit user confirmation before implementation.`,
     );
+  }
+
+  // Check for shared layer drift (only when tracks are configured)
+  const sharedLayers = sharedLayersForTarget(projectDir, target);
+  for (const layer of sharedLayers) {
+    if (layer.tracks.length === 0) continue;
+    const driftResult = computeSharedDrift(projectDir, layer);
+    if (driftResult.state !== null) {
+      if (hasDriftChanges(driftResult.drift)) {
+        warnings.push(
+          `Shared layer "${layer.name}" has spec drift — shared code may need updates before ${target} generation.`
+        );
+      }
+    }
   }
 
   const ready =

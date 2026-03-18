@@ -152,6 +152,65 @@
             },
             "additionalProperties": true
           }
+        },
+        "shared": {
+          "type": "object",
+          "description": "Named shared code layers that span multiple targets (e.g. KMP common modules)",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "platforms": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "language": {
+                "type": "string"
+              },
+              "root": {
+                "type": "string"
+              },
+              "paths": {
+                "type": "object",
+                "additionalProperties": { "type": "string" }
+              },
+              "tracks": {
+                "type": "array",
+                "description": "Spec categories this shared layer tracks for drift. Must be explicit — choose which categories actually affect the shared code.",
+                "items": {
+                  "type": "string",
+                  "enum": ["manifest", "tokens", "contracts", "screens", "flows", "platform", "locales"]
+                }
+              },
+              "scope": {
+                "type": "string",
+                "description": "What code belongs in this shared layer (e.g. 'Business logic, data models, repositories, API clients, view models. No UI rendering.')"
+              }
+            },
+            "required": ["platforms", "language", "root", "scope"],
+            "additionalProperties": false
+          }
+        },
+        "structure": {
+          "type": "object",
+          "description": "Per-target output directory structure (overrides heuristic code root discovery)",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "root": {
+                "type": "string"
+              },
+              "paths": {
+                "type": "object",
+                "additionalProperties": { "type": "string" }
+              },
+              "scope": {
+                "type": "string",
+                "description": "What code belongs in this target directory (e.g. 'Pure SwiftUI views and navigation. All business logic comes from the shared layer.')"
+              }
+            },
+            "required": ["root"],
+            "additionalProperties": false
+          }
         }
       },
       "required": [

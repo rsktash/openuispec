@@ -64,6 +64,42 @@ Paths are relative to `openuispec.yaml`. The `.openuispec-state.json` file recor
 - `generation.extra_rules` can hold project-wide generation conventions
 - `drift --snapshot` requires that target output directory to already exist
 
+## Shared code layers
+
+Projects that share business logic between platforms (e.g. KMP `commonMain`) can declare `generation.shared` to tell AI what code belongs in the shared layer vs platform-specific targets:
+
+```yaml
+generation:
+  targets: [ios, android, web]
+  shared:
+    mobile_common:
+      platforms: [ios, android]
+      language: kotlin
+      root: "../shared"
+      scope: "Business logic, data models, repositories, API clients, view models. No UI rendering."
+      # tracks: [manifest, contracts]   # optional — enables hash-based drift detection for this layer
+      paths:
+        domain: "commonMain/domain/"
+        features: "commonMain/features/"
+  structure:
+    ios:
+      root: "../shared"
+      scope: "Pure SwiftUI views and navigation. All business logic comes from the shared layer."
+      paths:
+        ui: "iosApp/ui/"
+    android:
+      root: "../shared"
+      scope: "Pure Compose UI and navigation. All business logic comes from the shared layer."
+      paths:
+        ui: "androidApp/ui/"
+```
+
+- **`scope`** (required on shared, optional on structure) — tells AI what code belongs where. This is the primary mechanism for routing generation work between shared and platform layers.
+- **`tracks`** (optional) — when set, enables hash-based drift detection scoped to specific spec categories (`manifest`, `tokens`, `contracts`, `screens`, `flows`, `platform`, `locales`). When omitted, the shared layer relies on `scope` alone.
+- **`structure`** — when present, overrides the heuristic code root discovery for a target. Paths are relative to `root`.
+- Shared layers are not targets — they are tracked alongside targets in `prepare` and `status` output.
+- `openuispec init --with-shared` scaffolds KMP defaults when both ios and android targets are selected.
+
 ## Spec sections overview
 
 | Section | What it defines |

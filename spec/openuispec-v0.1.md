@@ -90,6 +90,19 @@ generation:
     ios: { language: swift, framework: swiftui }
     android: { language: kotlin, framework: compose }
     web: { language: typescript, framework: react }
+  # shared:                          # optional: cross-platform shared code layers
+  #   mobile_common:
+  #     platforms: [ios, android]
+  #     language: kotlin
+  #     root: "../shared"
+  #     scope: "Business logic, data models, repositories, view models. No UI."
+  #     paths:
+  #       domain: "commonMain/domain/"
+  # structure:                       # optional: per-target directory structure (overrides heuristics)
+  #   ios:
+  #     root: "../shared"
+  #     scope: "Pure SwiftUI views and navigation."
+  #     paths: { ui: "iosApp/ui/" }
 ```
 
 ---

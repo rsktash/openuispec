@@ -84,3 +84,49 @@ test("init --defaults --quiet produces minimal output", () => {
     rmSync(sandbox, { recursive: true, force: true });
   }
 });
+
+test("init --defaults --with-shared scaffolds shared layer and structure config", () => {
+  const sandbox = mkdtempSync(join(tmpdir(), "openuispec-init-shared-"));
+
+  try {
+    runInit(sandbox, ["--defaults", "--with-shared"]);
+
+    const manifestPath = join(sandbox, "openuispec", "openuispec.yaml");
+    const manifest = readFileSync(manifestPath, "utf-8");
+
+    // Shared layer should be present with KMP defaults
+    assert.match(manifest, /shared:/);
+    assert.match(manifest, /mobile_common:/);
+    assert.match(manifest, /platforms: \[ios, android\]/);
+    assert.match(manifest, /language: kotlin/);
+    assert.match(manifest, /scope: "Business logic/);
+    // tracks omitted by default (scope drives AI behavior, tracks is opt-in for drift)
+    assert.ok(!manifest.includes("tracks:"));
+
+    // Structure should be present for ios and android
+    assert.match(manifest, /structure:/);
+    assert.match(manifest, /ios:/);
+    assert.match(manifest, /android:/);
+    assert.match(manifest, /scope: "Pure SwiftUI/);
+    assert.match(manifest, /scope: "Pure Compose/);
+  } finally {
+    rmSync(sandbox, { recursive: true, force: true });
+  }
+});
+
+test("init --defaults --with-shared --targets ios produces no shared layer (needs 2 mobile platforms)", () => {
+  const sandbox = mkdtempSync(join(tmpdir(), "openuispec-init-shared-single-"));
+
+  try {
+    runInit(sandbox, ["--defaults", "--with-shared", "--targets", "ios"]);
+
+    const manifestPath = join(sandbox, "openuispec", "openuispec.yaml");
+    const manifest = readFileSync(manifestPath, "utf-8");
+
+    // No shared layer when only one mobile target
+    assert.ok(!manifest.includes("shared:"));
+    assert.ok(!manifest.includes("structure:"));
+  } finally {
+    rmSync(sandbox, { recursive: true, force: true });
+  }
+});
