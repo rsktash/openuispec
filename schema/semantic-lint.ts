@@ -184,7 +184,8 @@ function collectIconRefs(filePath: string): { refs: Set<string>; suffixes: strin
   if (!isRecord(data) || !isRecord(data.icons)) return { refs, suffixes };
 
   const icons = data.icons as UnknownRecord;
-  const variantSuffixes = isRecord(icons.variants?.suffixes) ? icons.variants.suffixes : {};
+  const variants = isRecord(icons.variants) ? icons.variants : {};
+  const variantSuffixes = isRecord(variants.suffixes) ? variants.suffixes : {};
   for (const suffix of Object.keys(variantSuffixes)) {
     if (suffix.trim()) suffixes.push(suffix);
   }
@@ -217,8 +218,9 @@ function collectIconRefs(filePath: string): { refs: Set<string>; suffixes: strin
     }
   }
 
-  if (typeof icons.fallback?.missing_icon === "string") {
-    refs.add(icons.fallback.missing_icon);
+  const fallback = isRecord(icons.fallback) ? icons.fallback : {};
+  if (typeof fallback.missing_icon === "string") {
+    refs.add(fallback.missing_icon);
   }
 
   return { refs, suffixes };

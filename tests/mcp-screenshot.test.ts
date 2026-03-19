@@ -98,6 +98,21 @@ describe("openuispec_screenshot", () => {
     assert.equal(meta.full_page, true);
   });
 
+  test("appends __ous_init param when init_script is provided", async () => {
+    const script = "window.__test_init = true;";
+    const result: any = await client.callTool({
+      name: "openuispec_screenshot",
+      arguments: { route: "/home", init_script: script, wait_for: 1500 },
+    });
+
+    assert.ok(!result.isError, `expected no error, got: ${result.content?.[0]?.text}`);
+    const meta = JSON.parse(result.content[1].text);
+    assert.ok(meta.url.includes("__ous_init="), "url should contain __ous_init param");
+    const encoded = meta.url.split("__ous_init=")[1];
+    assert.equal(Buffer.from(encoded, "base64").toString("utf-8"), script);
+    assert.equal(meta.init_script, script);
+  });
+
   test("returns error for invalid selector", async () => {
     const result: any = await client.callTool({
       name: "openuispec_screenshot",

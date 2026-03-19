@@ -813,9 +813,10 @@ server.registerTool(
       full_page: z.boolean().optional().default(false).describe("Capture the full scrollable page instead of just the viewport"),
       selector: z.string().optional().describe("CSS selector to screenshot a specific element instead of the full page"),
       output_dir: z.string().optional().describe("Directory to save the screenshot PNG (relative to web app root). E.g. 'screenshots'. If omitted, only returns base64 in response."),
+      init_script: z.string().optional().describe("JavaScript to run before the page renders. Passed to the app via ?__ous_init=<base64> query param. The app's bootstrapper decodes and executes it — use for auth injection, role switching, or session setup."),
     },
   },
-  async ({ route, viewport, scale, theme, wait_for, full_page, selector, output_dir }) => {
+  async ({ route, viewport, scale, theme, wait_for, full_page, selector, output_dir, init_script }) => {
     try {
       return await takeScreenshot(projectCwd, {
         route,
@@ -826,6 +827,7 @@ server.registerTool(
         full_page,
         selector,
         output_dir,
+        init_script,
       });
     } catch (err) {
       return toolError(err);
@@ -894,6 +896,7 @@ const webBatchCaptureSchema = z.object({
   selector: z.string().optional().describe("CSS selector to screenshot a specific element"),
   full_page: z.boolean().optional().describe("Capture full scrollable page"),
   wait_for: z.number().optional().describe("Per-capture wait time in ms"),
+  init_script: z.string().optional().describe("Per-capture init script (overrides shared init_script for this capture)"),
 });
 
 server.registerTool(
@@ -906,11 +909,12 @@ server.registerTool(
       scale: z.number().optional().default(2).describe("Device pixel ratio for all captures (default 2)"),
       theme: z.enum(["light", "dark"]).optional().describe("Force color scheme for all captures"),
       output_dir: z.string().optional().describe("Directory to save all PNGs (relative to web app root)"),
+      init_script: z.string().optional().describe("Shared init script for all captures. Passed via ?__ous_init=<base64>. Per-capture init_script overrides this."),
     },
   },
-  async ({ captures, viewport, scale, theme, output_dir }) => {
+  async ({ captures, viewport, scale, theme, output_dir, init_script }) => {
     try {
-      return await takeScreenshotBatch(projectCwd, { captures, viewport, scale, theme, output_dir });
+      return await takeScreenshotBatch(projectCwd, { captures, viewport, scale, theme, output_dir, init_script });
     } catch (err) {
       return toolError(err);
     }

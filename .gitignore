@@ -20,3 +20,4 @@ build/
 .env.local
 site/_output/
 .cloc-ignore
+docs/openuispec-impeccable-integration.md

@@ -48,10 +48,9 @@ export async function closeBrowser(): Promise<void> {
 
 // ── shared result type ──────────────────────────────────────────────
 
-export interface ScreenshotResult {
-  content: Array<{ type: "text"; text: string } | { type: "image"; data: string; mimeType: string }>;
-  isError?: true;
-}
+import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
+
+export type ScreenshotResult = CallToolResult;
 
 // ── manifest loading ────────────────────────────────────────────────
 

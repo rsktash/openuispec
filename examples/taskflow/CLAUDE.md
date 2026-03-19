@@ -92,6 +92,7 @@ If MCP tools are not available, use these CLI commands with `--json` flag:
 
 **Visual verification:**
 - `openuispec screenshot --route /path` — screenshot the web app
+- `openuispec screenshot --route /path --init-script "..."` — inject auth/role before rendering (web only; app must implement `__ous_init` bootstrapper)
 - `openuispec screenshot-android [--project-dir path]` — screenshot Android app
 - `openuispec screenshot-ios [--project-dir path]` — screenshot iOS app
 

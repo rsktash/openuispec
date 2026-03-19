@@ -175,6 +175,59 @@ Each capture supports:
 - `wait_for`: per-capture wait time in ms
 - `selector`: CSS selector to screenshot a specific element (web only)
 - `full_page`: capture full scrollable page (web only)
+- `init_script`: JavaScript to execute before the page renders (web only — see below)
+
+### `init_script` — app-level initialization
+
+`init_script` lets you inject auth, switch roles, or set up session state before a screenshot is taken — without Puppeteer executing JS directly. The tool base64-encodes the script and appends it as a `?__ous_init=<encoded>` query param. The generated app's bootstrapper reads and runs it before rendering.
+
+**Why app-level instead of `evaluateOnNewDocument`:** the app can `await` login APIs, set framework state, or call any async init — Puppeteer's `evaluateOnNewDocument` is sync-only and has no access to app internals.
+
+**Single capture (MCP):**
+
+```json
+{
+  "route": "/dashboard",
+  "init_script": "window.__auth = { token: 'test-token', role: 'admin' };"
+}
+```
+
+**Batch capture (MCP):**
+
+```json
+{
+  "output_dir": "screenshots",
+  "init_script": "window.__auth = { token: 'test-token', role: 'viewer' };",
+  "captures": [
+    { "screen": "dashboard", "route": "/dashboard" },
+    { "screen": "admin_panel", "route": "/admin",
+      "init_script": "window.__auth = { token: 'test-token', role: 'admin' };" }
+  ]
+}
+```
+
+Per-capture `init_script` overrides the shared one. If neither is set, no param is appended and the app renders normally.
+
+**Bootstrapper contract** — the generated app must include a bootstrapper that:
+
+1. Checks for `__ous_init` in the URL query string on load
+2. Base64-decodes it (`atob`) and `eval`s it (or parses it as structured data)
+3. Runs **before** rendering authenticated content (can be async — app awaits it)
+4. Strips the param from URL/history after processing (`history.replaceState`)
+
+Example bootstrapper (framework-agnostic):
+
+```js
+const param = new URLSearchParams(location.search).get('__ous_init');
+if (param) {
+  try { eval(atob(param)); } catch (e) { console.warn('[ous] init_script error', e); }
+  const url = new URL(location.href);
+  url.searchParams.delete('__ous_init');
+  history.replaceState(null, '', url.toString());
+}
+```
+
+This is a **contract between the tool and generated code** — the tool appends the param; the app consumes it.
 
 ### Preview (experimental)
 
