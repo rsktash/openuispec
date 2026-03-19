@@ -31,6 +31,13 @@ action_trigger:
       primary: { style: "clip-path" }
       ghost: { style: "clip-path" }
   generation:
+    must_avoid:
+      - "Do not apply gradient backgrounds to buttons — use flat token-defined colors"
+      - "Do not make primary and secondary variants visually identical — they must be immediately distinguishable by background, border, or text color"
+      - "Do not use bounce or elastic easing on press feedback — use the motion.easing tokens"
+      - "Do not add drop shadows to every button variant — only elevated contexts use elevation tokens"
+      - "Do not use pure black (#000) or pure white (#fff) — always resolve through color.text and color.surface tokens"
+      - "Do not set identical min_height across all size variants — sm, md, lg must feel proportionally different"
     must_handle:
       - "Cut top-left and bottom-right corners by cut_size for primary and ghost"
       - "Preserve button hit area and loading state inside the cut shape"

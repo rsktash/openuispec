@@ -127,7 +127,12 @@ SPEC AUTHORING: spec_types → spec_schema(type, summary?) → write YAML
 PREVIEW: openuispec_preview(screen) → render spec as HTML with mock data, returns screenshot (no app needed)
 SCREENSHOTS: screenshot (web), screenshot_android, screenshot_ios — single + batch variants
 
-Skip only for purely non-UI requests.`,
+Skip only for purely non-UI requests.
+
+When generating UI code:
+1. Check anti_patterns in the prepare result — hard constraints on what NOT to produce
+2. Check design_context — match the complexity level and personality description
+3. Apply the AI Fingerprint Test: would a viewer immediately say "AI made this"? If yes, revise.`,
   }
 );
 
@@ -319,7 +324,7 @@ function buildAuditChecklist(projectDir: string, target: string, screenFilter?: 
 server.registerTool(
   "openuispec_check",
   {
-    description: "Validate spec files (schema + semantic lint) and check prepare readiness. Does NOT inspect generated code. With audit=true, returns a spec-derived checklist of must_handle items, screen sections, and locale files — use it as a guide when YOU manually review the generated code.",
+    description: "Validate spec files (schema + semantic lint) and check prepare readiness. Does NOT inspect generated code. With audit=true, returns a spec-derived checklist of must_handle items, must_avoid anti-patterns, screen sections, and locale files — use it as a guide when YOU manually review the generated code. design_quality_score and audit_findings are included when audit=true.",
     inputSchema: {
       target: targetSchema,
       audit: z.boolean().optional().default(false).describe("Include the full audit checklist. Omit for a compact pass/fail summary."),
@@ -329,7 +334,7 @@ server.registerTool(
   },
   async ({ target, audit: includeAudit, screens, contracts }) => {
     try {
-      const result = buildCheckResult(target, projectCwd);
+      const result = buildCheckResult(target, projectCwd, includeAudit);
       const totalErrors = result.validation.total_errors + result.semantic.total_errors;
       const passing = totalErrors === 0 && result.prepare.ready;
 
@@ -356,6 +361,13 @@ server.registerTool(
         const screenFilter = screens && screens.length > 0 ? screens : undefined;
         const contractFilter = contracts && contracts.length > 0 ? contracts : undefined;
         hints.push(buildAuditChecklist(projectDir, target, screenFilter, contractFilter));
+      }
+
+      if (includeAudit && result.audit) {
+        hints.push(`DESIGN QUALITY SCORE: ${result.audit.score}/100 (${result.audit.errors} errors, ${result.audit.warnings} warnings)`);
+        if (!result.audit.passed && result.audit.threshold > 0) {
+          hints.push(`SCORE BELOW THRESHOLD: ${result.audit.score} < ${result.audit.threshold}`);
+        }
       }
 
       if (baselineHint) hints.push(baselineHint);

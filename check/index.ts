@@ -29,6 +29,7 @@ import {
   type JsonGroupResult,
 } from "../schema/validate.js";
 import { collectSemanticLint } from "../schema/semantic-lint.js";
+import { buildAuditResult, formatAuditResult, type AuditResult } from './audit.js';
 
 // ── types ─────────────────────────────────────────────────────────────
 
@@ -54,6 +55,7 @@ export interface CheckResult {
   validation: CheckValidation;
   semantic: CheckSemantic;
   prepare: CheckPrepare;
+  audit?: AuditResult;
 }
 
 // ── prepare readiness helpers ─────────────────────────────────────────
@@ -178,7 +180,7 @@ function determinePrepare(
 
 // ── core (importable, no process.exit) ───────────────────────────────
 
-export function buildCheckResult(target: string, cwd: string = process.cwd()): CheckResult {
+export function buildCheckResult(target: string, cwd: string = process.cwd(), includeAudit: boolean = false): CheckResult {
   const projectDir = findProjectDir(cwd);
   const projectName = readProjectName(projectDir);
   const includes = readIncludes(projectDir);
@@ -210,7 +212,8 @@ export function buildCheckResult(target: string, cwd: string = process.cwd()): C
   // 3. Prepare readiness
   const prepare = determinePrepare(projectDir, projectName, target);
 
-  return { target, validation, semantic, prepare };
+  const audit = includeAudit ? buildAuditResult(projectDir) : undefined;
+  return { target, validation, semantic, prepare, audit };
 }
 
 // ── main ──────────────────────────────────────────────────────────────
@@ -227,12 +230,25 @@ export function runCheck(argv: string[]): void {
     process.exit(1);
   }
 
-  const result = buildCheckResult(target);
+  const includeAudit = argv.includes("--audit");
+  const minScoreIdx = argv.indexOf("--min-score");
+  const minScore = minScoreIdx !== -1 && argv[minScoreIdx + 1] ? parseInt(argv[minScoreIdx + 1], 10) : 0;
+
+  const result = buildCheckResult(target, undefined, includeAudit);
 
   if (isJson) {
     console.log(JSON.stringify(result, null, 2));
   } else {
     printReport(result);
+    if (result.audit) {
+      console.log("\nDesign Quality Audit");
+      console.log("====================");
+      console.log(formatAuditResult(result.audit));
+      if (minScore > 0 && result.audit.score < minScore) {
+        console.error(`\nFAIL: Score ${result.audit.score} is below --min-score ${minScore}`);
+        process.exit(1);
+      }
+    }
   }
 
   // Exit codes: 0 = clean + ready, 2 = validation errors, 1 = config error

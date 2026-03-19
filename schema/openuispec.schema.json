@@ -259,6 +259,53 @@
         "type": "string"
       }
     },
+    "design": {
+      "type": "object",
+      "description": "Design intent and anti-patterns for this project",
+      "properties": {
+        "personality": { "type": "string", "description": "Brief description of the brand's visual personality" },
+        "complexity": {
+          "type": "string",
+          "enum": ["restrained", "balanced", "elaborate"],
+          "default": "balanced",
+          "description": "How elaborate animations, effects, and visual details should be"
+        },
+        "audience": { "type": "string", "description": "Who uses this app — informs tone and complexity" },
+        "avoid": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Project-specific anti-patterns. May use [web]/[ios]/[android] scope tags."
+        }
+      },
+      "additionalProperties": false
+    },
+    "generation_guidance": {
+      "type": "object",
+      "description": "Universal anti-patterns and audit config for AI generators",
+      "properties": {
+        "universal_anti_patterns": {
+          "type": "object",
+          "description": "Cross-contract anti-patterns by domain",
+          "properties": {
+            "typography": { "type": "array", "items": { "type": "string" } },
+            "color": { "type": "array", "items": { "type": "string" } },
+            "spacing": { "type": "array", "items": { "type": "string" } },
+            "motion": { "type": "array", "items": { "type": "string" } },
+            "elevation": { "type": "array", "items": { "type": "string" } },
+            "layout": { "type": "array", "items": { "type": "string" } },
+            "accessibility": { "type": "array", "items": { "type": "string" } }
+          },
+          "additionalProperties": false
+        },
+        "audit_threshold": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Minimum design quality score. Default 0 (informational). --min-score CLI flag takes precedence."
+        }
+      },
+      "additionalProperties": false
+    },
     "api": {
       "type": "object",
       "description": "API endpoint definitions",

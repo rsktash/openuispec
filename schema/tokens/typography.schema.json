@@ -60,6 +60,11 @@
             }
           },
           "additionalProperties": false
+        },
+        "generation_notes": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Sparse guidance for AI generators. Use [web]/[ios]/[android] tags for platform-specific notes."
         }
       },
       "required": [
@@ -93,6 +98,11 @@
             "capitalize",
             "none"
           ]
+        },
+        "generation_notes": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Sparse guidance for AI generators. Use [web]/[ios]/[android] tags for platform-specific notes."
         }
       },
       "required": [

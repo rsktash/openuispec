@@ -168,3 +168,86 @@ Mock files are not validated by `openuispec validate` and are excluded from drif
 | 12. Custom contract extensions | `x_` prefixed domain-specific contracts |
 | 13. Form validation | Validation rules, field dependencies, cross-field checks |
 | 14. Development workflow | Dual-workflow model, drift detection, spec as sync layer |
+
+## Manifest: `design` and `generation_guidance`
+
+Two new top-level sections in `openuispec.yaml` shape how AI generators approach design quality.
+
+### `design` — Project brand intent
+
+```yaml
+design:
+  personality: "Clean, focused, productivity-first — no decorative flourishes"
+  complexity: "balanced"          # restrained | balanced | elaborate
+  audience: "Individual contributors and small teams"
+  avoid:
+    - "Do not use color gradients — flat, token-driven color only"
+    - "[web] Do not use CSS animations for non-interactive decorative purposes"
+```
+
+`complexity` controls how generators apply motion, elevation, and decorative detail:
+- `restrained` — required state transitions only, no decorative shadows, clean whitespace
+- `balanced` — all motion patterns, full elevation token usage, standard state animations
+- `elaborate` — rich animations with staggered reveals, creative elevation, platform flourishes
+
+`avoid` items may use `[web]`/`[ios]`/`[android]` scope tags — same convention as `extra_rules`.
+
+### `generation_guidance` — Universal anti-patterns
+
+```yaml
+generation_guidance:
+  universal_anti_patterns:
+    typography:
+      - "Do not fall back to Inter, Roboto, Arial when the spec defines a custom font_family"
+    color:
+      - "Do not use pure black (#000000) or pure white (#FFFFFF) — resolve through the token layer"
+    spacing:
+      - "Do not ignore the page_margin and card_padding aliases"
+    motion:
+      - "Do not ignore reduced_motion — remove animations entirely when the user prefers it"
+    elevation:
+      - "Do not add shadows to elements that don't specify an elevation token"
+    layout:
+      - "Do not use pixel breakpoints — reference size classes by name"
+    accessibility:
+      - "Do not use color as the only differentiator between states"
+  audit_threshold: 70             # Minimum score for openuispec check --audit
+```
+
+`universal_anti_patterns` appear in the `openuispec prepare` output under `anti_patterns.universal`, filtered by target platform tag. `audit_threshold` is the default minimum score for `openuispec check --audit`.
+
+## Contract and component: `must_avoid`
+
+The `generation` block in contracts, custom contracts, and components now supports `must_avoid` alongside `must_handle`, `should_handle`, and `may_handle`:
+
+```yaml
+action_trigger:
+  generation:
+    must_avoid:
+      - "Do not apply gradient backgrounds to buttons — use flat token-defined colors"
+      - "Do not use bounce or elastic easing on press feedback"
+      - "[ios] Do not add drop shadows to every button variant"
+```
+
+Items may use `[web]`/`[ios]`/`[android]` scope tags. Untagged items apply to all platforms. `must_avoid` appears in the `openuispec prepare` output under `anti_patterns.contract_specific`, filtered by target.
+
+## Token: `generation_notes`
+
+Token entries in `typography`, `color`, and `motion` files support sparse `generation_notes` for AI generators:
+
+```yaml
+typography:
+  font_family:
+    primary:
+      value: "DM Sans"
+      generation_notes:
+        - "Never fall back to Inter or Roboto — choose a geometric sans with similar x-height"
+        - "[web] Use font-display: swap to prevent FOUT"
+        - "[ios] Register the font in Info.plist before first render"
+  scale:
+    body:
+      generation_notes:
+        - "This is the most-used text style — ensure line_height is comfortable (1.5 default)"
+```
+
+`generation_notes` are sparse — only add them for tokens where AI generators consistently make wrong choices.

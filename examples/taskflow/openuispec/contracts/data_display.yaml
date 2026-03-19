@@ -1,4 +1,12 @@
 # data_display contract extension
 # Base definition: spec Section 4.2
 
-data_display: {}
+data_display:
+  generation:
+    must_avoid:
+      - "Do not nest cards inside cards — use flat hierarchy with spacing and subtle background shifts"
+      - "Do not give every card variant the same border-radius and shadow — vary by emphasis level"
+      - "Do not use gray text on colored backgrounds — use a darker shade of the background color or the on_color token"
+      - "Do not make all stat cards identical size with centered text — vary layout to match the data shape"
+      - "Do not use the same skeleton shape for all variants — skeleton must match the specific variant layout (card vs compact vs hero)"
+      - "Do not omit the highlighted state visual differentiation — unread/new items must be visually distinct from default items"

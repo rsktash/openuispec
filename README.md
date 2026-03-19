@@ -46,7 +46,7 @@ This scaffolds a spec directory, starter tokens, and **configures the MCP server
 ## Key concepts
 
 - **Tokens** — design values (color, typography, spacing, elevation, motion) with semantic names and constrained ranges
-- **Contracts** — 7 reusable UI component families defined by role, props, interaction states, and accessibility
+- **Contracts** — 7 reusable UI component families defined by role, props, interaction states, accessibility, and `must_avoid` anti-patterns for AI generators
 - **Components** — reusable compositions of contracts with named slots, states, and variants
 - **Screens** — compositions of contracts and components with data bindings, adaptive layout, and conditional rendering
 - **Flows** — multi-screen navigation journeys, intent-based and platform-agnostic
@@ -54,6 +54,8 @@ This scaffolds a spec directory, starter tokens, and **configures the MCP server
 - **Data binding** — reactive state, format expressions, caching, and loading/error/empty states
 - **Adaptive layout** — size classes (compact/regular/expanded) with per-section overrides
 - **Platform adaptation** — per-target overrides for iOS, Android, and Web behaviors
+- **Design intent** — `design` section in the manifest captures brand personality, complexity level, and audience — generators match visual elaborateness accordingly
+- **Anti-patterns** — `must_avoid` in contracts and `generation_guidance.universal_anti_patterns` in the manifest steer AI away from generic, statistically common design mistakes
 
 ## The 7 contract families
 
@@ -75,7 +77,7 @@ OpenUISpec includes an **MCP server** that AI assistants call automatically duri
 openuispec init → configures MCP for your agent → AI calls tools automatically
 ```
 
-When you ask your AI to "add a settings page" or "update the home feed," the MCP server provides spec context before generation, feeds authoritative spec contents during generation, validates spec integrity after edits, and returns a spec-derived checklist for the AI to review the generated code against.
+When you ask your AI to "add a settings page" or "update the home feed," the MCP server provides spec context before generation, feeds authoritative spec contents during generation, validates spec integrity after edits, and returns a spec-derived checklist — including `must_avoid` anti-patterns and design quality score — for the AI to review the generated code against.
 
 16 tools are available as both MCP tools and CLI commands — see the [full reference](./docs/cli.md).
 

@@ -18,6 +18,10 @@ motion:
       duration: "instant"
       easing: "default"
       property: "transform"
+      generation_notes:
+        - "The scale value is subtle by design — do not exaggerate to 0.9 or lower"
+        - "[ios] Complement with haptic feedback (.impact(style: .light))"
+        - "[android] Use ripple effect instead of or in addition to scale"
     slide_up:
       duration: "normal"
       easing: "enter"

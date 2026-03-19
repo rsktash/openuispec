@@ -161,3 +161,11 @@
   9. `openuispec drift --snapshot --target <target>`
 - `drift --snapshot` should continue to be described as bookkeeping/baselining, not as proof that the target implementation matches the spec.
 - If the target output directory does not exist yet, the CLI should direct the user to run code generation first instead of implying that snapshot can initialize an empty target.
+
+## Design quality audit
+
+`openuispec check --audit` runs design quality heuristics against token and contract files, returning a numeric score (`max(0, 100 - errors × 10 - warnings × 3)`) and categorized findings. The `audit_threshold` in `generation_guidance` sets a project-wide minimum; `--min-score N` overrides per-run.
+
+`openuispec prepare` includes `anti_patterns` (universal + contract-specific + project-specific, filtered by target platform) and `design_context` (personality, complexity, audience, complexity_rule) in its output when the manifest defines `generation_guidance` and `design` sections.
+
+`generation.extra_rules` in the manifest is included in prepare output and filtered by platform tag.

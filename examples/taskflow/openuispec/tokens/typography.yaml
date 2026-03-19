@@ -10,6 +10,11 @@ typography:
         ios: { system_alternative: "SF Pro" }
         android: { system_alternative: "Google Sans" }
         web: { load_strategy: "swap", source: "google_fonts" }
+      generation_notes:
+        - "If the primary font is unavailable on a platform, choose a geometric sans with similar x-height — never fall back to Inter or Roboto"
+        - "[web] Use font-display: swap and a size-adjust fallback to prevent FOUT (Flash of Unstyled Text)"
+        - "[ios] Register the font in Info.plist and verify it loads before first render"
+        - "[android] Place the font in res/font/ and reference via XML font family — do not load programmatically"
 
   scale:
     display:
@@ -40,6 +45,9 @@ typography:
       size: { base: 16, range: [14, 16] }
       weight: 400
       line_height: 1.5
+      generation_notes:
+        - "This is the most-used text style — ensure line_height is comfortable for reading (1.5 default)"
+        - "On compact screens: the lower end of the size range is acceptable — do not go below 14pt/px"
     body_sm:
       semantic: "Secondary text, descriptions"
       size: { base: 14, range: [13, 15] }
@@ -52,6 +60,9 @@ typography:
       weight: 400
       tracking: 0.02
       line_height: 1.35
+      generation_notes:
+        - "Caption text must still meet the contrast_min requirement from the text token it pairs with"
+        - "Do not use caption size for primary content — it is for metadata, timestamps, and labels only"
     overline:
       semantic: "Section tags, category labels"
       size: { base: 11, range: [10, 12] }

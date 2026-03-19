@@ -62,8 +62,8 @@ Or run directly: `openuispec mcp`
 | Tool | What it does |
 |------|-------------|
 | `openuispec_validate` | Validate spec files against JSON Schemas, optionally filtered by group |
-| `openuispec_check` | Validate spec files (schema + semantic) and check target generation readiness. `audit=true` returns a spec-derived review checklist |
-| `openuispec_prepare` | Returns spec context, platform config, constraints. Optional `include_specs` embeds all spec contents |
+| `openuispec_check` | Validate spec files (schema + semantic) and check target generation readiness. `audit=true` returns a spec-derived review checklist including `must_avoid` anti-patterns and a design quality score |
+| `openuispec_prepare` | Returns spec context, platform config, constraints, `anti_patterns`, and `design_context`. Optional `include_specs` embeds all spec contents |
 | `openuispec_drift` | Detect drift, or `snapshot=true` to create/update baseline |
 
 ### Visual verification
@@ -97,7 +97,9 @@ openuispec configure-target <t> [--defaults]  # Configure target stack
 ```bash
 openuispec validate [group...] [--json]    # Validate spec files against JSON Schemas
 openuispec validate semantic               # Lint cross-references (locale keys, icons, contracts, tokens)
-openuispec check --target <t> [--json]     # Validate spec files + check target generation readiness
+openuispec check --target <t> [--json]         # Validate spec files + check target generation readiness
+openuispec check --target <t> --audit          # Also run design quality audit (score + findings)
+openuispec check --target <t> --audit --min-score 70  # Fail if score below threshold
 ```
 
 ### Status & generation workflow
@@ -270,3 +272,27 @@ openuispec drift --snapshot --target ios
 - `prepare` runs in `bootstrap` mode for first-time generation and `update` mode after a snapshot exists
 - `drift --snapshot` is bookkeeping — it does not prove code matches the spec, and requires the output directory to exist. Only run it after reviewing the generated output.
 - Run `openuispec status` between targets to see what still needs updating
+
+## Design Quality Audit
+
+`openuispec check --audit` scores the spec against design quality heuristics and returns findings grouped by domain.
+
+```bash
+openuispec check --target web --audit
+openuispec check --target ios --audit --min-score 70   # exit 1 if score < 70
+openuispec check --target web --audit --json           # machine-readable output
+```
+
+**Score formula:** `max(0, 100 - errors × 10 - warnings × 3)`
+
+**Checks performed:**
+
+| Domain | What's checked |
+|--------|---------------|
+| Typography | Primary font not an AI default (Inter/Roboto/Arial/Open Sans) · ≥4 scale levels defined |
+| Color | No pure #000000/#FFFFFF · Both light + dark themes present |
+| Spacing | ≥4 scale values · `page_margin` and `card_padding` aliases present |
+| Motion | ≥2 distinct durations · `reduced_motion` policy defined |
+| Contracts | `collection` has `empty_state` in `must_handle` |
+
+The `audit_threshold` in `generation_guidance` sets the project-wide minimum score. `--min-score` overrides it per-run.

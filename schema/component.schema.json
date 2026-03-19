@@ -107,6 +107,11 @@
             "may_handle": {
               "type": "array",
               "items": { "type": "string" }
+            },
+            "must_avoid": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Anti-patterns for AI generators. Strings may start with [web], [ios], or [android] to scope to a platform. Unmarked items apply to all platforms."
             }
           },
           "additionalProperties": false

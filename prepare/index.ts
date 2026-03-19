@@ -172,6 +172,17 @@ export interface PrepareResult {
   shared_layers?: SharedLayerInfo[];
   bootstrap?: PrepareBootstrapBundle;
   spec_contents?: SpecFileContent[];
+  anti_patterns?: {
+    universal: Record<string, string[]>;
+    contract_specific: Record<string, string[]>;
+    project_specific: string[];
+  };
+  design_context?: {
+    personality?: string;
+    complexity: 'restrained' | 'balanced' | 'elaborate';
+    audience?: string;
+    complexity_rule: string;
+  };
   next_steps: string[];
 }
 
@@ -643,7 +654,88 @@ function generationRules(target: string, outputDir: string, manifest: Record<str
     rules.push(`Target "${target}" scope: ${structure.scope}`);
   }
 
+  // Include extra_rules from manifest, filtered by target platform tag
+  const extraRules: string[] = Array.isArray(manifest.generation?.extra_rules)
+    ? manifest.generation.extra_rules.filter((rule: any): rule is string => typeof rule === "string")
+    : [];
+  for (const rule of extraRules) {
+    if (matchesTargetPlatform(rule, target)) rules.push(rule);
+  }
+
   return rules;
+}
+
+function matchesTargetPlatform(item: string, target: string): boolean {
+  const tagMatch = item.match(/^\[([a-z]+)\]/);
+  return !tagMatch || tagMatch[1] === target;
+}
+
+function complexityRule(complexity: string): string {
+  switch (complexity) {
+    case 'restrained':
+      return 'Minimal motion (required state transitions only). No decorative shadows. Clean whitespace. Precise token application. No background effects.';
+    case 'elaborate':
+      return 'Rich animations with staggered reveals. Creative elevation. Platform-specific flourishes.';
+    default:
+      return 'Apply all motion.patterns. Use elevation tokens fully. Standard state animations.';
+  }
+}
+
+function buildDesignContext(manifest: Record<string, any>): PrepareResult['design_context'] {
+  const design = manifest.design;
+  if (!design) return undefined;
+  const complexity = (design.complexity as 'restrained' | 'balanced' | 'elaborate') ?? 'balanced';
+  return {
+    ...(design.personality ? { personality: design.personality } : {}),
+    complexity,
+    ...(design.audience ? { audience: design.audience } : {}),
+    complexity_rule: complexityRule(complexity),
+  };
+}
+
+function buildAntiPatterns(
+  manifest: Record<string, any>,
+  projectDir: string,
+  target: string
+): PrepareResult['anti_patterns'] {
+  // Universal anti-patterns from generation_guidance
+  const universal: Record<string, string[]> = {};
+  const universalRaw = manifest.generation_guidance?.universal_anti_patterns ?? {};
+  for (const [domain, items] of Object.entries(universalRaw)) {
+    if (Array.isArray(items)) {
+      const filtered = (items as string[]).filter((item) => matchesTargetPlatform(item, target));
+      if (filtered.length > 0) universal[domain] = filtered;
+    }
+  }
+
+  // Contract-specific must_avoid
+  const contract_specific: Record<string, string[]> = {};
+  try {
+    const contractsDir = resolve(projectDir, manifest.includes?.contracts ?? './contracts/');
+    if (existsSync(contractsDir)) {
+      for (const file of readdirSync(contractsDir).filter((f) => f.endsWith('.yaml') && !f.startsWith('x_'))) {
+        const content = YAML.parse(readFileSync(join(contractsDir, file), 'utf-8'));
+        const contractName = Object.keys(content)[0];
+        const mustAvoid: string[] = content[contractName]?.generation?.must_avoid ?? [];
+        if (mustAvoid.length > 0) {
+          const filtered = mustAvoid.filter((item: string) => matchesTargetPlatform(item, target));
+          if (filtered.length > 0) contract_specific[contractName] = filtered;
+        }
+      }
+    }
+  } catch { /* skip on error */ }
+
+  // Project-specific avoid from design section
+  const project_specific: string[] = [];
+  const designAvoid: string[] = manifest.design?.avoid ?? [];
+  for (const item of designAvoid) {
+    if (matchesTargetPlatform(item, target)) project_specific.push(item);
+  }
+
+  const hasContent = Object.keys(universal).length > 0 || Object.keys(contract_specific).length > 0 || project_specific.length > 0;
+  if (!hasContent) return undefined;
+
+  return { universal, contract_specific, project_specific };
 }
 
 function localizationConstraints(
@@ -1228,6 +1320,8 @@ function buildBootstrapPrepareResult(cwd: string, target: string, includeContent
   const outputDirExists = existsSync(outputDir);
   const snapshotPath = join(outputDir, ".openuispec-state.json");
   const snapshotFileExists = existsSync(snapshotPath);
+  const antiPatterns = buildAntiPatterns(manifest, projectDir, target);
+  const designContext = buildDesignContext(manifest);
 
   return {
     mode: "bootstrap",
@@ -1259,6 +1353,8 @@ function buildBootstrapPrepareResult(cwd: string, target: string, includeContent
     items: [],
     ...(sharedLayerInfos.length > 0 ? { shared_layers: sharedLayerInfos } : {}),
     ...(includeContents ? { spec_contents: readAllSpecContents(projectDir) } : {}),
+    ...(antiPatterns ? { anti_patterns: antiPatterns } : {}),
+    ...(designContext ? { design_context: designContext } : {}),
     bootstrap: {
       output_exists: existsSync(outputDir),
       generation_ready: missingDecisions.length === 0 && backendContextReady && !pendingUserConfirmation,

@@ -75,6 +75,11 @@
         "pattern": {
           "type": "string",
           "description": "Named animation pattern"
+        },
+        "generation_notes": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Sparse guidance for AI generators. Use [web]/[ios]/[android] tags for platform-specific notes."
         }
       },
       "additionalProperties": false

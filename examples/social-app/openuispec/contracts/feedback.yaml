@@ -3,6 +3,14 @@
 # Rounded Cap: toasts and dialogs use primary diagonal
 
 feedback:
+  generation:
+    must_avoid:
+      - "Do not use the same visual treatment for all severity levels — info, success, warning, and error must be immediately distinguishable by color, icon, and border"
+      - "Do not stack multiple toasts without spacing or queue management — overlapping toasts are a usability failure"
+      - "Do not use alert dialogs for non-blocking informational feedback — use toasts or banners per the variant definition"
+      - "Do not skip enter/exit animations — feedback appearing or disappearing instantly feels broken"
+      - "Do not use the same position for toasts and banners — toasts float, banners are inline"
+      - "Do not auto-dismiss error-severity feedback with a short timer — errors need manual dismissal or a longer duration"
   variants:
     toast:
       semantic: "Toast notification — rounded cap primary diagonal, auto-dismiss"

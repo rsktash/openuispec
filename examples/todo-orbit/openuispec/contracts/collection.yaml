@@ -23,6 +23,13 @@ collection:
       list: { element: "ul", class: "todo-list" }
       chips: { element: "div", class: "chip-row" }
   generation:
+    must_avoid:
+      - "Do not omit empty states — every collection must render the empty_state component when data is empty"
+      - "Do not use infinite scroll without a visible loading indicator at the bottom"
+      - "Do not render loading skeletons that mismatch the actual item layout — skeleton shapes must reflect the item_contract variant"
+      - "Do not use identical item spacing for list and grid variants — grid uses gap, list uses separator"
+      - "Do not render table headers with the same visual weight as table rows — headers use header_background and header_weight tokens"
+      - "[web] Do not skip keyboard navigation support — lists need ArrowUp/ArrowDown, grids need 2D arrow navigation"
     must_handle:
       - "Preserve empty_state and pull_to_refresh behavior for task lists"
       - "Render chips as single-select filters bound to state.active_filter"

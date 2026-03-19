@@ -18,6 +18,10 @@ motion:
       duration: "instant"
       property: "scale"
       value: 0.98
+      generation_notes:
+        - "The scale value is subtle by design — do not exaggerate to 0.9 or lower"
+        - "[ios] Complement with haptic feedback (.impact(style: .light))"
+        - "[android] Use ripple effect instead of or in addition to scale"
     state_change:
       duration: "quick"
       property: "opacity, border-color, background"

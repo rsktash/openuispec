@@ -1,4 +1,13 @@
 # nav_container contract extension
 # Base definition: spec Section 4.4
 
-nav_container: {}
+nav_container:
+  generation:
+    must_avoid:
+      - "Do not use the same icon treatment for active and inactive items — differentiate with fill/outline variants, color, or both"
+      - "Do not center-align sidebar items — use leading alignment with consistent padding per the item_padding_h token"
+      - "Do not ignore the collapsed state for sidebar and rail variants — collapsed mode must show only icons with proper spacing"
+      - "Do not use a generic hamburger menu icon when the spec defines a specific drawer trigger"
+      - "Do not render tab_bar and sidebar with the same visual weight — tab_bar is compact and subordinate, sidebar is prominent"
+      - "[ios] Do not forget safe area insets on tab_bar — iOS bottom inset must be respected"
+      - "[android] Do not ignore gesture navigation bar insets on tab_bar and bottom navigation"

@@ -10,6 +10,10 @@ color:
       on_color:
         reference: "#FFFFFF"
         contrast_min: 4.5
+      generation_notes:
+        - "This is the most important brand color — use consistently for primary actions, active states, and key interactive elements"
+        - "Do not dilute by applying it to backgrounds, borders, and text simultaneously — pick one dominant usage per surface"
+        - "The on_color token exists specifically for text/icons placed on this background — do not calculate contrast manually"
     secondary:
       semantic: "Warm accent for highlights and due-date emphasis"
       reference: "#F59E0B"

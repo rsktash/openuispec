@@ -21,6 +21,13 @@ surface:
       sheet: { style: "clip-path" }
       modal: { style: "clip-path" }
   generation:
+    must_avoid:
+      - "Do not use the same overlay opacity for modal, sheet, and popover — each has a distinct tokens definition"
+      - "Do not omit the drag indicator on sheet variants — it signals that the surface is interactive and dismissible"
+      - "Do not use glassmorphism or frosted-glass effects unless the project's design personality explicitly calls for it"
+      - "Do not skip focus trapping on modal and sheet variants — keyboard users must not be able to tab behind the surface"
+      - "Do not render popover without an arrow/caret pointing to its trigger element"
+      - "Do not present fullscreen surfaces without a clear close affordance"
     must_handle:
       - "Apply the cut-corner silhouette to sheet and modal surfaces"
       - "Maintain shadows and overlays without square corners bleeding through"

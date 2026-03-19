@@ -39,6 +39,46 @@ generation:
     android: { language: kotlin, framework: compose, min_sdk: 26 }
     web: { language: typescript, framework: react, bundler: vite }
 
+generation_guidance:
+  universal_anti_patterns:
+    typography:
+      - "Do not fall back to Inter, Roboto, Arial, or system defaults when the spec defines a custom font_family"
+      - "Do not use a single font weight throughout — the typography scale defines different weights per level"
+      - "Do not use monospace fonts as shorthand for 'technical' aesthetic unless the spec explicitly calls for it"
+    color:
+      - "Do not use pure black (#000000) or pure white (#FFFFFF) — always resolve through the token layer"
+      - "Do not use the AI-default palette: cyan-on-dark, purple-to-blue gradients, neon accents"
+      - "Do not use gray text on colored backgrounds — derive text color from the on_color token or a darkened shade"
+      - "Do not apply the same opacity to all border tokens — border.default and border.emphasis have distinct opacity values"
+    spacing:
+      - "Do not use the same spacing value everywhere — the spec defines xxs through xxxl for a reason"
+      - "Do not ignore the page_margin and card_padding aliases — they exist to enforce consistent spatial rhythm"
+      - "Do not add spacing that the spec doesn't define — if a gap isn't in the token scale, it shouldn't exist in output"
+    motion:
+      - "Do not use bounce or elastic easing — these feel dated and the spec defines specific easing curves"
+      - "Do not apply the same duration to all animations — instant, quick, normal, and slow serve different purposes"
+      - "Do not ignore reduced_motion — when the user prefers reduced motion, animations must be removed entirely"
+    elevation:
+      - "Do not add shadows to elements that don't specify an elevation token"
+      - "Do not use the same shadow depth for cards and modals — cards use elevation.md, modals use elevation.lg"
+    layout:
+      - "Do not assume large-screen layouts work on compact — every multi-pane pattern needs an explicit compact fallback"
+      - "Do not use pixel breakpoints — reference size classes by name (compact, regular, expanded)"
+    accessibility:
+      - "Do not use color as the only differentiator between states — combine with icon, border, or text changes"
+      - "Do not skip focus ring styles — keyboard users must see where focus is at all times"
+      - "Do not set tab order manually unless the contract explicitly requires it — use document order"
+  audit_threshold: 70
+
+design:
+  personality: "Clean, focused, productivity-first — no decorative flourishes. Color is used for priority and status clarity, not aesthetics."
+  complexity: "balanced"
+  audience: "Individual contributors and small teams managing personal and shared task lists"
+  avoid:
+    - "Do not use playful or rounded UI patterns — this is a professional productivity tool"
+    - "Do not use color gradients — flat, token-driven color only"
+    - "[web] Do not use CSS animations for non-interactive decorative purposes"
+
 # ============================================================
 # Custom formatters & mappers (see spec Section 10.5)
 # ============================================================

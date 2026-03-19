@@ -75,6 +75,11 @@
         },
         "contrast_min": {
           "type": "number"
+        },
+        "generation_notes": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Sparse guidance for AI generators. Use [web]/[ios]/[android] tags for platform-specific notes."
         }
       },
       "required": [

@@ -3,6 +3,14 @@
 # Add project-specific variants, token overrides, and generation hints.
 
 input_field:
+  generation:
+    must_avoid:
+      - "Do not use placeholder text as the only label — always render a persistent visible label"
+      - "Do not use a single generic gray border for all states — focused, error, and disabled must each have distinct visual treatment"
+      - "Do not hardcode red for error states — use color.semantic.danger which may differ from pure red per the token definition"
+      - "Do not skip the label animation between resting and active positions — this is a must_handle requirement"
+      - "Do not use the same visual weight for required and optional fields — required fields need a visible indicator"
+      - "Do not render select fields identically across platforms — respect the render_hint and platform_mapping"
   variants:
     cut_corner:
       semantic: "Angled corner input for branded forms"

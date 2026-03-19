@@ -31,6 +31,8 @@ Call these MCP tools directly. They return structured JSON with everything you n
    - Every field/action in the spec has a corresponding UI element
    - Token values (colors, spacing, radii) match exactly — no approximations
    - Contract `must_handle` states are all implemented (loading, error, empty, etc.)
+   - `anti_patterns` from prepare output: confirm none of the listed patterns appear in generated code
+   - `design_context.complexity_rule` is honored (motion, elevation, decorative detail level)
    - Adaptive breakpoints match the spec's `size_classes`
    - Locale keys match `$t:` references
    - Navigation targets match flow definitions
@@ -87,6 +89,8 @@ If MCP tools are not available, use these CLI commands with `--json` flag:
 **Validation & generation workflow:**
 - `openuispec validate [group...] --json` — validate spec files against JSON Schemas
 - `openuispec check --target <t> --json` — validate spec files + check target generation readiness
+- `openuispec check --target <t> --audit` — also run design quality audit (score + anti-pattern checklist)
+- `openuispec check --target <t> --audit --min-score 70` — fail if design quality score below threshold
 - `openuispec prepare --target <t> --json` — build AI-ready work bundle
 - `openuispec drift --target <t> --explain --json` — semantic drift
 

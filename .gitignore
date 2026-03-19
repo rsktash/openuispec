@@ -21,3 +21,4 @@ build/
 site/_output/
 .cloc-ignore
 docs/openuispec-impeccable-integration.md
+docs/impeccable-integration-proposal.md
