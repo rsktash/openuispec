@@ -98,14 +98,14 @@ test("status includes shared layer info when configured", () => {
       { recursive: true }
     );
 
-    // Add shared layer config (insert under generation block, before formatters)
+    // Add shared layer config (insert under generation block, before generation_guidance)
     const manifestPath = join(sandbox, "openuispec", "openuispec.yaml");
     const manifest = readFileSync(manifestPath, "utf-8");
     writeFileSync(
       manifestPath,
       manifest.replace(
-        "\nformatters:",
-        `\n  shared:\n    mobile_common:\n      platforms: [ios, android]\n      language: kotlin\n      root: "../kmp-shared"\n      tracks: [manifest, contracts]\n      scope: \"Shared business logic.\"\n\nformatters:`
+        "\ngeneration_guidance:",
+        `\n  shared:\n    mobile_common:\n      platforms: [ios, android]\n      language: kotlin\n      root: "../kmp-shared"\n      tracks: [manifest, contracts]\n      scope: \"Shared business logic.\"\n\ngeneration_guidance:`
       )
     );
 
