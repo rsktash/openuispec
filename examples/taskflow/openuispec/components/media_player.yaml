@@ -1,0 +1,92 @@
+# ============================================================
+# Component: media_player
+# ============================================================
+# Reusable media playback component composed from base contracts.
+# Demonstrates the component spec type with slots, states,
+# variants, and layout.
+# ============================================================
+
+media_player:
+  semantic: "Plays audio and video media with transport controls"
+
+  props:
+    source: { type: string, required: true }
+    media_type: { type: enum, values: [audio, video], required: true }
+    title: { type: string }
+
+  slots:
+    play_button:
+      contract: action_trigger
+      variant: icon
+      props: { label: "$t:media_player.play", icon: play }
+      hideable: true
+    scrubber:
+      contract: input_field
+      input_type: slider
+      props: { label: "$t:media_player.progress" }
+      hideable: true
+    time_label:
+      contract: data_display
+      variant: caption
+      hideable: true
+    volume_control:
+      contract: input_field
+      input_type: slider
+      hideable: true
+
+  layout:
+    type: stack
+    spacing: "spacing.sm"
+    sections:
+      - slot: play_button
+      - slot: scrubber
+      - layout:
+          type: row
+          sections:
+            - slot: time_label
+            - slot: volume_control
+
+  states:
+    idle: { semantic: "No media loaded" }
+    loading:
+      semantic: "Buffering"
+      hide_slots: [scrubber, volume_control]
+    playing:
+      semantic: "Actively playing"
+      slot_overrides:
+        play_button: { props: { icon: pause } }
+    paused:
+      semantic: "Paused at position"
+      slot_overrides:
+        play_button: { props: { icon: play } }
+
+  variants:
+    mini:
+      semantic: "Compact player for persistent bottom bar"
+      hide_slots: [volume_control]
+      layout:
+        type: row
+        sections:
+          - slot: play_button
+          - slot: scrubber
+          - slot: time_label
+    fullscreen:
+      semantic: "Full-screen immersive player"
+      tokens: { background: "#000000" }
+
+  tokens:
+    background: "color.surface.secondary"
+    radius: "spacing.md"
+    padding: "spacing.md"
+
+  a11y:
+    role: "group"
+    label: "props.title"
+
+  platform_mapping:
+    ios: { component: "VideoPlayer", framework: "AVKit" }
+    android: { component: "PlayerView", library: "androidx.media3" }
+    web: { element: "div", role: "region" }
+
+  generation:
+    must_handle: ["All slots must render with correct contract types"]

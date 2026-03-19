@@ -232,8 +232,8 @@ function manifestTemplate(
     structureBlock = `  structure:\n${entries}\n`;
   }
 
-  return `# ${name} — OpenUISpec v0.1
-spec_version: "0.1"
+  return `# ${name} — OpenUISpec v0.2
+spec_version: "0.2"
 
 project:
   name: "${name}"
@@ -242,6 +242,7 @@ project:
 includes:
   tokens: "./tokens/"
   contracts: "./contracts/"
+  components: "./components/"
   screens: "./screens/"
   flows: "./flows/"
   platform: "./platform/"
@@ -290,6 +291,7 @@ This directory contains the **OpenUISpec** semantic UI specification for **${nam
 | \`screens/\` | Screen definitions — one YAML file per screen |
 | \`flows/\` | Navigation flows — multi-step user journeys |
 | \`contracts/\` | Component contracts — standard extensions and custom (\`x_\` prefixed) |
+| \`components/\` | Reusable component compositions — contract slot compositions with states and variants |
 | \`platform/\` | Platform overrides — per-target (iOS, Android, Web) behaviors |
 | \`locales/\` | Localization — i18n strings (JSON, ICU MessageFormat) |
 
@@ -306,7 +308,7 @@ Do NOT guess the file format — skipping this step will produce invalid YAML th
 
 **Reference files inside the package (read in this order):**
 1. \`README.md\` — schema tables, file format reference, root wrapper keys
-2. \`spec/openuispec-v0.1.md\` — full specification (contracts, layout, expressions, etc.)
+2. \`spec/openuispec-v0.2.md\` — full specification (contracts, layout, expressions, etc.)
 3. \`examples/taskflow/openuispec/\` — complete working example with all file types
 4. \`schema/\` — JSON Schemas for validation
 
@@ -432,6 +434,7 @@ Do not baseline on your own initiative — only run the snapshot when the user a
 **Focused getters (prefer these for incremental edits over \`read_specs\`):**
 - \`openuispec_get_screen(name)\` — single screen spec
 - \`openuispec_get_contract(name, variant?)\` — single contract, optionally one variant
+- \`openuispec_get_component(name, variant?)\` — single component, optionally one variant
 - \`openuispec_get_tokens(category)\` — single token category (color, typography, spacing, etc.)
 - \`openuispec_get_locale(locale, keys?)\` — single locale file, optionally filtered keys
 - \`openuispec_check(target, audit?, screens?, contracts?)\` — validation + optional scoped audit checklist
@@ -446,27 +449,36 @@ Use \`read_specs\` for full-project generation; use focused getters when editing
 ### CLI fallback (when MCP is not available)
 
 If MCP tools are not available, use these CLI commands with \`--json\` flag:
-- \`openuispec prepare --target <t> --json\` — build AI-ready work bundle
-- \`openuispec check --target <t> --json\` — composite validation
+
+**Status & discovery:**
 - \`openuispec status --json\` — cross-target status
-- \`openuispec drift --target <t> --explain --json\` — semantic drift
-- \`openuispec validate [group...] --json\` — schema validation
+- \`openuispec spec-types\` — list available spec types
+- \`openuispec spec-schema <type>\` — get JSON schema for a spec type
+
+**Spec access:**
 - \`openuispec read-specs [paths...]\` — read spec file contents
 - \`openuispec get-screen <name>\` — get a single screen spec
 - \`openuispec get-contract <name> [--variant v]\` — get a contract spec
+- \`openuispec get-component <name> [--variant v]\` — get a component spec
 - \`openuispec get-tokens <category>\` — get tokens for a category
 - \`openuispec get-locale <locale> [--keys k1,k2]\` — get a locale file
-- \`openuispec spec-types\` — list available spec types
-- \`openuispec spec-schema <type>\` — get JSON schema for a spec type
+
+**Validation & generation workflow:**
+- \`openuispec validate [group...] --json\` — validate spec files against JSON Schemas
+- \`openuispec check --target <t> --json\` — validate spec files + check target generation readiness
+- \`openuispec prepare --target <t> --json\` — build AI-ready work bundle
+- \`openuispec drift --target <t> --explain --json\` — semantic drift
+
+**Visual verification:**
 - \`openuispec screenshot --route /path\` — screenshot the web app
 - \`openuispec screenshot-android [--project-dir path]\` — screenshot Android app
 - \`openuispec screenshot-ios [--project-dir path]\` — screenshot iOS app
 
 ### Other CLI commands
 - \`openuispec init\` — scaffold a new spec project
-- \`openuispec drift --snapshot --target <t>\` — snapshot current state (user-initiated, after reviewing generated output)
 - \`openuispec configure-target <t>\` — configure target platform stack
 - \`openuispec update-rules\` — update AI rules to match installed package version
+- \`openuispec drift --snapshot --target <t>\` — snapshot current state (user-initiated, after reviewing generated output)
 
 ## Spec format reference
 
@@ -478,13 +490,13 @@ You MUST read the reference files before creating or editing spec files — do N
 
 **Reference files (read in order):**
 1. \`README.md\` — schema tables, file format, root wrapper keys
-2. \`spec/openuispec-v0.1.md\` — full specification
+2. \`spec/openuispec-v0.2.md\` — full specification
 3. \`examples/taskflow/openuispec/\` — complete working example
 4. \`schema/\` — JSON Schemas for every file type
 
 ## Spec location
 - Spec root: \`${specDir}/\` — read \`${specDir}/openuispec.yaml\` first for actual paths.
-- Default dirs: tokens/, screens/, flows/, contracts/, platform/, locales/
+- Default dirs: tokens/, screens/, flows/, contracts/, components/, platform/, locales/
 
 ## When to start from spec vs platform code
 
@@ -500,7 +512,7 @@ You MUST read the reference files before creating or editing spec files — do N
 
 ## If spec directories are empty (first-time setup)
 
-Read \`spec/openuispec-v0.1.md\` from the package first, then:
+Read \`spec/openuispec-v0.2.md\` from the package first, then:
 1. Scan codebase for UI screens → create \`${specDir}/screens/<name>.yaml\` as \`status: stub\`
 2. Extract tokens (colors, fonts, spacing) → \`${specDir}/tokens/\`
 3. Create contract extensions → \`${specDir}/contracts/\`
@@ -590,8 +602,60 @@ export function updateRules(): void {
     console.log(`\nAI rules updated to v${version}`);
   }
 
+  // Migrate old spec doc version references to current
+  migrateDocVersionRefs(cwd, specDir);
+
   // Ensure MCP server is configured
   configureMcp(cwd, true);
+}
+
+// ── spec doc version migration ──────────────────────────────────────
+
+function getCurrentSpecDocVersion(): string | null {
+  const pkgDir = dirname(fileURLToPath(import.meta.url));
+  const specDir = join(pkgDir, "..", "spec");
+  try {
+    const files = readdirSync(specDir);
+    const match = files
+      .map((f) => f.match(/^openuispec-v(.+)\.md$/))
+      .filter(Boolean)
+      .sort()
+      .pop();
+    return match ? match[1] : null;
+  } catch {
+    return null;
+  }
+}
+
+function migrateDocVersionRefs(cwd: string, specDir: string): void {
+  const currentVersion = getCurrentSpecDocVersion();
+  if (!currentVersion) return;
+
+  const currentRef = `openuispec-v${currentVersion}`;
+  const pattern = /openuispec-v(\d+\.\d+)/g;
+
+  const filesToCheck = [
+    join(cwd, specDir, "README.md"),
+    join(cwd, "CLAUDE.md"),
+    join(cwd, "AGENTS.md"),
+  ];
+
+  for (const filePath of filesToCheck) {
+    if (!existsSync(filePath)) continue;
+
+    const content = readFileSync(filePath, "utf-8");
+    const oldRefs = [...content.matchAll(pattern)]
+      .filter((m) => m[1] !== currentVersion);
+    if (oldRefs.length === 0) continue;
+
+    const migrated = content.replace(pattern, (_match, ver) =>
+      ver === currentVersion ? _match : currentRef
+    );
+    writeFileSync(filePath, migrated);
+    const relPath = relative(cwd, filePath);
+    const oldVersions = [...new Set(oldRefs.map((m) => m[1]))].join(", ");
+    console.log(`  updated ${relPath} (migrated v${oldVersions} → v${currentVersion} doc references)`);
+  }
 }
 
 // ── shared MCP config ───────────────────────────────────────────────
@@ -1058,6 +1122,7 @@ export async function init(argv: string[] = []): Promise<void> {
     const dirs = [
       "tokens",
       "contracts",
+      "components",
       "screens",
       "flows",
       "platform",

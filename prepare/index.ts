@@ -935,7 +935,7 @@ function referenceExamples(): string[] {
   const packageRoot = resolvePackageRoot();
   const candidates = [
     join(packageRoot, "README.md"),
-    join(packageRoot, "spec", "openuispec-v0.1.md"),
+    join(packageRoot, "spec", "openuispec-v0.2.md"),
     join(packageRoot, "examples", "taskflow", "openuispec"),
     join(packageRoot, "schema"),
   ];

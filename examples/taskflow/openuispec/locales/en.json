@@ -127,6 +127,7 @@
   "status.in_progress": "In progress",
   "status.done": "Done",
 
+  "media_player.progress": "Playback progress",
   "media_player.loading": "Loading media…",
   "media_player.play": "Play",
   "media_player.pause": "Pause",

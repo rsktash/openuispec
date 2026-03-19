@@ -1,11 +1,11 @@
-# OpenUISpec v0.1
+# OpenUISpec v0.2
 
 > A single source of truth design language for AI-native, platform-native app development.
 
-**Status:** Draft  
-**Version:** 0.1  
-**Authors:** Rustam Samandarov  
-**Last updated:** 2026-03-13
+**Status:** Draft
+**Version:** 0.2
+**Authors:** Rustam Samandarov
+**Last updated:** 2026-03-19
 
 ---
 
@@ -49,6 +49,8 @@ project/
 │   ├── surface.yaml
 │   ├── collection.yaml
 │   └── x_media_player.yaml    # Custom contract (Section 12)
+├── components/
+│   └── media_player.yaml      # Component composition (Section 15)
 ├── screens/
 │   ├── home.yaml
 │   ├── order_detail.yaml
@@ -68,7 +70,7 @@ project/
 
 ```yaml
 # openuispec.yaml
-spec_version: "0.1"
+spec_version: "0.2"
 project:
   name: "MyApp"
   description: "A sample application defined in OpenUISpec"
@@ -3167,6 +3169,8 @@ Use a custom contract when the component:
 
 Do **not** use a custom contract when a built-in family with the right variant already covers the use case. A data card is `data_display`, not `x_data_card`.
 
+> **Prefer components over custom contracts** when the UI block is a composition of multiple contracts (e.g., a media player with play button, scrubber, and time label). Components (Section 15) provide named slots, states, variants, and screen-level overrides. Reserve `x_` custom contracts for truly atomic, domain-specific widgets that don't decompose into smaller contracts.
+
 ### 12.2 Naming
 
 Custom contract names **MUST**:
@@ -3271,7 +3275,7 @@ Custom contracts are registered in the root manifest via the `custom_contracts` 
 
 ```yaml
 # openuispec.yaml
-spec_version: "0.1"
+spec_version: "0.2"
 project:
   name: "MyApp"
 
@@ -3841,6 +3845,259 @@ This is the spec's primary value beyond code generation: it gives cross-platform
 
 ---
 
+## 15. Component composition
+
+Components fill the gap between atomic contracts and full-page screens. A component is a **reusable composition of contracts with named slots** — think of a media player composed of a play button, scrubber, time label, and volume control, each backed by a base contract.
+
+```
+Tokens → Contracts → Components → Screens → Flows
+         (atomic)    (composed)   (full page)
+```
+
+Components live in the `components/` directory referenced by `includes.components` in the manifest.
+
+### 15.1 Component definition format
+
+Each YAML file contains a single root key — the component name — mapping to a `component_def`:
+
+```yaml
+# components/media_player.yaml
+media_player:
+  semantic: "Plays audio and video media with transport controls"
+
+  props:
+    source: { type: string, required: true }
+    media_type: { type: enum, values: [audio, video], required: true }
+    title: { type: string }
+
+  slots:
+    play_button:
+      contract: action_trigger
+      variant: icon
+      props: { label: "$t:media_player.play", icon: play }
+      hideable: true
+    scrubber:
+      contract: input_field
+      input_type: slider
+      props: { label: "$t:media_player.progress" }
+      hideable: true
+    time_label:
+      contract: data_display
+      variant: caption
+      hideable: true
+    volume_control:
+      contract: input_field
+      input_type: slider
+      hideable: true
+
+  layout:
+    type: stack
+    spacing: "spacing.sm"
+    sections:
+      - slot: play_button
+      - slot: scrubber
+      - layout:
+          type: row
+          sections:
+            - slot: time_label
+            - slot: volume_control
+
+  states:
+    idle: { semantic: "No media loaded" }
+    loading:
+      semantic: "Buffering"
+      hide_slots: [scrubber, volume_control]
+    playing:
+      semantic: "Actively playing"
+      slot_overrides:
+        play_button: { props: { icon: pause } }
+    paused:
+      semantic: "Paused at position"
+      slot_overrides:
+        play_button: { props: { icon: play } }
+
+  variants:
+    mini:
+      semantic: "Compact player for persistent bottom bar"
+      hide_slots: [volume_control]
+      layout:
+        type: row
+        sections:
+          - slot: play_button
+          - slot: scrubber
+          - slot: time_label
+    fullscreen:
+      semantic: "Full-screen immersive player"
+      tokens: { background: "#000000" }
+
+  tokens:
+    background: "color.surface.secondary"
+    radius: "spacing.md"
+    padding: "spacing.md"
+
+  a11y:
+    role: "group"
+    label: "props.title"
+
+  platform_mapping:
+    ios: { component: "VideoPlayer", framework: "AVKit" }
+    android: { component: "PlayerView", library: "androidx.media3" }
+    web: { element: "div", role: "region" }
+
+  generation:
+    must_handle: ["All slots must render with correct contract types"]
+```
+
+### 15.2 Anatomy
+
+| Section | Purpose | Required |
+|---------|---------|----------|
+| `semantic` | Human-readable description of what this component does | Yes |
+| `slots` | Named contract instances that make up the component | Yes |
+| `props` | Typed inputs the component accepts (passed via data binding) | No |
+| `layout` | Spatial arrangement of slots using layout primitives | No |
+| `states` | Composite states that control slot visibility and props | No |
+| `variants` | Named presets that hide slots, change layout, or override tokens | No |
+| `tokens` | Visual token bindings for the component container | No |
+| `a11y` | Accessibility role and label pattern | No |
+| `platform_mapping` | Per-platform native component hints | No |
+| `dependencies` | Platform-specific library requirements | No |
+| `generation` | AI generation hints (must_handle, should_handle, may_handle) | No |
+| `test_cases` | Behavioral verification scenarios | No |
+
+### 15.3 Slots
+
+A **slot** is a named position within a component that renders a base contract. Each slot specifies:
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `contract` | `contract_ref` | Yes | The base contract family (e.g. `action_trigger`, `data_display`) |
+| `variant` | `string` | No | Default variant for the contract |
+| `input_type` | `string` | No | Input type (for `input_field` contracts) |
+| `props` | `object` | No | Default props passed to the contract |
+| `hideable` | `bool` | No | Whether this slot can be hidden from screens or by states |
+| `tokens_override` | `object` | No | Token overrides for this slot |
+
+Slots reference **base contracts only** — components cannot nest other components (v1 keeps it flat).
+
+### 15.4 States
+
+Component states are **composite states** that control slot visibility and override slot props. They differ from contract states (Section 4): contract states describe UI interaction states of a single widget (pressed, disabled, loading); component states describe the state of the entire composition (playing, paused, buffering).
+
+Each state can specify:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `semantic` | `string` | What this state means |
+| `hide_slots` | `string[]` | Slots to hide when this state is active |
+| `slot_overrides` | `object` | Per-slot prop/variant overrides |
+| `transitions_to` | `string[]` | Valid next states |
+
+### 15.5 Variants
+
+Variants are named presets that change the component's appearance or slot arrangement:
+
+```yaml
+variants:
+  mini:
+    semantic: "Compact player for persistent bottom bar"
+    hide_slots: [volume_control]
+    layout:
+      type: row
+      sections:
+        - slot: play_button
+        - slot: scrubber
+        - slot: time_label
+```
+
+A variant can specify:
+- `semantic` — What this variant is for
+- `hide_slots` — Slots to remove in this variant
+- `layout` — Alternative slot arrangement
+- `tokens` — Token overrides for this variant
+- `slot_overrides` — Per-slot prop/variant overrides
+
+### 15.6 Slot resolution order
+
+When a component is rendered, slot properties are resolved by layering overrides from most general to most specific:
+
+```
+slot default → variant override → state override → screen-level override
+```
+
+Most specific wins. Screen-level overrides always have final say. If a slot is hidden at any level (variant `hide_slots`, state `hide_slots`, or screen-level `hidden: true`), it is not rendered.
+
+### 15.7 Usage in screens
+
+Components are used in screens via the `component` key (instead of `contract`):
+
+```yaml
+# screens/task_detail.yaml
+- component: media_player
+  variant: mini
+  props:
+    source: "{task.attachment.url}"
+    media_type: "{task.attachment.media_type}"
+  slots:
+    volume_control: { hidden: true }
+    play_button:
+      variant: branded
+      tokens_override: { background: "color.brand.primary" }
+```
+
+**Screen-level slot overrides** can:
+- Change the slot's `variant`
+- Override `props`
+- Apply `tokens_override`
+- Set `hidden: true` to suppress the slot (only if the slot is declared `hideable: true`)
+
+### 15.8 Components vs. custom contracts
+
+| Aspect | Component | Custom contract (`x_`) |
+|--------|-----------|----------------------|
+| Structure | Composition of base contracts via slots | Single atomic widget |
+| Customization | Slots can be restyled, repositioned, swapped, or hidden | Props and tokens only |
+| States | Composite states controlling slot visibility | UI interaction states (pressed, loading, error) |
+| Layout | Defines spatial arrangement of slots | Opaque — platform decides layout |
+| Use when | The UI block decomposes into smaller contracts | The widget is truly atomic and domain-specific |
+| Examples | Media player, wizard, conversation timeline | Status badge, SLA indicator, sparkline chart |
+
+### 15.9 Registration
+
+Components are registered in the manifest's `includes` section:
+
+```yaml
+# openuispec.yaml
+includes:
+  tokens: "./tokens/"
+  contracts: "./contracts/"
+  components: "./components/"
+  screens: "./screens/"
+  # ...
+```
+
+Each `.yaml` file in the components directory defines one component. The file must contain exactly one root key matching the component name (no `x_` prefix — that is reserved for custom contracts).
+
+### 15.10 AI generation requirements
+
+**MUST:**
+- Read all component definitions before generating code
+- Render every non-hidden slot with the correct base contract type
+- Apply the slot resolution order (Section 15.6) correctly
+- Support variant selection from screens
+- Include `dependencies` in generated project configuration
+
+**SHOULD:**
+- Implement component states with correct slot visibility transitions
+- Apply component-level and slot-level token overrides
+- Generate accessibility support matching the `a11y` definition
+
+**MAY:**
+- Generate test code based on `test_cases`
+- Add platform-specific enhancements via `platform_mapping`
+
+---
+
 ## Appendix A: Type reference
 
 | Type | Description | Example |
@@ -3853,6 +4110,7 @@ This is the spec's primary value beyond code generation: it gives cross-platform
 | `media_ref` | Image/video reference | `"assets/hero.jpg"` |
 | `color_ref` | Token path | `"color.brand.primary"` |
 | `component_ref` | Inline contract instance | `{ contract: data_display, ... }` |
+| `composed_component_ref` | Component name from `components/` | `"media_player"` |
 | `contract_ref` | Contract family name | `"action_trigger"` |
 | `screen_ref` | Screen identifier | `"screens/order_detail"` |
 | `action` | Action definition (see Section 9) | `{ type: navigate, destination: "..." }` |
@@ -3884,4 +4142,4 @@ This is the spec's primary value beyond code generation: it gives cross-platform
 
 ---
 
-*OpenUISpec v0.1 — Draft specification. Subject to revision.*
+*OpenUISpec v0.2 — Draft specification. Subject to revision.*

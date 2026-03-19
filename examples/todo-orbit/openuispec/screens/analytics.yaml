@@ -102,14 +102,11 @@ analytics:
 
       - id: trend_chart
         margin_top: "spacing.lg"
-        contract: x_task_trend_chart
-        variant: detail
+        component: task_trend_chart
         props:
-          series: "trend"
           metric: completed
           period: "state.period"
           show_legend: true
-          empty_message: "$t:analytics.empty_trend"
 
       - id: overdue_header
         margin_top: "spacing.xl"

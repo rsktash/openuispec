@@ -171,7 +171,7 @@
       "additionalProperties": false
     },
     "section_item": {
-      "description": "A section item \u2014 either a contract instance or a section group with children",
+      "description": "A section item \u2014 a contract instance, component instance, or section group with children",
       "type": "object",
       "properties": {
         "id": {
@@ -179,6 +179,17 @@
         },
         "contract": {
           "type": "string"
+        },
+        "component": {
+          "type": "string",
+          "description": "Component name (alternative to contract). References a component defined in components/*.yaml."
+        },
+        "slots": {
+          "type": "object",
+          "description": "Slot overrides when using a component. Each key is a slot name.",
+          "additionalProperties": {
+            "$ref": "https://openuispec.rsteam.uz/schema/component.schema.json#/$defs/slot_override"
+          }
         },
         "variant": {
           "type": "string"

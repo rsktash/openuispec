@@ -18,6 +18,7 @@
  *   openuispec read-specs [paths...]          Read spec file contents
  *   openuispec get-screen <name>              Get a single screen spec
  *   openuispec get-contract <name> [--variant v] Get a contract spec
+ *   openuispec get-component <name> [--variant v] Get a component spec
  *   openuispec get-tokens <category>          Get tokens for a category
  *   openuispec get-locale <locale> [--keys k1,k2] Get a locale file
  *   openuispec spec-types                     List available spec types
@@ -119,6 +120,7 @@ const SCHEMA_CATALOG: Record<string, { file: string; title: string; description:
   platform:         { file: "platform.schema.json",              title: "Platform",         description: "Platform-specific generation config" },
   contract:         { file: "contract.schema.json",              title: "Contract",         description: "Built-in UI contract definitions" },
   "custom-contract":{ file: "custom-contract.schema.json",       title: "Custom Contract",  description: "User-defined UI contract definitions (x_ prefixed)" },
+  component:        { file: "component.schema.json",             title: "Component",        description: "Reusable composition of contracts with named slots" },
   locale:           { file: "locale.schema.json",                title: "Locale",           description: "Locale translation files" },
   "tokens/color":       { file: "tokens/color.schema.json",       title: "Color Tokens",       description: "Color tokens" },
   "tokens/typography":  { file: "tokens/typography.schema.json",   title: "Typography Tokens",  description: "Typography tokens" },
@@ -225,31 +227,34 @@ async function main(): Promise<void> {
       break;
     }
 
-    case "get-contract": {
+    case "get-contract":
+    case "get-component": {
+      const specType = command === "get-contract" ? "contract" : "component";
+      const specDir = specType === "contract" ? "contracts" : "components";
       const name = rest[0];
-      if (!name) { console.error("Usage: openuispec get-contract <name> [--variant v]"); process.exit(1); }
+      if (!name) { console.error(`Usage: openuispec get-${specType} <name> [--variant v]`); process.exit(1); }
       const variant = getOption(rest, "--variant");
       const { findProjectDir } = await import("../drift/index.js");
       const YAML = (await import("yaml")).default;
       const projectDir = findProjectDir(cwd);
       const manifest = YAML.parse(readFileSync(join(projectDir, "openuispec.yaml"), "utf-8"));
-      const contractsDir = resolveSpecDir(projectDir, manifest, "contracts");
+      const dir = resolveSpecDir(projectDir, manifest, specDir);
 
-      if (!existsSync(contractsDir)) { console.error(`Contracts directory not found: ${contractsDir}`); process.exit(1); }
+      if (!existsSync(dir)) { console.error(`${specDir} directory not found: ${dir}`); process.exit(1); }
 
       let found = false;
-      for (const file of readdirSync(contractsDir).filter(f => f.endsWith(".yaml")).sort()) {
-        const filePath = join(contractsDir, file);
+      for (const file of readdirSync(dir).filter(f => f.endsWith(".yaml")).sort()) {
+        const filePath = join(dir, file);
         const raw = readFileSync(filePath, "utf-8");
         const content = YAML.parse(raw);
-        const contractName = Object.keys(content)[0];
-        if (contractName !== name) continue;
+        const rootKey = Object.keys(content)[0];
+        if (rootKey !== name) continue;
         found = true;
 
         if (variant) {
-          const variantDef = content[contractName]?.variants?.[variant];
+          const variantDef = content[rootKey]?.variants?.[variant];
           if (!variantDef) {
-            const available = Object.keys(content[contractName]?.variants ?? {}).join(", ");
+            const available = Object.keys(content[rootKey]?.variants ?? {}).join(", ");
             console.error(`Variant "${variant}" not found. Available: ${available}`);
             process.exit(1);
           }
@@ -259,7 +264,7 @@ async function main(): Promise<void> {
         }
         break;
       }
-      if (!found) { console.error(`Contract "${name}" not found in ${contractsDir}`); process.exit(1); }
+      if (!found) { console.error(`${specType} "${name}" not found in ${dir}`); process.exit(1); }
       break;
     }
 
@@ -471,6 +476,7 @@ Spec access:
   openuispec read-specs [paths...]          Read spec file contents as JSON
   openuispec get-screen <name>              Get a single screen spec (YAML)
   openuispec get-contract <name> [--variant v]  Get a contract spec
+  openuispec get-component <name> [--variant v] Get a component spec
   openuispec get-tokens <category>          Get tokens for a category (YAML)
   openuispec get-locale <locale> [--keys k1,k2] Get a locale file (JSON)
   openuispec spec-types                     List available spec types
@@ -493,7 +499,7 @@ Screenshots (batch — build once, capture many):
 Server:
   openuispec mcp                            Start MCP server (stdio transport)
 
-Validate groups: manifest, tokens, screens, flows, platform, locales, contracts, semantic
+Validate groups: manifest, tokens, screens, flows, platform, locales, contracts, components, semantic
 Exit codes: 0 = success, 1 = missing config/usage error, 2 = validation failure
 Docs: https://openuispec.rsteam.uz
 `);

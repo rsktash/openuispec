@@ -12,6 +12,7 @@ This directory contains the **OpenUISpec** semantic UI specification for **TaskF
 | `screens/` | Screen definitions — one YAML file per screen |
 | `flows/` | Navigation flows — multi-step user journeys |
 | `contracts/` | Component contracts — standard extensions and custom (`x_` prefixed) |
+| `components/` | Reusable compositions — contract slot compositions with states and variants |
 | `platform/` | Platform overrides — per-target (iOS, Android, Web) behaviors |
 | `locales/` | Localization — i18n strings (JSON, ICU MessageFormat) |
 
@@ -28,7 +29,7 @@ Do NOT guess the file format — skipping this step will produce invalid YAML th
 
 **Reference files inside the package (read in this order):**
 1. `README.md` — schema tables, file format reference, root wrapper keys
-2. `spec/openuispec-v0.1.md` — full specification (contracts, layout, expressions, etc.)
+2. `spec/openuispec-v0.2.md` — full specification (contracts, layout, expressions, etc.)
 3. `examples/taskflow/openuispec/` — complete working example with all file types
 4. `schema/` — JSON Schemas for validation
 

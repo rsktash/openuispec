@@ -140,6 +140,29 @@ function loadContractDefs(projectDir: string, manifest: any): Record<string, any
   return defs;
 }
 
+function loadComponentDefs(projectDir: string, manifest: any): Record<string, any> {
+  const componentsDir = resolve(projectDir, manifest.includes?.components ?? "./components/");
+  const defs: Record<string, any> = {};
+
+  if (!existsSync(componentsDir)) return defs;
+
+  for (const file of readdirSync(componentsDir)) {
+    if (!file.endsWith(".yaml") && !file.endsWith(".yml")) continue;
+    try {
+      const content = YAML.parse(readFileSync(join(componentsDir, file), "utf-8"));
+      if (content && typeof content === "object") {
+        for (const [name, def] of Object.entries(content)) {
+          defs[name] = def;
+        }
+      }
+    } catch {
+      // Skip malformed component files
+    }
+  }
+
+  return defs;
+}
+
 function loadMockData(projectDir: string, screenName: string): { data: Record<string, any>; params: Record<string, any> } {
   const mockDir = join(projectDir, "mock");
 
@@ -192,9 +215,11 @@ export async function renderPreview(
   const tokens = loadAllTokens(projectDir, manifest);
   const locale = loadLocale(projectDir, manifest, localeName);
 
-  // 3. Load contract definitions (project extensions)
+  // 3. Load contract definitions (project extensions) and component definitions
   const contractDefs = loadContractDefs(projectDir, manifest);
   manifest._contractDefs = contractDefs;
+  const componentDefs = loadComponentDefs(projectDir, manifest);
+  manifest._componentDefs = componentDefs;
 
   // 4. Load mock data
   const { data: mockData, params: mockParams } = loadMockData(projectDir, screen);

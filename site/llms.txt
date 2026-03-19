@@ -4,9 +4,9 @@
 
 ## Core Docs
 
-- [Full Specification + Schemas](https://openuispec.rsteam.uz/llms-full.txt): Complete OpenUISpec v0.1 specification with all JSON Schema definitions in a single file
+- [Full Specification + Schemas](https://openuispec.rsteam.uz/llms-full.txt): Complete OpenUISpec v0.2 specification with all JSON Schema definitions in a single file
 - [GitHub Repository](https://github.com/rsktash/openuispec): Source code, CLI tool, and examples
-- [Specification Document](https://github.com/rsktash/openuispec/blob/main/spec/openuispec-v0.1.md): Full spec in markdown
+- [Specification Document](https://github.com/rsktash/openuispec/blob/main/spec/openuispec-v0.2.md): Full spec in markdown
 
 ## File formats at a glance
 
@@ -14,7 +14,7 @@ Every file type has a required root key and a JSON Schema that defines its struc
 
 ### Root manifest (`openuispec.yaml`)
 ```yaml
-spec_version: "0.1"
+spec_version: "0.2"
 project:
   name: "MyApp"
 includes:
@@ -56,6 +56,30 @@ create_task:
         sections: [...]
 ```
 
+### Component (`components/<name>.yaml`) — root key is the component id
+```yaml
+media_player:
+  semantic: "Plays audio and video media"
+  slots:
+    play_button:
+      contract: action_trigger
+      variant: icon
+      props: { label: "$t:media_player.play", icon: play }
+    scrubber:
+      contract: input_field
+      input_type: slider
+  layout:
+    type: stack
+    sections:
+      - slot: play_button
+      - slot: scrubber
+  states:
+    playing:
+      semantic: "Actively playing"
+      slot_overrides:
+        play_button: { props: { icon: pause } }
+```
+
 ### Token file (`tokens/<type>.yaml`) — root key matches the token type
 ```yaml
 # tokens/color.yaml
@@ -92,6 +116,7 @@ Each schema validates a specific file type. Read the schema before creating or e
 - [Locale Schema](https://openuispec.rsteam.uz/schema/locale.schema.json): validates `locales/*.json`
 - [Contract Extension Schema](https://openuispec.rsteam.uz/schema/contract.schema.json): validates `contracts/<name>.yaml` (standard contract extensions with variants, token overrides, generation hints)
 - [Custom Contract Schema](https://openuispec.rsteam.uz/schema/custom-contract.schema.json): validates `contracts/x_*.yaml` (fully custom contracts)
+- [Component Schema](https://openuispec.rsteam.uz/schema/component.schema.json): validates `components/*.yaml` (reusable contract compositions with named slots)
 
 ## Standard Contract Usage
 

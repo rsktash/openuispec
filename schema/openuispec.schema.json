@@ -60,6 +60,10 @@
         "locales": {
           "type": "string",
           "description": "Localization string files — one JSON file per supported locale containing translated UI text."
+        },
+        "components": {
+          "type": "string",
+          "description": "Reusable component compositions — each YAML file defines a component as a composition of contracts with named slots, states, and variants."
         }
       },
       "required": [
@@ -184,7 +188,7 @@
                 "description": "Spec categories this shared layer tracks for hash-based drift detection. Optional — when omitted, the layer relies on scope alone. Categories: manifest (project config, data models, API endpoints), tokens (visual design tokens — UI only), contracts (reusable UI component definitions — UI only, not business logic), screens (screen layouts — UI only), flows (navigation journeys — UI only), platform (per-target overrides — UI only), locales (translated UI strings).",
                 "items": {
                   "type": "string",
-                  "enum": ["manifest", "tokens", "contracts", "screens", "flows", "platform", "locales"]
+                  "enum": ["manifest", "tokens", "contracts", "components", "screens", "flows", "platform", "locales"]
                 }
               },
               "scope": {

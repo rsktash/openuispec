@@ -10,13 +10,14 @@ Todo Orbit is a multi-platform sample project for OpenUISpec. It combines a sour
 - Create and edit task flows
 - Recurring-rule creation with conditional fields and validation
 - Bilingual localization with English and Russian
-- Custom contracts for schedule preview and task trend charts
+- Components for reusable composed UI (task trend chart)
+- Custom contracts for schedule preview
 
 ## Project layout
 
 | Path | Purpose |
 |------|---------|
-| [`openuispec/`](./openuispec/) | Source OpenUISpec project: manifest, tokens, screens, flows, contracts, locales |
+| [`openuispec/`](./openuispec/) | Source OpenUISpec project: manifest, tokens, screens, flows, contracts, components, locales |
 | [`generated/web/Todo Orbit/`](./generated/web/Todo%20Orbit/) | Generated React + Vite web app |
 | [`generated/ios/Todo Orbit/`](./generated/ios/Todo%20Orbit/) | Generated SwiftUI iOS target |
 | [`generated/android/Todo Orbit/`](./generated/android/Todo%20Orbit/) | Generated Jetpack Compose Android target |

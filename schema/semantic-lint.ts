@@ -25,6 +25,7 @@ function collectLocaleKeys(data: unknown, prefix = ""): string[] {
 export interface Includes {
   tokens: string;
   contracts: string;
+  components: string;
   screens: string;
   flows: string;
   platform: string;
@@ -43,6 +44,7 @@ interface SemanticContext {
   formatterNames: Set<string>;
   mapperNames: Set<string>;
   contractNames: Set<string>;
+  componentNames: Set<string>;
   tokenRefs: Set<string>;
   iconRefs: Set<string>;
   iconVariantSuffixes: string[];
@@ -253,6 +255,15 @@ function buildContext(projectDir: string, includes: Includes, manifest: UnknownR
     }
   }
 
+  // Components are also valid references in screen sections (via "component:" key)
+  const componentNames = new Set<string>();
+  const componentsDir = resolve(projectDir, includes.components);
+  for (const filePath of listFiles(componentsDir, ".yaml")) {
+    for (const key of rootKeys(filePath)) {
+      componentNames.add(key);
+    }
+  }
+
   const tokenRefs = new Set<string>();
   const tokensDir = resolve(projectDir, includes.tokens);
   for (const filePath of listFiles(tokensDir, ".yaml")) {
@@ -300,6 +311,7 @@ function buildContext(projectDir: string, includes: Includes, manifest: UnknownR
     formatterNames,
     mapperNames,
     contractNames,
+    componentNames,
     tokenRefs,
     iconRefs: iconData.refs,
     iconVariantSuffixes: iconData.suffixes,
@@ -427,6 +439,10 @@ function validateStringValue(
 
   if ((key === "contract" || key === "item_contract") && !context.contractNames.has(value)) {
     errors.push({ path, message: `unknown contract "${value}"` });
+  }
+
+  if (key === "component" && !path.includes("platform_mapping") && !context.componentNames.has(value)) {
+    errors.push({ path, message: `unknown component "${value}"` });
   }
 
   if (
@@ -617,6 +633,7 @@ export function collectSemanticLint(projectDir: string, includes: Includes): Usa
   const manifest = readManifest(projectDir) as UnknownRecord;
   const context = buildContext(projectDir, includes, manifest);
   const contractsDir = resolve(projectDir, includes.contracts);
+  const componentsDir = resolve(projectDir, includes.components);
 
   const allErrors: UsageLint[] = [
     ...lintLocaleCoverage(context),
@@ -629,11 +646,13 @@ export function collectSemanticLint(projectDir: string, includes: Includes): Usa
     ...listFiles(resolve(projectDir, includes.flows), ".yaml"),
     ...listFiles(resolve(projectDir, includes.platform), ".yaml"),
     ...listFiles(resolve(projectDir, includes.contracts), ".yaml"),
+    ...listFiles(componentsDir, ".yaml"),
   ];
 
   for (const filePath of files) {
+    const isContractOrComponent = filePath.startsWith(contractsDir) || filePath.startsWith(componentsDir);
     allErrors.push(
-      ...lintFile(filePath, context, { validateTokens: !filePath.startsWith(contractsDir) })
+      ...lintFile(filePath, context, { validateTokens: !isContractOrComponent })
     );
   }
 
@@ -645,6 +664,7 @@ export function runSemanticLint(projectDir: string, includes: Includes): number 
   const context = buildContext(projectDir, includes, manifest);
   let total = 0;
   const contractsDir = resolve(projectDir, includes.contracts);
+  const componentsDir = resolve(projectDir, includes.components);
 
   total += printSemanticErrors("locales", lintLocaleCoverage(context));
   total += printSemanticErrors("openuispec.yaml", lintManifestGenerationContext(projectDir, context.manifest));
@@ -655,12 +675,14 @@ export function runSemanticLint(projectDir: string, includes: Includes): number 
     ...listFiles(resolve(projectDir, includes.flows), ".yaml"),
     ...listFiles(resolve(projectDir, includes.platform), ".yaml"),
     ...listFiles(resolve(projectDir, includes.contracts), ".yaml"),
+    ...listFiles(componentsDir, ".yaml"),
   ];
 
   for (const filePath of files) {
+    const isContractOrComponent = filePath.startsWith(contractsDir) || filePath.startsWith(componentsDir);
     total += printSemanticErrors(
       basename(filePath),
-      lintFile(filePath, context, { validateTokens: !filePath.startsWith(contractsDir) })
+      lintFile(filePath, context, { validateTokens: !isContractOrComponent })
     );
   }
 

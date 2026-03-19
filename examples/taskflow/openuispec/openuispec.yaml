@@ -1,12 +1,12 @@
 # ============================================================
-# TaskFlow — OpenUISpec v0.1 Example Application
+# TaskFlow — OpenUISpec v0.2 Example Application
 # ============================================================
 # A task management app demonstrating all 7 contract families,
 # theming, navigation flows, adaptive layout, and the formal
 # action system and data binding model.
 # ============================================================
 
-spec_version: "0.1"
+spec_version: "0.2"
 
 project:
   name: "TaskFlow"
@@ -16,13 +16,12 @@ project:
 includes:
   tokens: "./tokens/"
   contracts: "./contracts/"
+  components: "./components/"
   screens: "./screens/"
   flows: "./flows/"
   platform: "./platform/"
   locales: "./locales/"
 
-custom_contracts:
-  - "./contracts/x_media_player.yaml"
 
 i18n:
   default_locale: "en"

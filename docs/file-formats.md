@@ -12,7 +12,8 @@ Every file type has a corresponding JSON Schema in `schema/`. **Read the schema 
 | `platform/*.yaml` | `platform.schema.json` | `platform` | [ios.yaml](../examples/taskflow/openuispec/platform/ios.yaml) |
 | `locales/*.json` | `locale.schema.json` | (object) | [en.json](../examples/taskflow/openuispec/locales/en.json) |
 | `contracts/<name>.yaml` | `contract.schema.json` | `<contract_name>` | [input_field.yaml](../examples/taskflow/openuispec/contracts/input_field.yaml) |
-| `contracts/x_*.yaml` | `custom-contract.schema.json` | `<x_name>` | [x_media_player.yaml](../examples/taskflow/openuispec/contracts/x_media_player.yaml) |
+| `contracts/x_*.yaml` | `custom-contract.schema.json` | `<x_name>` | [x_schedule_preview.yaml](../examples/todo-orbit/openuispec/contracts/x_schedule_preview.yaml) |
+| `components/*.yaml` | `component.schema.json` | `<component_name>` | [media_player.yaml](../examples/taskflow/openuispec/components/media_player.yaml) |
 | `tokens/color.yaml` | `tokens/color.schema.json` | `color` | [color.yaml](../examples/taskflow/openuispec/tokens/color.yaml) |
 | `tokens/typography.yaml` | `tokens/typography.schema.json` | `typography` | [typography.yaml](../examples/taskflow/openuispec/tokens/typography.yaml) |
 | `tokens/spacing.yaml` | `tokens/spacing.schema.json` | `spacing` | [spacing.yaml](../examples/taskflow/openuispec/tokens/spacing.yaml) |
@@ -35,6 +36,40 @@ color:
 brand:
   primary: ...
 ```
+
+## Components
+
+Components are **reusable compositions of contracts with named slots**. They fill the gap between atomic contracts and full-page screens — use them for complex UI blocks like media players, wizards, conversation timelines, and maps.
+
+```
+Tokens → Contracts → Components → Screens → Flows
+         (atomic)    (composed)    (full page)
+```
+
+Each component file lives in `components/*.yaml` with a single root key (the component name). Components define:
+
+- **slots** — named contract instances (e.g. `play_button: { contract: action_trigger }`)
+- **layout** — how slots are arranged (stack, row, nested)
+- **states** — composite states that hide slots or override slot props (e.g. `playing`, `loading`)
+- **variants** — named presets that change layout, hide slots, or override tokens (e.g. `mini`, `fullscreen`)
+
+Screens reference components with `component:` instead of `contract:` and can override individual slots:
+
+```yaml
+- component: media_player
+  variant: mini
+  props:
+    source: "{task.attachment.url}"
+  slots:
+    volume_control: { hidden: true }
+    play_button:
+      variant: branded
+      tokens_override: { background: "color.brand.primary" }
+```
+
+**Resolution order:** slot default → variant override → state override → screen-level override. Most specific wins.
+
+Simple custom contracts (`x_entity_status_badge`, etc.) stay as `x_` prefixed contracts — components are for composed UI that has internal layout and state.
 
 ## Shared interactive state roles
 

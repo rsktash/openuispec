@@ -1,0 +1,85 @@
+# ============================================================
+# Component: task_trend_chart
+# ============================================================
+# Visualizes task creation and completion trends as a composed
+# component with chart area, legend, and period selector slots.
+# ============================================================
+
+task_trend_chart:
+  semantic: "Visualizes task creation and completion trends over time for productivity analysis"
+
+  props:
+    metric:
+      type: enum
+      values: [completed, created, completion_rate]
+      required: true
+    period:
+      type: enum
+      values: [week, month, quarter]
+      required: true
+    show_legend: { type: bool, default: true }
+
+  slots:
+    chart_area:
+      contract: data_display
+      variant: card
+      props: { title: "$t:analytics.trend_chart" }
+    period_selector:
+      contract: input_field
+      input_type: select
+      props: { label: "$t:analytics.period", options: [week, month, quarter] }
+      hideable: true
+    legend:
+      contract: data_display
+      variant: inline
+      props: { title: "$t:analytics.legend" }
+      hideable: true
+
+  layout:
+    type: stack
+    spacing: "spacing.sm"
+    sections:
+      - slot: period_selector
+      - slot: chart_area
+      - slot: legend
+
+  states:
+    idle: { semantic: "Chart has not loaded data yet" }
+    loading:
+      semantic: "Trend data is loading"
+      hide_slots: [legend]
+    ready:
+      semantic: "Trend data is available and rendered"
+    empty:
+      semantic: "No trend points available"
+      hide_slots: [legend]
+    error:
+      semantic: "Trend data failed to load"
+      hide_slots: [legend]
+
+  variants:
+    compact:
+      semantic: "Compact chart for dashboard cards"
+      hide_slots: [period_selector]
+      tokens:
+        background: "color.surface.secondary"
+        radius: "spacing.sm"
+
+  tokens:
+    background: "color.surface.primary"
+    radius: "spacing.sm"
+    padding: "spacing.md"
+
+  a11y:
+    role: "img"
+    label: "Analytics trend chart"
+
+  platform_mapping:
+    ios: { component: "Chart", framework: "Swift Charts" }
+    android: { component: "Canvas chart composable" }
+    web: { component: "SVG chart component" }
+
+  generation:
+    must_handle:
+      - "Render chart area with completed and created series"
+      - "Handle loading, empty, and error states"

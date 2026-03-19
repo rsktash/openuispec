@@ -1,5 +1,5 @@
-# openuispec-sample — OpenUISpec v0.1
-spec_version: "0.1"
+# openuispec-sample — OpenUISpec v0.2
+spec_version: "0.2"
 
 project:
   name: "Todo Orbit"
@@ -9,13 +9,13 @@ project:
 includes:
   tokens: "./tokens/"
   contracts: "./contracts/"
+  components: "./components/"
   screens: "./screens/"
   flows: "./flows/"
   platform: "./platform/"
   locales: "./locales/"
 
 custom_contracts:
-  - "./contracts/x_task_trend_chart.yaml"
   - "./contracts/x_schedule_preview.yaml"
 
 i18n:

@@ -189,6 +189,9 @@ export function discoverSpecFiles(projectDir: string): string[] {
   if (includes.contracts) {
     files.push(...listFiles(resolve(projectDir, includes.contracts), ".yaml"));
   }
+  if (includes.components) {
+    files.push(...listFiles(resolve(projectDir, includes.components), ".yaml"));
+  }
 
   return files;
 }
@@ -203,6 +206,7 @@ export function specCategory(relPath: string): string {
   if (dir === "platform") return "platform";
   if (dir === "locales") return "locales";
   if (dir === "contracts") return "contracts";
+  if (dir === "components") return "components";
   return "other";
 }
 
@@ -662,7 +666,7 @@ export function createSharedSnapshot(
   const { entries, stubs: stubCount } = buildFileEntries(projectDir, files);
 
   const state: SharedLayerState = {
-    spec_version: manifest.spec_version ?? "0.1",
+    spec_version: manifest.spec_version ?? "0.2",
     snapshot_at: new Date().toISOString(),
     layer_name: layerName,
     generated_by_target: generatedByTarget,
@@ -770,7 +774,7 @@ export function createSnapshot(cwd: string, target: string): SnapshotResult {
   const { entries, stubs: stubCount } = buildFileEntries(projectDir, files);
 
   const state: StateFile = {
-    spec_version: manifest.spec_version ?? "0.1",
+    spec_version: manifest.spec_version ?? "0.2",
     snapshot_at: new Date().toISOString(),
     target,
     baseline,
@@ -1033,6 +1037,7 @@ function printReport(projectDir: string, result: CheckResult): void {
     "Platform",
     "Locales",
     "Contracts",
+    "Components",
     "Other",
   ];
 

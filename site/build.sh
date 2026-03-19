@@ -87,7 +87,7 @@ echo "  create llms.txt"
 
 > OpenUISpec is a semantic UI specification format for AI-native, platform-native app development. It replaces cross-platform frameworks by sharing intent (YAML spec) instead of runtime code — AI generates native SwiftUI, Jetpack Compose, and React from the same source of truth.
 
-This document contains the complete OpenUISpec v0.1 specification followed by all JSON Schema definitions for validation.
+This document contains the complete OpenUISpec v0.2 specification followed by all JSON Schema definitions for validation.
 
 ## Quick file format reference
 
@@ -102,6 +102,7 @@ Every file type has a root key and a JSON Schema. Read the schema before creatin
 | \`locales/*.json\` | \`locale.schema.json\` | (object) |
 | \`contracts/<name>.yaml\` | \`contract.schema.json\` | \`<contract_name>\` |
 | \`contracts/x_*.yaml\` | \`custom-contract.schema.json\` | \`<x_name>\` |
+| \`components/*.yaml\` | \`component.schema.json\` | \`<component_name>\` |
 | \`tokens/color.yaml\` | \`tokens/color.schema.json\` | \`color\` |
 | \`tokens/typography.yaml\` | \`tokens/typography.schema.json\` | \`typography\` |
 | \`tokens/spacing.yaml\` | \`tokens/spacing.schema.json\` | \`spacing\` |
@@ -119,7 +120,7 @@ PREAMBLE
 
   echo "## Specification"
   echo ""
-  cat "$REPO_ROOT/spec/openuispec-v0.1.md"
+  cat "$REPO_ROOT/spec/openuispec-v0.2.md"
   echo ""
   echo "---"
   echo ""
@@ -139,6 +140,7 @@ PREAMBLE
   echo "| \`locale.schema.json\` | \`locales/*.json\` | (object) |"
   echo "| \`contract.schema.json\` | \`contracts/<name>.yaml\` | \`<contract_name>\` |"
   echo "| \`custom-contract.schema.json\` | \`contracts/x_*.yaml\` | \`<x_name>\` |"
+  echo "| \`component.schema.json\` | \`components/*.yaml\` | \`<component_name>\` |"
   echo "| \`tokens/color.schema.json\` | \`tokens/color.yaml\` | \`color\` |"
   echo "| \`tokens/typography.schema.json\` | \`tokens/typography.yaml\` | \`typography\` |"
   echo "| \`tokens/spacing.schema.json\` | \`tokens/spacing.yaml\` | \`spacing\` |"
@@ -161,6 +163,7 @@ PREAMBLE
     schema/locale.schema.json \
     schema/contract.schema.json \
     schema/custom-contract.schema.json \
+    schema/component.schema.json \
     schema/tokens/color.schema.json \
     schema/tokens/typography.schema.json \
     schema/tokens/spacing.schema.json \

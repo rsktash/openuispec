@@ -1,6 +1,6 @@
 # TaskFlow — OpenUISpec Example Application
 
-A complete task management app defined entirely in OpenUISpec v0.1, demonstrating how a single source of truth generates native iOS, Android, and Web applications.
+A complete task management app defined entirely in OpenUISpec v0.2, demonstrating how a single source of truth generates native iOS, Android, and Web applications.
 
 ## What this demonstrates
 
@@ -68,6 +68,8 @@ taskflow/
 │   ├── layout.yaml              # Size classes, primitives, reflow rules
 │   └── themes.yaml              # Light, dark, warm variants
 ├── contracts/                   # 7 contract family stubs (see spec Section 4)
+├── components/
+│   └── media_player.yaml        # Media player component with slots and states
 ├── screens/
 │   ├── home.yaml                # Task list with search, filters, FAB, adaptive nav
 │   ├── task_detail.yaml         # Full task view with actions + assignee sheet
@@ -100,4 +102,4 @@ The AI should produce:
 
 ---
 
-*TaskFlow is a reference implementation of OpenUISpec v0.1, not a production application.*
+*TaskFlow is a reference implementation of OpenUISpec v0.2, not a production application.*

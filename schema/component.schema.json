@@ -1,0 +1,278 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openuispec.rsteam.uz/schema/component.schema.json",
+  "title": "OpenUISpec Component",
+  "description": "Reusable composition of contracts with named slots — root key is the component name",
+  "type": "object",
+  "minProperties": 1,
+  "maxProperties": 1,
+  "propertyNames": {
+    "pattern": "^[a-z][a-z0-9_]*$"
+  },
+  "additionalProperties": {
+    "$ref": "#/$defs/component_def"
+  },
+  "$defs": {
+    "component_def": {
+      "type": "object",
+      "description": "A component definition — composition of contracts with named slots, states, variants, and layout",
+      "properties": {
+        "semantic": {
+          "type": "string",
+          "description": "Human-readable description of this component's purpose"
+        },
+        "props": {
+          "type": "object",
+          "description": "Typed property definitions for this component",
+          "additionalProperties": {
+            "$ref": "https://openuispec.rsteam.uz/schema/custom-contract.schema.json#/$defs/prop_def"
+          }
+        },
+        "slots": {
+          "type": "object",
+          "description": "Named slots — each slot wraps a contract instance",
+          "additionalProperties": {
+            "$ref": "#/$defs/slot_def"
+          }
+        },
+        "layout": {
+          "$ref": "#/$defs/component_layout"
+        },
+        "states": {
+          "type": "object",
+          "description": "Composite states that control slot visibility and props",
+          "additionalProperties": {
+            "$ref": "#/$defs/component_state_def"
+          }
+        },
+        "variants": {
+          "type": "object",
+          "description": "Named component variants with layout and slot overrides",
+          "additionalProperties": {
+            "$ref": "#/$defs/component_variant_def"
+          }
+        },
+        "tokens": {
+          "type": "object",
+          "description": "Token bindings for the component container",
+          "additionalProperties": true
+        },
+        "a11y": {
+          "type": "object",
+          "description": "Accessibility requirements",
+          "properties": {
+            "role": {
+              "type": "string",
+              "description": "ARIA/accessibility role"
+            },
+            "label": {
+              "type": "string",
+              "description": "Accessibility label source"
+            }
+          },
+          "additionalProperties": true
+        },
+        "platform_mapping": {
+          "type": "object",
+          "description": "Per-platform native component mapping",
+          "properties": {
+            "ios": { "type": "object", "additionalProperties": true },
+            "android": { "type": "object", "additionalProperties": true },
+            "web": { "type": "object", "additionalProperties": true }
+          },
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "dependencies": {
+          "type": "object",
+          "description": "Per-platform library/framework requirements",
+          "additionalProperties": {
+            "$ref": "https://openuispec.rsteam.uz/schema/custom-contract.schema.json#/$defs/dependency_def"
+          }
+        },
+        "generation": {
+          "type": "object",
+          "description": "AI generation compliance hints",
+          "properties": {
+            "must_handle": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "should_handle": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "may_handle": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          },
+          "additionalProperties": false
+        },
+        "test_cases": {
+          "type": "array",
+          "description": "Behavioral verification scenarios",
+          "items": {
+            "$ref": "https://openuispec.rsteam.uz/schema/custom-contract.schema.json#/$defs/test_case"
+          }
+        }
+      },
+      "required": ["semantic", "slots"],
+      "additionalProperties": false
+    },
+    "slot_def": {
+      "type": "object",
+      "description": "A named slot wrapping a contract instance",
+      "properties": {
+        "contract": {
+          "type": "string",
+          "description": "Base contract family (e.g. action_trigger, input_field, data_display)"
+        },
+        "variant": {
+          "type": "string",
+          "description": "Contract variant"
+        },
+        "input_type": {
+          "type": "string",
+          "description": "Input type for input_field contracts (e.g. slider, text)"
+        },
+        "props": {
+          "type": "object",
+          "description": "Default props passed to the contract",
+          "additionalProperties": true
+        },
+        "hideable": {
+          "type": "boolean",
+          "description": "Whether this slot can be hidden by states or screen overrides"
+        },
+        "tokens_override": {
+          "type": "object",
+          "description": "Token overrides for this slot",
+          "additionalProperties": true
+        }
+      },
+      "required": ["contract"],
+      "additionalProperties": false
+    },
+    "component_layout": {
+      "type": "object",
+      "description": "Layout definition for the component",
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "Layout type (e.g. stack, row, grid)"
+        },
+        "spacing": {
+          "type": "string"
+        },
+        "align": {
+          "type": "string"
+        },
+        "justify": {
+          "type": "string"
+        },
+        "sections": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/component_layout_item"
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "component_layout_item": {
+      "description": "A layout item — either a slot reference or a nested layout",
+      "type": "object",
+      "properties": {
+        "slot": {
+          "type": "string",
+          "description": "Reference to a named slot"
+        },
+        "layout": {
+          "$ref": "#/$defs/component_layout"
+        }
+      },
+      "additionalProperties": true
+    },
+    "component_state_def": {
+      "type": "object",
+      "description": "A composite state affecting slot visibility and props",
+      "properties": {
+        "semantic": {
+          "type": "string"
+        },
+        "hide_slots": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Slots to hide in this state"
+        },
+        "slot_overrides": {
+          "type": "object",
+          "description": "Per-slot prop/variant overrides in this state",
+          "additionalProperties": {
+            "$ref": "#/$defs/slot_override"
+          }
+        },
+        "transitions_to": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "States this state can transition to"
+        }
+      },
+      "additionalProperties": false
+    },
+    "component_variant_def": {
+      "type": "object",
+      "description": "A named component variant with layout and slot overrides",
+      "properties": {
+        "semantic": {
+          "type": "string"
+        },
+        "hide_slots": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Slots to hide in this variant"
+        },
+        "layout": {
+          "$ref": "#/$defs/component_layout"
+        },
+        "tokens": {
+          "type": "object",
+          "description": "Token overrides for this variant",
+          "additionalProperties": true
+        },
+        "slot_overrides": {
+          "type": "object",
+          "description": "Per-slot prop/variant overrides in this variant",
+          "additionalProperties": {
+            "$ref": "#/$defs/slot_override"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "slot_override": {
+      "type": "object",
+      "description": "Override for a specific slot",
+      "properties": {
+        "variant": {
+          "type": "string"
+        },
+        "props": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "tokens_override": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "hidden": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

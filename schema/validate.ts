@@ -478,6 +478,7 @@ function validateFile(
 const DEFAULT_INCLUDES: Includes = {
   tokens: "./tokens/",
   contracts: "./contracts/",
+  components: "./components/",
   screens: "./screens/",
   flows: "./flows/",
   platform: "./platform/",
@@ -697,6 +698,26 @@ const GROUPS: Record<string, ValidationGroup> = {
         } else {
           errors.push(...collectValidateFile(ajv, f, `${BASE}contract.schema.json`));
         }
+      }
+      return { group: groupKey, errors };
+    },
+  },
+
+  components: {
+    label: "Components",
+    run(ajv, projectDir, includes) {
+      let errors = 0;
+      const dir = resolveInclude(projectDir, includes.components);
+      for (const f of listFiles(dir, ".yaml")) {
+        errors += validateFile(ajv, f, `${BASE}component.schema.json`);
+      }
+      return errors;
+    },
+    collectJson(ajv, projectDir, includes, groupKey) {
+      const errors: JsonError[] = [];
+      const dir = resolveInclude(projectDir, includes.components);
+      for (const f of listFiles(dir, ".yaml")) {
+        errors.push(...collectValidateFile(ajv, f, `${BASE}component.schema.json`));
       }
       return { group: groupKey, errors };
     },

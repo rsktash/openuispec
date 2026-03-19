@@ -47,7 +47,8 @@ This scaffolds a spec directory, starter tokens, and **configures the MCP server
 
 - **Tokens** — design values (color, typography, spacing, elevation, motion) with semantic names and constrained ranges
 - **Contracts** — 7 reusable UI component families defined by role, props, interaction states, and accessibility
-- **Screens** — compositions of contracts with data bindings, adaptive layout, and conditional rendering
+- **Components** — reusable compositions of contracts with named slots, states, and variants
+- **Screens** — compositions of contracts and components with data bindings, adaptive layout, and conditional rendering
 - **Flows** — multi-screen navigation journeys, intent-based and platform-agnostic
 - **Actions** — 13 typed action types with composition, error handling, and optimistic updates
 - **Data binding** — reactive state, format expressions, caching, and loading/error/empty states
@@ -98,12 +99,12 @@ Screenshots of the generated apps are in the [artifacts](./artifacts/) directory
 |-----|-------------|
 | [CLI & MCP Tools](./docs/cli.md) | All CLI commands, MCP tools, screenshot params, target workflow |
 | [File Formats & Schemas](./docs/file-formats.md) | File types, JSON schemas, output directories, spec sections |
-| [Full Specification](./spec/openuispec-v0.1.md) | Complete v0.1 spec (14 sections) |
+| [Full Specification](./spec/openuispec-v0.2.md) | Complete v0.2 spec (15 sections) |
 | [llms-full.txt](https://openuispec.rsteam.uz/llms-full.txt) | Spec + all schemas in one file (for AI consumption) |
 
 ## Status
 
-**v0.1 — Draft**. The spec covers all foundational layers with three example apps demonstrating generation across iOS, Android, and Web.
+**v0.2 — Draft**. The spec covers all foundational layers — including component composition — with three example apps demonstrating generation across iOS, Android, and Web.
 
 ### Roadmap
 

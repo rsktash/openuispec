@@ -1,11 +1,11 @@
 # TaskFlow — Contract Files
 
 These files define the 7 standard OpenUISpec contract families used by TaskFlow.
-They are extracted from the OpenUISpec v0.1 specification (Section 4) for use as
+They are extracted from the OpenUISpec v0.2 specification (Section 4) for use as
 standalone, machine-readable contract definitions.
 
 For the full specification of each contract including generation hints and test cases,
-see `spec/openuispec-v0.1.md` Section 4.
+see `spec/openuispec-v0.2.md` Section 4.
 
 | File | Contract | Section |
 |------|----------|---------|

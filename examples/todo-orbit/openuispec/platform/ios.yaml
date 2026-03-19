@@ -3,9 +3,6 @@ ios:
   min_version: "17.0"
 
   overrides:
-    x_task_trend_chart:
-      compact: { uses_native_chart_framework: true }
-      detail: { uses_native_chart_framework: true, supports_rule_mark: true }
     x_schedule_preview:
       compact: { uses_timeline_view: true }
       detail: { uses_timeline_view: true, supports_content_transition: true }

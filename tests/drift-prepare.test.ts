@@ -192,7 +192,7 @@ test("prepare emits a bootstrap bundle and recommends configure-target when stac
     );
     assert.ok(
       prepared.bootstrap.reference_examples.some((example: string) =>
-        example.endsWith("/spec/openuispec-v0.1.md")
+        example.endsWith("/spec/openuispec-v0.2.md")
       )
     );
     assert.ok(

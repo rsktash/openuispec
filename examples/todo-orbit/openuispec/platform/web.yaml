@@ -3,9 +3,6 @@ web:
   language: typescript
 
   overrides:
-    x_task_trend_chart:
-      compact: { implementation: "svg", responsive: true }
-      detail: { implementation: "svg", responsive: true, supports_tooltip: true }
     x_schedule_preview:
       compact: { implementation: "semantic_list", responsive: true }
       detail: { implementation: "semantic_list", responsive: true, supports_staggered_updates: true }

@@ -17,10 +17,6 @@ ios:
     collection:
       list: { uses_system_list_style: ".insetGrouped" }
 
-    x_media_player:
-      inline:
-        uses_native_player: true
-        pip_enabled: true
 
   behaviors:
     haptics: true

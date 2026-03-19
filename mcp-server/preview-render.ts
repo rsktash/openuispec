@@ -831,6 +831,15 @@ function renderSection(section: any, ctx: PreviewContext, depth = 0): string {
     positionStyle = `position: fixed; bottom: ${bottomOffset + spacingOffset}px; right: ${rightOffset}; z-index: 100; `;
   }
 
+  // If this section references a component, render it
+  if (adaptedSection.component) {
+    const inner = renderComponent(adaptedSection, ctx, depth);
+    if (containerStyle || positionStyle) {
+      return `<div${id} style="${positionStyle}${containerStyle}">${inner}</div>`;
+    }
+    return inner;
+  }
+
   // If this section IS a contract (leaf node), wrap it with container styles
   if (adaptedSection.contract) {
     const inner = renderContract(adaptedSection, ctx, depth);
@@ -914,6 +923,122 @@ function renderCustomContractPlaceholder(
   </div>`;
 }
 
+function renderComponent(section: any, ctx: PreviewContext, depth: number): string {
+  const componentName = section.component;
+  const def = ctx.manifest?._componentDefs?.[componentName];
+  if (!def) {
+    return `<div class="contract-placeholder" style="padding: ${sp(ctx,"sm",12)}; border: 1px dashed ${FALLBACK.borderDefault}; border-radius: ${sp(ctx,"sm",8)}; color: ${FALLBACK.textTertiary}; font-size: 13px; text-align: center;">[component: ${escapeHtml(componentName)}]</div>`;
+  }
+
+  const variantName = section.variant;
+  const screenSlotOverrides = section.slots ?? {};
+
+  // Merge: slot defaults → variant overrides → screen-level overrides
+  const variantDef = variantName ? def.variants?.[variantName] : undefined;
+  const hiddenSlots = new Set<string>([
+    ...(variantDef?.hide_slots ?? []),
+  ]);
+
+  // Build per-slot merged overrides
+  const slotOverrides: Record<string, any> = {};
+  // Variant slot overrides
+  if (variantDef?.slot_overrides) {
+    for (const [slotName, override] of Object.entries(variantDef.slot_overrides)) {
+      slotOverrides[slotName] = { ...(slotOverrides[slotName] ?? {}), ...(override as any) };
+    }
+  }
+  // Screen-level slot overrides (highest priority)
+  for (const [slotName, override] of Object.entries(screenSlotOverrides)) {
+    const prev = slotOverrides[slotName] ?? {};
+    const screenOverride = override as any;
+    slotOverrides[slotName] = { ...prev, ...screenOverride };
+    if (screenOverride.hidden) {
+      hiddenSlots.add(slotName);
+    }
+    // Merge props deeply
+    if (prev.props && screenOverride.props) {
+      slotOverrides[slotName].props = { ...prev.props, ...screenOverride.props };
+    }
+  }
+
+  // Resolve layout (variant layout overrides default)
+  const layout = variantDef?.layout ?? def.layout;
+
+  // Container tokens
+  const tokens = { ...(def.tokens ?? {}), ...(variantDef?.tokens ?? {}) };
+  const bg = tokens.background
+    ? (resolveColor(ctx, tokens.background) ?? resolveTokenPath(ctx.tokens, tokens.background) ?? FALLBACK.surfaceSecondary)
+    : FALLBACK.surfaceSecondary;
+  const radius = tokens.radius
+    ? (resolveTokenPath(ctx.tokens, tokens.radius) ?? sp(ctx, "md", 16))
+    : sp(ctx, "md", 16);
+  const padding = tokens.padding
+    ? (resolveTokenPath(ctx.tokens, tokens.padding) ?? sp(ctx, "md", 16))
+    : sp(ctx, "md", 16);
+
+  // Render layout recursively
+  function renderLayoutItems(items: any[]): string {
+    return items.map((item: any) => {
+      if (item.slot) {
+        if (hiddenSlots.has(item.slot)) return "";
+        const slotDef = def.slots?.[item.slot];
+        if (!slotDef) return "";
+        const override = slotOverrides[item.slot] ?? {};
+        // Build section-like object for renderContract
+        const slotSection: any = {
+          contract: slotDef.contract,
+          variant: override.variant ?? slotDef.variant,
+          input_type: slotDef.input_type,
+          props: { ...(slotDef.props ?? {}), ...(override.props ?? {}) },
+          tokens_override: { ...(slotDef.tokens_override ?? {}), ...(override.tokens_override ?? {}) },
+        };
+        return renderContract(slotSection, ctx, depth + 1);
+      }
+      if (item.layout) {
+        const nested = item.layout;
+        const dir = nested.type === "row" ? "row" : "column";
+        const spacing = nested.spacing
+          ? (resolveTokenPath(ctx.tokens, nested.spacing) ?? sp(ctx, "sm", 8))
+          : sp(ctx, "sm", 8);
+        const inner = renderLayoutItems(nested.sections ?? []);
+        return `<div style="display: flex; flex-direction: ${dir}; gap: ${spacing};">${inner}</div>`;
+      }
+      return "";
+    }).join("\n");
+  }
+
+  const layoutDir = layout?.type === "row" ? "row" : "column";
+  const layoutSpacing = layout?.spacing
+    ? (resolveTokenPath(ctx.tokens, layout.spacing) ?? sp(ctx, "sm", 8))
+    : sp(ctx, "sm", 8);
+  const layoutSections = layout?.sections ?? [];
+
+  // If no layout, render all non-hidden slots in order
+  const innerHtml = layoutSections.length > 0
+    ? renderLayoutItems(layoutSections)
+    : Object.entries(def.slots ?? {}).map(([slotName, slotDef]: [string, any]) => {
+        if (hiddenSlots.has(slotName)) return "";
+        const override = slotOverrides[slotName] ?? {};
+        const slotSection: any = {
+          contract: slotDef.contract,
+          variant: override.variant ?? slotDef.variant,
+          input_type: slotDef.input_type,
+          props: { ...(slotDef.props ?? {}), ...(override.props ?? {}) },
+          tokens_override: { ...(slotDef.tokens_override ?? {}), ...(override.tokens_override ?? {}) },
+        };
+        return renderContract(slotSection, ctx, depth + 1);
+      }).join("\n");
+
+  const semantic = def.semantic ?? "";
+  const headerColor = resolveColor(ctx, "color.text.tertiary") ?? FALLBACK.textTertiary;
+
+  return `<div class="component" style="padding: ${padding}; background: ${bg}; border-radius: ${radius}; display: flex; flex-direction: ${layoutDir}; gap: ${layoutSpacing};">
+    <div style="${getTypographyCSS(ctx.tokens, "caption")} color: ${headerColor}; text-transform: uppercase; letter-spacing: 0.05em;">${escapeHtml(componentName)}${variantName ? `.${escapeHtml(variantName)}` : ""}</div>
+    ${semantic ? `<div style="${getTypographyCSS(ctx.tokens, "body_sm")} color: ${resolveColor(ctx, "color.text.secondary") ?? FALLBACK.textSecondary};">${escapeHtml(semantic)}</div>` : ""}
+    ${innerHtml}
+  </div>`;
+}
+
 function renderContract(section: any, ctx: PreviewContext, depth: number): string {
   const contract = section.contract;
   const variant = section.variant ?? "default";
@@ -934,8 +1059,14 @@ function renderContract(section: any, ctx: PreviewContext, depth: number): strin
     case "feedback":
     case "surface":
       return ""; // Not visible by default
-    default:
+    default: {
+      // Check if this is a component reference
+      const componentDef = ctx.manifest?._componentDefs?.[contract];
+      if (componentDef) {
+        return renderComponent({ component: contract, variant: variant !== "default" ? variant : undefined, props, slots: section.slots }, ctx, depth);
+      }
       return renderCustomContractPlaceholder(contract, variant, props, ctx);
+    }
   }
 }
 

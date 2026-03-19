@@ -41,6 +41,7 @@ Call these MCP tools directly. They return structured JSON with everything you n
 **Focused getters (prefer these for incremental edits over `read_specs`):**
 - `openuispec_get_screen(name)` — single screen spec
 - `openuispec_get_contract(name, variant?)` — single contract, optionally one variant
+- `openuispec_get_component(name, variant?)` — single component, optionally one variant
 - `openuispec_get_tokens(category)` — single token category (color, typography, spacing, etc.)
 - `openuispec_get_locale(locale, keys?)` — single locale file, optionally filtered keys
 - `openuispec_check(target, screens?, contracts?)` — scoped audit for specific screens/contracts
@@ -55,27 +56,36 @@ Use `read_specs` for full-project generation; use focused getters when editing o
 ### CLI fallback (when MCP is not available)
 
 If MCP tools are not available, use these CLI commands with `--json` flag:
-- `openuispec prepare --target <t> --json` — build AI-ready work bundle
-- `openuispec check --target <t> --json` — composite validation
+
+**Status & discovery:**
 - `openuispec status --json` — cross-target status
-- `openuispec drift --target <t> --explain --json` — semantic drift
-- `openuispec validate [group...] --json` — schema validation
+- `openuispec spec-types` — list available spec types
+- `openuispec spec-schema <type>` — get JSON schema for a spec type
+
+**Spec access:**
 - `openuispec read-specs [paths...]` — read spec file contents
 - `openuispec get-screen <name>` — get a single screen spec
 - `openuispec get-contract <name> [--variant v]` — get a contract spec
+- `openuispec get-component <name> [--variant v]` — get a component spec
 - `openuispec get-tokens <category>` — get tokens for a category
 - `openuispec get-locale <locale> [--keys k1,k2]` — get a locale file
-- `openuispec spec-types` — list available spec types
-- `openuispec spec-schema <type>` — get JSON schema for a spec type
+
+**Validation & generation workflow:**
+- `openuispec validate [group...] --json` — validate spec files against JSON Schemas
+- `openuispec check --target <t> --json` — validate spec files + check target generation readiness
+- `openuispec prepare --target <t> --json` — build AI-ready work bundle
+- `openuispec drift --target <t> --explain --json` — semantic drift
+
+**Visual verification:**
 - `openuispec screenshot --route /path` — screenshot the web app
 - `openuispec screenshot-android [--project-dir path]` — screenshot Android app
 - `openuispec screenshot-ios [--project-dir path]` — screenshot iOS app
 
 ### Other CLI commands
 - `openuispec init` — scaffold a new spec project
-- `openuispec drift --snapshot --target <t>` — snapshot current state (only after UI code is updated)
 - `openuispec configure-target <t>` — configure target platform stack
 - `openuispec update-rules` — update AI rules to match installed package version
+- `openuispec drift --snapshot --target <t>` — snapshot current state (only after UI code is updated)
 
 ## Spec format reference
 
@@ -87,13 +97,13 @@ You MUST read the reference files before creating or editing spec files — do N
 
 **Reference files (read in order):**
 1. `README.md` — schema tables, file format, root wrapper keys
-2. `spec/openuispec-v0.1.md` — full specification
+2. `spec/openuispec-v0.2.md` — full specification
 3. `examples/taskflow/openuispec/` — complete working example
 4. `schema/` — JSON Schemas for every file type
 
 ## Spec location
 - Spec root: `openuispec/` — read `openuispec/openuispec.yaml` first for actual paths.
-- Default dirs: tokens/, screens/, flows/, contracts/, platform/, locales/
+- Default dirs: tokens/, screens/, flows/, contracts/, components/, platform/, locales/
 
 ## When to start from spec vs platform code
 
@@ -109,7 +119,7 @@ You MUST read the reference files before creating or editing spec files — do N
 
 ## If spec directories are empty (first-time setup)
 
-Read `spec/openuispec-v0.1.md` from the package first, then:
+Read `spec/openuispec-v0.2.md` from the package first, then:
 1. Scan codebase for UI screens → create `openuispec/screens/<name>.yaml` as `status: stub`
 2. Extract tokens (colors, fonts, spacing) → `openuispec/tokens/`
 3. Create contract extensions → `openuispec/contracts/`

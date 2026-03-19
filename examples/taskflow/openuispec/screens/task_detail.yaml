@@ -105,19 +105,16 @@ task_detail:
         padding_h: "spacing.page_margin"
         margin_top: "spacing.md"
         children:
-          - contract: x_media_player
-            variant: inline
+          - component: media_player
             props:
               source: "{task.attachment.url}"
               media_type: "{task.attachment.media_type}"
               title: "{task.attachment.filename}"
-              poster: "{task.attachment.thumbnail}"
-              show_controls: true
-            tokens_override:
-              radius: "spacing.md"
+            slots:
+              volume_control: { hidden: true }
             adaptive:
-              compact: { variant: inline }
-              expanded: { variant: inline, max_width: 640 }
+              compact: {}
+              expanded: { max_width: 640 }
 
       # ---------- Details section ----------
       - id: details

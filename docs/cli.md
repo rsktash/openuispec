@@ -38,33 +38,51 @@ Or run directly: `openuispec mcp`
 
 ## MCP Tools
 
-| Tool | When | What it does |
-|------|------|-------------|
-| `openuispec_spec_types` | Before creating spec files | Lists all available spec types with descriptions |
-| `openuispec_spec_schema` | Before creating/editing spec files | Returns JSON schema for a spec type. Optional `summary` for top-level overview |
-| `openuispec_prepare` | Before UI code generation | Returns spec context, platform config, constraints. Optional `include_specs` embeds all spec contents |
-| `openuispec_read_specs` | Before and after generation | Without `paths`: returns file listing. With `paths`: loads spec contents |
-| `openuispec_check` | After spec edits or generation | Spec validation (schema + semantic) + prepare readiness. `audit=true` returns a spec-derived checklist for manual code review |
-| `openuispec_validate` | After spec edits | Schema-only validation, optionally filtered by group |
-| `openuispec_drift` | Before updates / after generation | Detect drift, or `snapshot=true` to create/update baseline |
-| `openuispec_status` | Anytime | Cross-target summary: baselines, drift, next steps |
-| `openuispec_get_screen` | Incremental edits | Get a single screen spec by name |
-| `openuispec_get_contract` | Incremental edits | Get a single contract spec, optionally filtered to one variant |
-| `openuispec_get_tokens` | Incremental edits | Get tokens for a specific category |
-| `openuispec_get_locale` | Incremental edits | Get a single locale file, optionally filtered to specific keys |
-| `openuispec_screenshot` | Visual verification | Screenshot the web app at a route via headless browser |
-| `openuispec_screenshot_android` | Visual verification | Screenshot Android app on emulator. Works with any project via `project_dir` |
-| `openuispec_screenshot_ios` | Visual verification | Screenshot iOS app on Simulator via XCUITest. Works with any project via `project_dir` |
-| `openuispec_screenshot_web_batch` | Visual verification | Multiple web screenshots in one server session |
-| `openuispec_screenshot_android_batch` | Visual verification | Multiple Android screenshots in one build+install cycle |
-| `openuispec_screenshot_ios_batch` | Visual verification | Multiple iOS screenshots in one build+install cycle |
-| `openuispec_preview` | For future use | Render a screen spec as HTML with mock data and return a screenshot — no app build needed. **Experimental**: output is a visual approximation, not pixel-accurate. |
+### Status & discovery
+
+| Tool | What it does |
+|------|-------------|
+| `openuispec_status` | Cross-target summary: baselines, drift, next steps |
+| `openuispec_spec_types` | Lists all available spec types with descriptions |
+| `openuispec_spec_schema` | Returns JSON schema for a spec type. Optional `summary` for top-level overview |
+
+### Spec access
+
+| Tool | What it does |
+|------|-------------|
+| `openuispec_read_specs` | Without `paths`: returns file listing. With `paths`: loads spec contents |
+| `openuispec_get_screen` | Get a single screen spec by name |
+| `openuispec_get_contract` | Get a single contract spec, optionally filtered to one variant |
+| `openuispec_get_component` | Get a single component spec, optionally filtered to one variant |
+| `openuispec_get_tokens` | Get tokens for a specific category |
+| `openuispec_get_locale` | Get a single locale file, optionally filtered to specific keys |
+
+### Validation & generation workflow
+
+| Tool | What it does |
+|------|-------------|
+| `openuispec_validate` | Validate spec files against JSON Schemas, optionally filtered by group |
+| `openuispec_check` | Validate spec files (schema + semantic) and check target generation readiness. `audit=true` returns a spec-derived review checklist |
+| `openuispec_prepare` | Returns spec context, platform config, constraints. Optional `include_specs` embeds all spec contents |
+| `openuispec_drift` | Detect drift, or `snapshot=true` to create/update baseline |
+
+### Visual verification
+
+| Tool | What it does |
+|------|-------------|
+| `openuispec_preview` | Render a screen spec as HTML with mock data and return a screenshot — no app build needed. **Experimental**: visual approximation, not pixel-accurate |
+| `openuispec_screenshot` | Screenshot the web app at a route via headless browser |
+| `openuispec_screenshot_android` | Screenshot Android app on emulator. Works with any project via `project_dir` |
+| `openuispec_screenshot_ios` | Screenshot iOS app on Simulator via XCUITest. Works with any project via `project_dir` |
+| `openuispec_screenshot_web_batch` | Multiple web screenshots in one server session |
+| `openuispec_screenshot_android_batch` | Multiple Android screenshots in one build+install cycle |
+| `openuispec_screenshot_ios_batch` | Multiple iOS screenshots in one build+install cycle |
 
 The server includes **protocol-level instructions** that trigger on UI-related requests independently of CLAUDE.md rules.
 
 ## CLI Commands
 
-### Workflow
+### Project setup
 
 ```bash
 openuispec init                            # Scaffold a new spec project
@@ -72,25 +90,36 @@ openuispec init --defaults                 # Non-interactive with unconfirmed de
 openuispec init --no-configure-targets     # Skip target stack setup
 openuispec update-rules                    # Update AI rules to match installed version
 openuispec configure-target <t> [--defaults]  # Configure target stack
-openuispec validate [group...] [--json]    # Validate spec files
-openuispec validate semantic               # Semantic cross-reference linting
+```
+
+### Validation
+
+```bash
+openuispec validate [group...] [--json]    # Validate spec files against JSON Schemas
+openuispec validate semantic               # Lint cross-references (locale keys, icons, contracts, tokens)
+openuispec check --target <t> [--json]     # Validate spec files + check target generation readiness
+```
+
+### Status & generation workflow
+
+```bash
 openuispec status [--json]                 # Cross-target baseline/drift status
-openuispec drift --target <t> --explain    # Explain semantic spec drift
 openuispec prepare --target <t> [--json]   # Build the target work bundle
-openuispec check --target <t> [--json]     # Composite validation + prepare readiness
+openuispec drift --target <t> --explain    # Explain semantic spec drift
 openuispec drift --snapshot --target <t>   # Snapshot current state + git baseline
 ```
 
 ### Spec access
 
 ```bash
+openuispec spec-types                         # List available spec types
+openuispec spec-schema <type>                 # Get JSON schema for a spec type
 openuispec read-specs [paths...]              # Read spec file contents as JSON
 openuispec get-screen <name>                  # Get a single screen spec (YAML)
 openuispec get-contract <name> [--variant v]  # Get a contract spec
+openuispec get-component <name> [--variant v] # Get a component spec
 openuispec get-tokens <category>              # Get tokens for a category (YAML)
 openuispec get-locale <locale> [--keys k1,k2] # Get a locale file (JSON)
-openuispec spec-types                         # List available spec types
-openuispec spec-schema <type>                 # Get JSON schema for a spec type
 ```
 
 ### Screenshots

@@ -122,7 +122,7 @@ WORKFLOW — each tool response includes a next_tool hint, follow it:
 5. Remind the user to baseline when satisfied: openuispec drift --snapshot --target <t>
    Do not baseline on your own initiative — the user decides when output is accepted.
 
-FOCUSED GETTERS (prefer for incremental edits): get_screen, get_contract, get_tokens, get_locale
+FOCUSED GETTERS (prefer for incremental edits): get_screen, get_contract, get_component, get_tokens, get_locale
 SPEC AUTHORING: spec_types → spec_schema(type, summary?) → write YAML
 PREVIEW: openuispec_preview(screen) → render spec as HTML with mock data, returns screenshot (no app needed)
 SCREENSHOTS: screenshot (web), screenshot_android, screenshot_ios — single + batch variants
@@ -389,10 +389,10 @@ server.registerTool(
 server.registerTool(
   "openuispec_validate",
   {
-    description: "Validate spec files against JSON schemas. Returns validation errors grouped by type (manifest, tokens, screens, flows, platform, locales, contracts, semantic).",
+    description: "Validate spec files against JSON schemas. Returns validation errors grouped by type (manifest, tokens, screens, flows, platform, locales, contracts, components, semantic).",
     inputSchema: {
       groups: z
-        .array(z.enum(["manifest", "tokens", "screens", "flows", "platform", "locales", "contracts", "semantic"]))
+        .array(z.enum(["manifest", "tokens", "screens", "flows", "platform", "locales", "contracts", "components", "semantic"]))
         .optional()
         .describe("Specific groups to validate. If omitted, validates all groups."),
     },
@@ -493,6 +493,7 @@ const SCHEMA_CATALOG: Record<string, { file: string; title: string; description:
   platform:         { file: "platform.schema.json",              title: "Platform",         description: "Platform-specific generation config: architecture, naming, CSS framework, component mapping" },
   contract:         { file: "contract.schema.json",              title: "Contract",         description: "Built-in UI contract definitions: variants, props, must_handle states, generation hints" },
   "custom-contract":{ file: "custom-contract.schema.json",       title: "Custom Contract",  description: "User-defined UI contract definitions (x_ prefixed)" },
+  component:        { file: "component.schema.json",             title: "Component",        description: "Reusable composition of contracts with named slots, states, variants, and layout" },
   locale:           { file: "locale.schema.json",                title: "Locale",           description: "Locale translation files: flat key-value string maps" },
   "tokens/color":       { file: "tokens/color.schema.json",       title: "Color Tokens",       description: "Color tokens: brand, surface, text, semantic, border groups with HSL ranges and contrast" },
   "tokens/typography":  { file: "tokens/typography.schema.json",   title: "Typography Tokens",  description: "Typography tokens: font families, sizes, weights, line heights, letter spacing" },
@@ -630,6 +631,53 @@ server.registerTool(
       }
 
       return toolError(`Contract "${name}" not found in ${contractsDir}`);
+    } catch (err) {
+      return toolError(err);
+    }
+  }
+);
+
+// ── tool: openuispec_get_component ──────────────────────────────────
+
+server.registerTool(
+  "openuispec_get_component",
+  {
+    description: "Get a single component spec. Components are reusable compositions of contracts with named slots.",
+    inputSchema: {
+      name: z.string().describe("Component name, e.g. 'media_player'"),
+      variant: z.string().optional().describe("Optional variant name. If given, returns only that variant's definition."),
+    },
+  },
+  async ({ name, variant }) => {
+    try {
+      const projectDir = findProjectDir(projectCwd);
+      const manifest = YAML.parse(readFileSync(join(projectDir, "openuispec.yaml"), "utf-8"));
+      const componentsDir = resolveSpecDir(projectDir, manifest, "components");
+
+      if (!existsSync(componentsDir)) {
+        return toolError(`Components directory not found: ${componentsDir}`);
+      }
+
+      for (const file of readdirSync(componentsDir).filter(f => f.endsWith(".yaml")).sort()) {
+        const filePath = join(componentsDir, file);
+        const raw = readFileSync(filePath, "utf-8");
+        const content = YAML.parse(raw);
+        const componentName = Object.keys(content)[0];
+        if (componentName !== name) continue;
+
+        if (variant) {
+          const component = content[componentName];
+          const variantDef = component?.variants?.[variant];
+          if (!variantDef) {
+            return toolError(`Variant "${variant}" not found in component "${name}". Available variants: ${Object.keys(component?.variants ?? {}).join(", ")}`);
+          }
+          return toolResult({ name, variant, definition: variantDef });
+        }
+
+        return toolResult({ name, path: relative(projectDir, filePath), content: raw });
+      }
+
+      return toolError(`Component "${name}" not found in ${componentsDir}`);
     } catch (err) {
       return toolError(err);
     }

@@ -45,6 +45,22 @@ icons:
           android: "undo"
           web: "undo-2"
 
+    media:
+      play:
+        semantic: "Play media"
+        variants: ["fill"]
+        platform:
+          ios: "play"
+          android: "play_arrow"
+          web: "play"
+      pause:
+        semantic: "Pause media"
+        variants: ["fill"]
+        platform:
+          ios: "pause"
+          android: "pause"
+          web: "pause"
+
     actions:
       plus:
         semantic: "Create new item"

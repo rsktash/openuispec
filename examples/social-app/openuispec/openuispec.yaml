@@ -1,5 +1,5 @@
-# social-app — OpenUISpec v0.1
-spec_version: "0.1"
+# social-app — OpenUISpec v0.2
+spec_version: "0.2"
 
 project:
   name: "social-app"
@@ -8,6 +8,7 @@ project:
 includes:
   tokens: "./tokens/"
   contracts: "./contracts/"
+  components: "./components/"
   screens: "./screens/"
   flows: "./flows/"
   platform: "./platform/"
