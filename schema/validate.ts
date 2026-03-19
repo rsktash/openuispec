@@ -399,6 +399,16 @@ function buildAjv(): AjvInstance {
 }
 
 const BASE = "https://openuispec.rsteam.uz/schema/";
+const TOKEN_FILE_SCHEMAS: Record<string, string> = {
+  "color.yaml": "color.schema.json",
+  "typography.yaml": "typography.schema.json",
+  "spacing.yaml": "spacing.schema.json",
+  "elevation.yaml": "elevation.schema.json",
+  "motion.yaml": "motion.schema.json",
+  "layout.yaml": "layout.schema.json",
+  "themes.yaml": "themes.schema.json",
+  "icons.yaml": "icons.schema.json",
+};
 
 // ── validate one file ────────────────────────────────────────────────
 
@@ -536,20 +546,13 @@ const GROUPS: Record<string, ValidationGroup> = {
     run(ajv, projectDir, includes) {
       let errors = 0;
       const tokensDir = resolveInclude(projectDir, includes.tokens);
-      const tokenMap: Record<string, string> = {
-        "color.yaml": "color.schema.json",
-        "typography.yaml": "typography.schema.json",
-        "spacing.yaml": "spacing.schema.json",
-        "elevation.yaml": "elevation.schema.json",
-        "motion.yaml": "motion.schema.json",
-        "layout.yaml": "layout.schema.json",
-        "themes.yaml": "themes.schema.json",
-        "icons.yaml": "icons.schema.json",
-      };
-      for (const [data, schema] of Object.entries(tokenMap)) {
+      for (const [data, schema] of Object.entries(TOKEN_FILE_SCHEMAS)) {
         const filePath = join(tokensDir, data);
         if (existsSync(filePath)) {
           errors += validateFile(ajv, filePath, `${BASE}tokens/${schema}`);
+        } else {
+          console.log(`  FAIL  ${data} (required token file is missing)`);
+          errors += 1;
         }
       }
       return errors;
@@ -557,20 +560,16 @@ const GROUPS: Record<string, ValidationGroup> = {
     collectJson(ajv, projectDir, includes, groupKey) {
       const errors: JsonError[] = [];
       const tokensDir = resolveInclude(projectDir, includes.tokens);
-      const tokenMap: Record<string, string> = {
-        "color.yaml": "color.schema.json",
-        "typography.yaml": "typography.schema.json",
-        "spacing.yaml": "spacing.schema.json",
-        "elevation.yaml": "elevation.schema.json",
-        "motion.yaml": "motion.schema.json",
-        "layout.yaml": "layout.schema.json",
-        "themes.yaml": "themes.schema.json",
-        "icons.yaml": "icons.schema.json",
-      };
-      for (const [data, schema] of Object.entries(tokenMap)) {
+      for (const [data, schema] of Object.entries(TOKEN_FILE_SCHEMAS)) {
         const filePath = join(tokensDir, data);
         if (existsSync(filePath)) {
           errors.push(...collectValidateFile(ajv, filePath, `${BASE}tokens/${schema}`));
+        } else {
+          errors.push({
+            file: data,
+            path: "(root)",
+            message: "required token file is missing",
+          });
         }
       }
       return { group: groupKey, errors };

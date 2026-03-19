@@ -91,6 +91,108 @@ test("drift --explain and prepare describe target work from baseline spec change
     assert.equal(prepared.items[0].spec_file, "screens/task_detail.yaml");
     assert.equal(prepared.items[0].semantic_changes[0].path, "task_detail.title");
     assert.ok(prepared.items[0].likely_files.includes("src/App.tsx"));
+    assert.equal(prepared.design_context.complexity, "restrained");
+    assert.equal(typeof prepared.design_context.personality, "string");
+    assert.ok(Object.keys(prepared.anti_patterns.universal).length > 0);
+    assert.ok(Object.keys(prepared.anti_patterns.contract_specific).length > 0);
+    assert.ok(prepared.anti_patterns.project_specific.length > 0);
+  } finally {
+    rmSync(sandbox, { recursive: true, force: true });
+  }
+});
+
+test("prepare matches platform tags case-insensitively when filtering anti-patterns", () => {
+  const sandbox = mkdtempSync(join(tmpdir(), "openuispec-prepare-platform-tags-"));
+
+  try {
+    cpSync(join(repoRoot, "examples", "todo-orbit", "openuispec"), join(sandbox, "openuispec"), {
+      recursive: true,
+    });
+    mkdirSync(join(sandbox, "backend"), { recursive: true });
+
+    const manifestPath = join(sandbox, "openuispec", "openuispec.yaml");
+    const manifest = readFileSync(manifestPath, "utf-8");
+    writeFileSync(
+      manifestPath,
+      manifest.replace(
+        'avoid:\n    - "Do not add decorative illustrations or background patterns"\n    - "Do not use more than 2 accent colors on any screen"\n    - "Do not animate list items on page load — only animate user-triggered state changes"',
+        'avoid:\n    - "[Web] Loud glassmorphism everywhere"\n    - "[iOS] Bottom sheets for every action"'
+      ).replace(
+        '- "Do not use pure black (#000000) or pure white (#FFFFFF) — always resolve through the token layer"',
+        '- "[Web] Avoid generic monochrome hero panels"\n      - "[iOS] Native tab bars replaced with hamburger menus"'
+      )
+    );
+
+    const contractPath = join(sandbox, "openuispec", "contracts", "action_trigger.yaml");
+    const contract = readFileSync(contractPath, "utf-8");
+    writeFileSync(
+      contractPath,
+      contract.replace(
+        'must_avoid:\n      - "Do not apply gradient backgrounds to buttons — use flat token-defined colors"',
+        'must_avoid:\n      - "[Web] Default browser button styling"\n      - "[Android] iOS-style pill segmented controls"'
+      )
+    );
+
+    const prepareOutput = run(sandbox, nodeBin, tsxArgs(prepareScript, ["--target", "web", "--json"]));
+    const prepared = JSON.parse(prepareOutput);
+
+    assert.ok(
+      prepared.anti_patterns.universal.color.includes(
+        "[Web] Avoid generic monochrome hero panels"
+      )
+    );
+    assert.ok(
+      !prepared.anti_patterns.universal.color.includes(
+        "[iOS] Native tab bars replaced with hamburger menus"
+      )
+    );
+    assert.ok(
+      prepared.anti_patterns.project_specific.includes("[Web] Loud glassmorphism everywhere")
+    );
+    assert.ok(
+      !prepared.anti_patterns.project_specific.includes("[iOS] Bottom sheets for every action")
+    );
+    assert.ok(
+      prepared.anti_patterns.contract_specific.action_trigger.includes(
+        "[Web] Default browser button styling"
+      )
+    );
+    assert.ok(
+      !prepared.anti_patterns.contract_specific.action_trigger.includes(
+        "[Android] iOS-style pill segmented controls"
+      )
+    );
+  } finally {
+    rmSync(sandbox, { recursive: true, force: true });
+  }
+});
+
+test("prepare still returns contract anti-patterns when one contract yaml is malformed", () => {
+  const sandbox = mkdtempSync(join(tmpdir(), "openuispec-prepare-broken-contract-"));
+
+  try {
+    cpSync(join(repoRoot, "examples", "todo-orbit", "openuispec"), join(sandbox, "openuispec"), {
+      recursive: true,
+    });
+    mkdirSync(join(sandbox, "backend"), { recursive: true });
+
+    writeFileSync(
+      join(sandbox, "openuispec", "contracts", "action_trigger.yaml"),
+      "action_trigger:\n  generation:\n    must_avoid:\n      - [broken\n"
+    );
+
+    const prepareOutput = run(sandbox, nodeBin, tsxArgs(prepareScript, ["--target", "web", "--json"]));
+    const prepared = JSON.parse(prepareOutput);
+
+    assert.ok(
+      prepared.anti_patterns.contract_specific.collection.length > 0,
+      "expected other contract anti-patterns to survive a malformed contract file",
+    );
+    assert.equal(
+      prepared.anti_patterns.contract_specific.action_trigger,
+      undefined,
+      "malformed contract should be skipped instead of suppressing all contract-specific anti-patterns",
+    );
   } finally {
     rmSync(sandbox, { recursive: true, force: true });
   }

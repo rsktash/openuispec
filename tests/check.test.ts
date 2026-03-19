@@ -1,10 +1,11 @@
 import assert from "node:assert/strict";
-import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, unlinkSync, writeFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
+import { buildAuditResult } from "../check/audit.ts";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const nodeBin = process.execPath;
@@ -104,6 +105,78 @@ test("check --target web --json returns validation errors for broken project", (
       (e: { message: string }) => e.message.includes("nonexistent_screen"),
     );
     assert.ok(hasScreenError, "expected error mentioning nonexistent_screen");
+  } finally {
+    rmSync(sandbox, { recursive: true, force: true });
+  }
+});
+
+test("check reports missing token files in validation and audit results", () => {
+  const sandbox = mkdtempSync(join(tmpdir(), "openuispec-check-missing-token-"));
+
+  try {
+    cpSync(join(repoRoot, "examples", "todo-orbit", "openuispec"), join(sandbox, "openuispec"), {
+      recursive: true,
+    });
+    mkdirSync(join(sandbox, "backend"), { recursive: true });
+    unlinkSync(join(sandbox, "openuispec", "tokens", "motion.yaml"));
+
+    const output = run(
+      sandbox,
+      tsxArgs(checkScript, ["--target", "web", "--audit", "--json"]),
+      { allowFailure: true },
+    );
+
+    const result = JSON.parse(output);
+    const tokenGroup = result.validation.groups.find((group: { group: string }) => group.group === "tokens");
+    assert.ok(tokenGroup, "expected tokens validation group");
+    assert.ok(
+      tokenGroup.errors.some(
+        (error: { file: string; message: string }) =>
+          error.file === "motion.yaml" && error.message.includes("required token file is missing"),
+      ),
+      "expected validation error for missing motion.yaml",
+    );
+    assert.ok(result.validation.total_errors > 0, "expected schema validation failure for missing token file");
+    assert.ok(result.audit, "expected audit results");
+    assert.ok(
+      result.audit.findings.some(
+        (finding: { domain: string; rule: string; severity: string; message: string }) =>
+          finding.domain === "tokens" &&
+          finding.rule === "missing_file" &&
+          finding.severity === "error" &&
+          finding.message.includes("motion.yaml"),
+      ),
+      "expected audit finding for missing motion.yaml",
+    );
+  } finally {
+    rmSync(sandbox, { recursive: true, force: true });
+  }
+});
+
+test("audit reports unreadable token yaml files", () => {
+  const sandbox = mkdtempSync(join(tmpdir(), "openuispec-audit-unreadable-token-"));
+
+  try {
+    cpSync(join(repoRoot, "examples", "todo-orbit", "openuispec"), join(sandbox, "openuispec"), {
+      recursive: true,
+    });
+    writeFileSync(
+      join(sandbox, "openuispec", "tokens", "motion.yaml"),
+      "motion:\n  duration:\n    quick: [broken\n"
+    );
+
+    const result = buildAuditResult(join(sandbox, "openuispec"));
+
+    assert.ok(
+      result.findings.some(
+        (finding) =>
+          finding.domain === "motion" &&
+          finding.rule === "unreadable_file" &&
+          finding.severity === "error" &&
+          finding.message.includes("motion.yaml"),
+      ),
+      "expected unreadable_file audit finding for malformed motion.yaml",
+    );
   } finally {
     rmSync(sandbox, { recursive: true, force: true });
   }

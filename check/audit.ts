@@ -10,7 +10,7 @@
  *   openuispec check --target web --audit --format json
  */
 
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import YAML from "yaml";
 
@@ -31,6 +31,16 @@ export interface AuditResult {
 }
 
 const AI_DEFAULT_FONTS = new Set(["Inter", "Roboto", "Arial", "Open Sans"]);
+const REQUIRED_TOKEN_FILES = [
+  "color.yaml",
+  "typography.yaml",
+  "spacing.yaml",
+  "elevation.yaml",
+  "motion.yaml",
+  "layout.yaml",
+  "themes.yaml",
+  "icons.yaml",
+];
 
 function readYaml(path: string): any {
   try {
@@ -40,8 +50,36 @@ function readYaml(path: string): any {
   }
 }
 
+function readYamlForAudit(path: string, domain: string, findings: AuditFinding[]): any {
+  try {
+    return YAML.parse(readFileSync(path, "utf-8"));
+  } catch (err: any) {
+    if (err?.code === "ENOENT") return null;
+    findings.push({
+      domain,
+      rule: "unreadable_file",
+      severity: "error",
+      message: `Could not parse "${path}". Fix malformed YAML before relying on this audit.`,
+    });
+    return null;
+  }
+}
+
+function checkRequiredTokenFiles(tokensDir: string, findings: AuditFinding[]): void {
+  for (const filename of REQUIRED_TOKEN_FILES) {
+    if (!existsSync(join(tokensDir, filename))) {
+      findings.push({
+        domain: "tokens",
+        rule: "missing_file",
+        severity: "error",
+        message: `Required token file "${filename}" is missing.`,
+      });
+    }
+  }
+}
+
 function checkTypography(tokensDir: string, findings: AuditFinding[]): void {
-  const doc = readYaml(join(tokensDir, "typography.yaml"));
+  const doc = readYamlForAudit(join(tokensDir, "typography.yaml"), "typography", findings);
   if (!doc?.typography) return;
 
   // Font diversity: primary must NOT be a common AI default
@@ -68,7 +106,7 @@ function checkTypography(tokensDir: string, findings: AuditFinding[]): void {
 }
 
 function checkColor(tokensDir: string, findings: AuditFinding[]): void {
-  const doc = readYaml(join(tokensDir, "color.yaml"));
+  const doc = readYamlForAudit(join(tokensDir, "color.yaml"), "color", findings);
   if (!doc?.color) return;
 
   // Pure black/white check
@@ -103,8 +141,9 @@ function checkColor(tokensDir: string, findings: AuditFinding[]): void {
 
   // Theme coverage: check themes.yaml for both light + dark
   {
-    const themes = readYaml(join(tokensDir, "themes.yaml"));
-    const themeKeys = Object.keys(themes?.themes ?? {});
+    const themes = readYamlForAudit(join(tokensDir, "themes.yaml"), "color", findings);
+    if (!themes?.themes) return;
+    const themeKeys = Object.keys(themes.themes);
     const hasLight = themeKeys.some((k) => k.includes("light"));
     const hasDark = themeKeys.some((k) => k.includes("dark"));
     if (!hasLight || !hasDark) {
@@ -119,7 +158,7 @@ function checkColor(tokensDir: string, findings: AuditFinding[]): void {
 }
 
 function checkSpacing(tokensDir: string, findings: AuditFinding[]): void {
-  const doc = readYaml(join(tokensDir, "spacing.yaml"));
+  const doc = readYamlForAudit(join(tokensDir, "spacing.yaml"), "spacing", findings);
   if (!doc?.spacing) return;
 
   // Scale usage: at least 4 distinct values
@@ -156,7 +195,7 @@ function checkSpacing(tokensDir: string, findings: AuditFinding[]): void {
 }
 
 function checkMotion(tokensDir: string, findings: AuditFinding[]): void {
-  const doc = readYaml(join(tokensDir, "motion.yaml"));
+  const doc = readYamlForAudit(join(tokensDir, "motion.yaml"), "motion", findings);
   if (!doc?.motion) return;
 
   // Duration variety: at least 2 distinct durations
@@ -185,7 +224,7 @@ function checkMotion(tokensDir: string, findings: AuditFinding[]): void {
 function checkContracts(contractsDir: string, findings: AuditFinding[]): void {
   // All collections have empty_state in must_handle or variants
   {
-    const doc = readYaml(join(contractsDir, "collection.yaml"));
+    const doc = readYamlForAudit(join(contractsDir, "collection.yaml"), "contracts", findings);
     const collection = doc ? doc[Object.keys(doc)[0]] : null;
     if (collection) {
       const mustHandle: string[] = collection.generation?.must_handle ?? [];
@@ -211,6 +250,7 @@ export function buildAuditResult(projectDir: string, threshold: number = 0): Aud
   const effectiveThreshold = threshold > 0 ? threshold : (manifest?.generation_guidance?.audit_threshold ?? 0);
 
   const findings: AuditFinding[] = [];
+  checkRequiredTokenFiles(tokensDir, findings);
   checkTypography(tokensDir, findings);
   checkColor(tokensDir, findings);
   checkSpacing(tokensDir, findings);

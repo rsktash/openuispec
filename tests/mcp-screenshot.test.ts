@@ -108,7 +108,7 @@ describe("openuispec_screenshot", () => {
     assert.ok(!result.isError, `expected no error, got: ${result.content?.[0]?.text}`);
     const meta = JSON.parse(result.content[1].text);
     assert.ok(meta.url.includes("__ous_init="), "url should contain __ous_init param");
-    const encoded = meta.url.split("__ous_init=")[1];
+    const encoded = decodeURIComponent(meta.url.split("__ous_init=")[1]);
     assert.equal(Buffer.from(encoded, "base64").toString("utf-8"), script);
     assert.equal(meta.init_script, script);
   });

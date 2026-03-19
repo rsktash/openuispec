@@ -666,8 +666,8 @@ function generationRules(target: string, outputDir: string, manifest: Record<str
 }
 
 function matchesTargetPlatform(item: string, target: string): boolean {
-  const tagMatch = item.match(/^\[([a-z]+)\]/);
-  return !tagMatch || tagMatch[1] === target;
+  const tagMatch = item.match(/^\[([a-z]+)\]/i);
+  return !tagMatch || tagMatch[1].toLowerCase() === target;
 }
 
 function complexityRule(complexity: string): string {
@@ -710,10 +710,10 @@ function buildAntiPatterns(
 
   // Contract-specific must_avoid
   const contract_specific: Record<string, string[]> = {};
-  try {
-    const contractsDir = resolve(projectDir, manifest.includes?.contracts ?? './contracts/');
-    if (existsSync(contractsDir)) {
-      for (const file of readdirSync(contractsDir).filter((f) => f.endsWith('.yaml') && !f.startsWith('x_'))) {
+  const contractsDir = resolve(projectDir, manifest.includes?.contracts ?? './contracts/');
+  if (existsSync(contractsDir)) {
+    for (const file of readdirSync(contractsDir).filter((f) => f.endsWith('.yaml') && !f.startsWith('x_'))) {
+      try {
         const content = YAML.parse(readFileSync(join(contractsDir, file), 'utf-8'));
         const contractName = Object.keys(content)[0];
         const mustAvoid: string[] = content[contractName]?.generation?.must_avoid ?? [];
@@ -721,9 +721,11 @@ function buildAntiPatterns(
           const filtered = mustAvoid.filter((item: string) => matchesTargetPlatform(item, target));
           if (filtered.length > 0) contract_specific[contractName] = filtered;
         }
+      } catch {
+        continue;
       }
     }
-  } catch { /* skip on error */ }
+  }
 
   // Project-specific avoid from design section
   const project_specific: string[] = [];
@@ -1386,6 +1388,8 @@ function buildUpdatePrepareResult(cwd: string, target: string, includeContents: 
   const sharedLayerConfigs = sharedLayersForTarget(projectDir, target);
   const codeRoots = suggestCodeRoots(target, outputDir, projectDir, sharedLayerConfigs);
   const manifest = readManifest(projectDir);
+  const antiPatterns = buildAntiPatterns(manifest, projectDir, target);
+  const designContext = buildDesignContext(manifest);
   const sharedLayerInfos = buildSharedLayerInfos(projectDir, target, sharedLayerConfigs);
   const platformDef = readPlatformDefinition(projectDir, manifest, target);
   const platformConfig = buildPlatformConfig(target, platformDef);
@@ -1429,6 +1433,8 @@ function buildUpdatePrepareResult(cwd: string, target: string, includeContents: 
     items,
     ...(sharedLayerInfos.length > 0 ? { shared_layers: sharedLayerInfos } : {}),
     ...(includeContents ? { spec_contents: readAllSpecContents(projectDir) } : {}),
+    ...(antiPatterns ? { anti_patterns: antiPatterns } : {}),
+    ...(designContext ? { design_context: designContext } : {}),
     next_steps: nextSteps,
   };
 }
