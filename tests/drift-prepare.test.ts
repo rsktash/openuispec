@@ -562,8 +562,8 @@ test("snapshot for ios creates shared layer state file and prepare --target andr
     writeFileSync(
       manifestPath,
       manifest.replace(
-        "\nformatters:",
-        `\n  shared:\n    mobile_common:\n      platforms: [ios, android]\n      language: kotlin\n      root: "../kmp-shared"\n      tracks: [manifest, contracts, flows]\n      scope: \"Business logic, data models, repositories. No UI.\"\n      paths:\n        domain: "common/domain/"\n        features: "common/features/"\n  structure:\n    ios:\n      root: "../kmp-shared"\n      paths:\n        ui: "iosApp/ui/"\n\nformatters:`
+        "\ngeneration_guidance:",
+        `\n  shared:\n    mobile_common:\n      platforms: [ios, android]\n      language: kotlin\n      root: "../kmp-shared"\n      tracks: [manifest, contracts, flows]\n      scope: \"Business logic, data models, repositories. No UI.\"\n      paths:\n        domain: "common/domain/"\n        features: "common/features/"\n  structure:\n    ios:\n      root: "../kmp-shared"\n      paths:\n        ui: "iosApp/ui/"\n\ngeneration_guidance:`
       )
     );
 
@@ -631,8 +631,8 @@ test("spec change causes drift on shared layer", () => {
     writeFileSync(
       manifestPath,
       manifest.replace(
-        "\nformatters:",
-        `\n  shared:\n    mobile_common:\n      platforms: [ios, android]\n      language: kotlin\n      root: "../kmp-shared"\n      tracks: [manifest, contracts, flows]\n      scope: \"Business logic, data models, repositories. No UI.\"\n\nformatters:`
+        "\ngeneration_guidance:",
+        `\n  shared:\n    mobile_common:\n      platforms: [ios, android]\n      language: kotlin\n      root: "../kmp-shared"\n      tracks: [manifest, contracts, flows]\n      scope: \"Business logic, data models, repositories. No UI.\"\n\ngeneration_guidance:`
       )
     );
 
