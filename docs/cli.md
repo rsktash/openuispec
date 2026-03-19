@@ -289,10 +289,15 @@ openuispec check --target web --audit --json           # machine-readable output
 
 | Domain | What's checked |
 |--------|---------------|
-| Typography | Primary font not an AI default (Inter/Roboto/Arial/Open Sans) · ≥4 scale levels defined |
-| Color | No pure #000000/#FFFFFF · Both light + dark themes present |
+| Tokens | All 8 required token files exist |
+| Typography | Primary font not an AI default · ≥4 scale levels · ≥2 distinct weights |
+| Color | No pure #000000/#FFFFFF · success/warning/danger/info semantic colors · light + dark themes |
 | Spacing | ≥4 scale values · `page_margin` and `card_padding` aliases present |
-| Motion | ≥2 distinct durations · `reduced_motion` policy defined |
-| Contracts | `collection` has `empty_state` in `must_handle` |
+| Motion | ≥2 distinct durations · `reduced_motion` policy · enter/exit easing · ≥1 cubic-bezier curve |
+| Elevation | ≥2 non-none levels · monotonically increasing progression |
+| Layout | ≥2 size classes · compact class defined |
+| Contracts | `collection` has `empty_state` in `must_handle` · all contracts have non-empty `must_handle` |
 
 The `audit_threshold` in `generation_guidance` sets the project-wide minimum score. `--min-score` overrides it per-run.
+
+See [Section 16 of the spec](../spec/openuispec-v0.2.md#16-design-intent-and-generation-guidance) for complete documentation of design intent, anti-patterns, and quality tiers.

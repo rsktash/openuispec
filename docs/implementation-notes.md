@@ -166,6 +166,6 @@
 
 `openuispec check --audit` runs design quality heuristics against token and contract files, returning a numeric score (`max(0, 100 - errors × 10 - warnings × 3)`) and categorized findings. The `audit_threshold` in `generation_guidance` sets a project-wide minimum; `--min-score N` overrides per-run.
 
-`openuispec prepare` includes `anti_patterns` (universal + contract-specific + project-specific, filtered by target platform) and `design_context` (personality, complexity, audience, complexity_rule) in its output when the manifest defines `generation_guidance` and `design` sections.
+`openuispec prepare` includes `anti_patterns` (universal + contract-specific + project-specific, filtered by target platform) and `design_context` (personality, complexity, quality_tier, audience, complexity_rule, quality_tier_rule, quality_test) in its output when the manifest defines `generation_guidance` and `design` sections. The `quality_test` field is an auto-generated AI-slop checklist tuned to the project's complexity and quality tier.
 
 `generation.extra_rules` in the manifest is included in prepare output and filtered by platform tag.

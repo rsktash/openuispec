@@ -92,8 +92,16 @@ test("drift --explain and prepare describe target work from baseline spec change
     assert.equal(prepared.items[0].semantic_changes[0].path, "task_detail.title");
     assert.ok(prepared.items[0].likely_files.includes("src/App.tsx"));
     assert.equal(prepared.design_context.complexity, "restrained");
+    assert.equal(prepared.design_context.quality_tier, "production");
     assert.equal(typeof prepared.design_context.personality, "string");
+    assert.equal(typeof prepared.design_context.complexity_rule, "string");
+    assert.equal(typeof prepared.design_context.quality_tier_rule, "string");
+    assert.equal(typeof prepared.design_context.quality_test, "string");
+    assert.ok(prepared.design_context.quality_test.includes("Inter/Roboto/Arial"));
+    assert.ok(prepared.design_context.quality_test.includes("restrained"));
     assert.ok(Object.keys(prepared.anti_patterns.universal).length > 0);
+    assert.ok(prepared.anti_patterns.universal.visual.length > 0);
+    assert.ok(prepared.anti_patterns.universal.interaction.length > 0);
     assert.ok(Object.keys(prepared.anti_patterns.contract_specific).length > 0);
     assert.ok(prepared.anti_patterns.project_specific.length > 0);
   } finally {

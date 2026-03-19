@@ -54,8 +54,9 @@ This scaffolds a spec directory, starter tokens, and **configures the MCP server
 - **Data binding** — reactive state, format expressions, caching, and loading/error/empty states
 - **Adaptive layout** — size classes (compact/regular/expanded) with per-section overrides
 - **Platform adaptation** — per-target overrides for iOS, Android, and Web behaviors
-- **Design intent** — `design` section in the manifest captures brand personality, complexity level, and audience — generators match visual elaborateness accordingly
-- **Anti-patterns** — `must_avoid` in contracts and `generation_guidance.universal_anti_patterns` in the manifest steer AI away from generic, statistically common design mistakes
+- **Design intent** — `design` section captures brand personality, complexity level (`restrained`/`balanced`/`elaborate`), quality tier (`mvp`/`production`/`flagship`), and audience — generators match visual elaborateness and polish level accordingly
+- **Anti-patterns** — `must_avoid` in contracts and `universal_anti_patterns` in the manifest (9 domains: typography, color, spacing, motion, elevation, layout, visual, interaction, accessibility) steer AI away from generic design mistakes. Platform-scoped with `[web]`/`[ios]`/`[android]` tags
+- **Design quality audit** — `check --audit` scores the spec against 18 heuristic checks across all token and contract domains, producing a numeric score with CI-gatable thresholds
 
 ## The 7 contract families
 
@@ -101,7 +102,7 @@ Screenshots of the generated apps are in the [artifacts](./artifacts/) directory
 |-----|-------------|
 | [CLI & MCP Tools](./docs/cli.md) | All CLI commands, MCP tools, screenshot params, target workflow |
 | [File Formats & Schemas](./docs/file-formats.md) | File types, JSON schemas, output directories, spec sections |
-| [Full Specification](./spec/openuispec-v0.2.md) | Complete v0.2 spec (15 sections) |
+| [Full Specification](./spec/openuispec-v0.2.md) | Complete v0.2 spec (16 sections) |
 | [llms-full.txt](https://openuispec.rsteam.uz/llms-full.txt) | Spec + all schemas in one file (for AI consumption) |
 
 ## Status

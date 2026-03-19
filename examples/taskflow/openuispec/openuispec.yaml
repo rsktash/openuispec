@@ -64,6 +64,14 @@ generation_guidance:
     layout:
       - "Do not assume large-screen layouts work on compact — every multi-pane pattern needs an explicit compact fallback"
       - "Do not use pixel breakpoints — reference size classes by name (compact, regular, expanded)"
+    visual:
+      - "Do not use glassmorphism or frosted-glass effects — this is a professional productivity tool"
+      - "Do not apply gradient text — it fails contrast checks and looks dated"
+      - "[web] Do not use box-shadow on every container — reserve elevation for interactive or raised elements"
+    interaction:
+      - "Do not treat hover and focus as the same state — keyboard users never see hover"
+      - "Do not use confirmation dialogs for reversible actions — use undo with a toast instead"
+      - "[web] Do not use :focus for focus rings — use :focus-visible to show rings only for keyboard navigation"
     accessibility:
       - "Do not use color as the only differentiator between states — combine with icon, border, or text changes"
       - "Do not skip focus ring styles — keyboard users must see where focus is at all times"
@@ -73,6 +81,7 @@ generation_guidance:
 design:
   personality: "Clean, focused, productivity-first — no decorative flourishes. Color is used for priority and status clarity, not aesthetics."
   complexity: "balanced"
+  quality_tier: "production"
   audience: "Individual contributors and small teams managing personal and shared task lists"
   avoid:
     - "Do not use playful or rounded UI patterns — this is a professional productivity tool"

@@ -92,19 +92,23 @@ generation:
     ios: { language: swift, framework: swiftui }
     android: { language: kotlin, framework: compose }
     web: { language: typescript, framework: react }
-  # shared:                          # optional: cross-platform shared code layers
-  #   mobile_common:
-  #     platforms: [ios, android]
-  #     language: kotlin
-  #     root: "../shared"
-  #     scope: "Business logic, data models, repositories, view models. No UI."
-  #     paths:
-  #       domain: "commonMain/domain/"
-  # structure:                       # optional: per-target directory structure (overrides heuristics)
-  #   ios:
-  #     root: "../shared"
-  #     scope: "Pure SwiftUI views and navigation."
-  #     paths: { ui: "iosApp/ui/" }
+
+generation_guidance:                 # Section 16.2
+  universal_anti_patterns:
+    typography:
+      - "Do not fall back to Inter, Roboto, Arial, or system defaults"
+    color:
+      - "Do not use pure black (#000000) or pure white (#FFFFFF)"
+    # ... additional domains: spacing, motion, elevation, layout, visual, interaction, accessibility
+  audit_threshold: 70
+
+design:                              # Section 16.1
+  personality: "Clean, focused..."
+  complexity: "balanced"             # restrained | balanced | elaborate
+  quality_tier: "production"         # mvp | production | flagship
+  audience: "..."
+  avoid:
+    - "Do not use decorative gradients"
 ```
 
 ---
@@ -4095,6 +4099,148 @@ Each `.yaml` file in the components directory defines one component. The file mu
 **MAY:**
 - Generate test code based on `test_cases`
 - Add platform-specific enhancements via `platform_mapping`
+
+---
+
+## 16. Design intent and generation guidance
+
+This section defines how the manifest communicates design intent, anti-patterns, and quality expectations to AI generators.
+
+### 16.1 Design section
+
+The `design` section in `openuispec.yaml` captures the project's visual identity and quality bar:
+
+```yaml
+design:
+  personality: "Minimal and calm — clarity over decoration"
+  complexity: "restrained"           # restrained | balanced | elaborate
+  quality_tier: "production"         # mvp | production | flagship
+  audience: "Professionals who prefer low-distraction tools"
+  avoid:
+    - "Do not add decorative illustrations or background patterns"
+    - "[web] Do not use CSS animations for non-interactive purposes"
+```
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `personality` | string | — | Brief description of the brand's visual personality |
+| `complexity` | enum | `balanced` | How elaborate animations, effects, and visual details should be |
+| `quality_tier` | enum | `production` | Quality bar for this project |
+| `audience` | string | — | Who uses this app — informs tone and complexity |
+| `avoid` | string[] | — | Project-specific anti-patterns. May use `[web]`/`[ios]`/`[android]` scope tags |
+
+**Complexity levels:**
+
+| Level | Meaning |
+|-------|---------|
+| `restrained` | Minimal motion (required state transitions only). No decorative shadows. Clean whitespace. No background effects. |
+| `balanced` | Apply all motion patterns. Use elevation tokens fully. Standard state animations. |
+| `elaborate` | Rich animations with staggered reveals. Creative elevation. Platform-specific flourishes. |
+
+**Quality tiers:**
+
+| Tier | Meaning |
+|------|---------|
+| `mvp` | Functional-only. Use semantic tokens but tolerate simple layouts. Skip elevation, motion patterns, and adaptive breakpoints. |
+| `production` | Production-quality. Apply all tokens, handle accessibility, support adaptive breakpoints. Motion and elevation expected. |
+| `flagship` | Pixel-perfect. Every token, motion pattern, elevation level, and adaptive breakpoint must be implemented. All contract states required. No shortcuts. |
+
+### 16.2 Generation guidance
+
+The `generation_guidance` section in `openuispec.yaml` provides cross-contract anti-patterns and quality thresholds:
+
+```yaml
+generation_guidance:
+  universal_anti_patterns:
+    typography:
+      - "Do not fall back to Inter, Roboto, Arial, or system defaults when the spec defines a custom font_family"
+    color:
+      - "Do not use pure black (#000000) or pure white (#FFFFFF)"
+    visual:
+      - "Do not apply gradient text — it fails contrast checks"
+    interaction:
+      - "Do not treat hover and focus as the same state"
+    # ... additional domains
+  audit_threshold: 70
+```
+
+**Anti-pattern domains:**
+
+| Domain | Scope |
+|--------|-------|
+| `typography` | Font choices, weights, scale usage |
+| `color` | Palettes, contrast, pure values |
+| `spacing` | Scale adherence, alias usage |
+| `motion` | Easing, duration, reduced-motion |
+| `elevation` | Shadow usage, depth hierarchy |
+| `layout` | Size classes, breakpoints, card usage |
+| `visual` | Decoration, gradients, glassmorphism |
+| `interaction` | State handling, focus vs hover, gestures |
+| `accessibility` | Color-only differentiation, focus rings, tab order |
+
+Anti-patterns are scoped with platform tags (`[web]`, `[ios]`, `[android]`). The `prepare` command filters them to the target platform before delivery to the generator.
+
+Anti-patterns exist at three levels:
+1. **Universal** — `generation_guidance.universal_anti_patterns` in the manifest (cross-contract)
+2. **Contract-specific** — `generation.must_avoid` in each contract file
+3. **Project-specific** — `design.avoid` in the manifest
+
+### 16.3 Design quality audit
+
+The `check --audit` command scores the spec against design quality heuristics.
+
+**Score formula:** `max(0, 100 - errors × 10 - warnings × 3)`
+
+**Checks performed:**
+
+| Domain | Rule | Severity | What it catches |
+|--------|------|----------|----------------|
+| tokens | `missing_file` | error | Required token file not found |
+| typography | `font_diversity` | error | Primary font is an AI default (Inter, Roboto, Arial, Open Sans) |
+| typography | `scale_usage` | warning | Fewer than 4 type scale levels |
+| typography | `weight_hierarchy` | warning | Single font weight across the entire type scale |
+| color | `pure_black` | error | Literal #000000 in token values |
+| color | `pure_white` | error | Literal #FFFFFF in token values |
+| color | `semantic_completeness` | warning | Missing success, warning, danger, or info semantic color |
+| color | `theme_coverage` | warning | Missing light or dark theme |
+| spacing | `scale_usage` | warning | Fewer than 4 spacing scale values |
+| spacing | `alias_page_margin` | warning | No page_margin alias defined |
+| spacing | `alias_card_padding` | warning | No card_padding alias defined |
+| motion | `duration_variety` | warning | Single duration value for all animations |
+| motion | `reduced_motion` | error | No reduced_motion policy |
+| motion | `easing_quality` | warning | Missing enter/exit curves or no cubic-bezier easing |
+| elevation | `level_count` | warning | Fewer than 2 non-none elevation levels |
+| elevation | `progression` | warning | Elevation levels not monotonically increasing |
+| layout | `size_class_coverage` | warning | Fewer than 2 size classes or no compact class |
+| contracts | `collection_empty_state` | warning | Collection missing empty_state in must_handle |
+| contracts | `state_coverage` | warning | Contract with empty must_handle |
+
+The `audit_threshold` in `generation_guidance` sets the project-wide minimum score. The `--min-score` CLI flag overrides it per-run.
+
+### 16.4 Prepare output
+
+The `prepare` command includes `design_context` and `anti_patterns` in its output for AI generators:
+
+```json
+{
+  "design_context": {
+    "personality": "Minimal and calm...",
+    "complexity": "restrained",
+    "quality_tier": "production",
+    "audience": "...",
+    "complexity_rule": "Minimal motion (required state transitions only)...",
+    "quality_tier_rule": "Production-quality. Apply all tokens...",
+    "quality_test": "After generation, verify the output does NOT exhibit these AI-slop indicators:\n1. Inter/Roboto/Arial as the primary font..."
+  },
+  "anti_patterns": {
+    "universal": { "typography": ["..."], "color": ["..."] },
+    "contract_specific": { "action_trigger": ["..."] },
+    "project_specific": ["..."]
+  }
+}
+```
+
+The `quality_test` field is an auto-generated checklist tuned to the project's complexity and quality tier. AI generators should use it as a post-generation self-review step.
 
 ---
 

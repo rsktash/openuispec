@@ -180,8 +180,11 @@ export interface PrepareResult {
   design_context?: {
     personality?: string;
     complexity: 'restrained' | 'balanced' | 'elaborate';
+    quality_tier: 'mvp' | 'production' | 'flagship';
     audience?: string;
     complexity_rule: string;
+    quality_tier_rule: string;
+    quality_test: string;
   };
   next_steps: string[];
 }
@@ -681,15 +684,63 @@ function complexityRule(complexity: string): string {
   }
 }
 
+function qualityTierRule(tier: string): string {
+  switch (tier) {
+    case 'mvp':
+      return 'Functional-only. Use semantic tokens but tolerate simple layouts. Skip elevation, motion patterns, and adaptive breakpoints.';
+    case 'flagship':
+      return 'Pixel-perfect. Every token, motion pattern, elevation level, and adaptive breakpoint must be implemented. All contract states required. No shortcuts.';
+    default:
+      return 'Production-quality. Apply all tokens, handle accessibility, support adaptive breakpoints. Motion and elevation expected but minor shortcuts acceptable.';
+  }
+}
+
+function buildQualityTest(complexity: string, qualityTier: string, personality?: string): string {
+  const items: string[] = [
+    'Inter/Roboto/Arial as the primary font when the spec defines a custom font_family.',
+    'Pure black (#000000) or pure white (#FFFFFF) — all colors must resolve through tokens.',
+    'Cyan-on-dark, purple-to-blue gradient, or neon accent color schemes not in color tokens.',
+    'Card-wrapping every content group — cards are for distinct, comparable items only.',
+    'Identical spacing values throughout — the spec defines a scale with distinct levels.',
+    'Bounce or elastic easing — use only the easing curves from motion tokens.',
+    'Shadows on elements with no elevation token assigned.',
+    'A single font weight everywhere — the type scale defines multiple weights for hierarchy.',
+  ];
+
+  if (complexity === 'restrained') {
+    items.push('Any decorative animation, gradient, glassmorphism, or background effect — this is a restrained design.');
+  } else if (complexity === 'elaborate') {
+    items.push('Missing entrance animations or transition effects — this is an elaborate design that expects rich motion.');
+  }
+
+  if (qualityTier === 'flagship') {
+    items.push('Any adaptive breakpoint missing — flagship quality requires all size classes implemented.');
+    items.push('Any must_handle state not implemented — flagship requires full contract compliance.');
+  }
+
+  const numbered = items.map((item, i) => `${i + 1}. ${item}`);
+  numbered.unshift('After generation, verify the output does NOT exhibit these AI-slop indicators:');
+
+  if (personality) {
+    numbered.push(`Design personality check: "${personality}" — verify the output tone matches.`);
+  }
+
+  return numbered.join('\n');
+}
+
 function buildDesignContext(manifest: Record<string, any>): PrepareResult['design_context'] {
   const design = manifest.design;
   if (!design) return undefined;
   const complexity = (design.complexity as 'restrained' | 'balanced' | 'elaborate') ?? 'balanced';
+  const tier = (design.quality_tier as 'mvp' | 'production' | 'flagship') ?? 'production';
   return {
     ...(design.personality ? { personality: design.personality } : {}),
     complexity,
+    quality_tier: tier,
     ...(design.audience ? { audience: design.audience } : {}),
     complexity_rule: complexityRule(complexity),
+    quality_tier_rule: qualityTierRule(tier),
+    quality_test: buildQualityTest(complexity, tier, design.personality),
   };
 }
 

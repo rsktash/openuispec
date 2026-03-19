@@ -271,6 +271,12 @@
           "description": "How elaborate animations, effects, and visual details should be"
         },
         "audience": { "type": "string", "description": "Who uses this app — informs tone and complexity" },
+        "quality_tier": {
+          "type": "string",
+          "enum": ["mvp", "production", "flagship"],
+          "default": "production",
+          "description": "Quality bar — mvp: functional-only, production: polished with full tokens, flagship: pixel-perfect with every state and motion pattern"
+        },
         "avoid": {
           "type": "array",
           "items": { "type": "string" },
@@ -293,6 +299,8 @@
             "motion": { "type": "array", "items": { "type": "string" } },
             "elevation": { "type": "array", "items": { "type": "string" } },
             "layout": { "type": "array", "items": { "type": "string" } },
+            "visual": { "type": "array", "items": { "type": "string" } },
+            "interaction": { "type": "array", "items": { "type": "string" } },
             "accessibility": { "type": "array", "items": { "type": "string" } }
           },
           "additionalProperties": false

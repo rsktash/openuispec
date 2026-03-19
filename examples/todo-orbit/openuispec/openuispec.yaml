@@ -63,6 +63,16 @@ generation_guidance:
     layout:
       - "Do not assume large-screen layouts work on compact — every multi-pane pattern needs an explicit compact fallback"
       - "Do not use pixel breakpoints — reference size classes by name (compact, regular, expanded)"
+    visual:
+      - "Do not mix rounded and sharp corners within the same card or surface — the spec uses cut-corner shapes exclusively"
+      - "Do not add decorative gradients, glows, or background textures — this is a restrained design"
+      - "Do not apply gradient text — it fails contrast checks and undermines the minimal aesthetic"
+      - "[web] Do not use box-shadow on every container — reserve elevation for interactive or raised elements"
+    interaction:
+      - "Do not treat hover and focus as the same state — keyboard users never see hover"
+      - "Do not use long-press as the primary action trigger — use explicit buttons or swipe actions"
+      - "Do not delay visual feedback on tap — the press_feedback pattern requires instant response"
+      - "[web] Do not use :focus for focus rings — use :focus-visible to show rings only for keyboard navigation"
     accessibility:
       - "Do not use color as the only differentiator between states — combine with icon, border, or text changes"
       - "Do not skip focus ring styles — keyboard users must see where focus is at all times"
@@ -72,6 +82,7 @@ generation_guidance:
 design:
   personality: "Minimal and calm — orbital metaphor suggests clarity and organization without visual noise"
   complexity: "restrained"
+  quality_tier: "production"
   audience: "Bilingual individuals who prefer a clean, low-distraction task environment"
   avoid:
     - "Do not add decorative illustrations or background patterns"

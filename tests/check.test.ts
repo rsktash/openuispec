@@ -181,3 +181,122 @@ test("audit reports unreadable token yaml files", () => {
     rmSync(sandbox, { recursive: true, force: true });
   }
 });
+
+test("audit checks semantic color completeness", () => {
+  const sandbox = mkdtempSync(join(tmpdir(), "openuispec-audit-semantic-color-"));
+  try {
+    cpSync(join(repoRoot, "examples", "todo-orbit", "openuispec"), join(sandbox, "openuispec"), { recursive: true });
+    const colorPath = join(sandbox, "openuispec", "tokens", "color.yaml");
+    const color = readFileSync(colorPath, "utf-8");
+    writeFileSync(colorPath, color.replace(/^\s+danger:[\s\S]*?contrast_min: 4\.5 \}/m, ""));
+    const result = buildAuditResult(join(sandbox, "openuispec"));
+    assert.ok(
+      result.findings.some((f) => f.rule === "semantic_completeness" && f.message.includes("danger")),
+      "expected warning for missing danger semantic color",
+    );
+  } finally {
+    rmSync(sandbox, { recursive: true, force: true });
+  }
+});
+
+test("audit checks elevation progression", () => {
+  const sandbox = mkdtempSync(join(tmpdir(), "openuispec-audit-elevation-"));
+  try {
+    cpSync(join(repoRoot, "examples", "todo-orbit", "openuispec"), join(sandbox, "openuispec"), { recursive: true });
+    // Reverse elevation values so sm > md
+    const elevPath = join(sandbox, "openuispec", "tokens", "elevation.yaml");
+    const elev = readFileSync(elevPath, "utf-8");
+    writeFileSync(elevPath, elev.replace("elevation: 1", "elevation: 10").replace("elevation: 6", "elevation: 2"));
+    const result = buildAuditResult(join(sandbox, "openuispec"));
+    assert.ok(
+      result.findings.some((f) => f.rule === "progression" && f.domain === "elevation"),
+      "expected warning for non-monotonic elevation",
+    );
+  } finally {
+    rmSync(sandbox, { recursive: true, force: true });
+  }
+});
+
+test("audit checks easing quality", () => {
+  const sandbox = mkdtempSync(join(tmpdir(), "openuispec-audit-easing-"));
+  try {
+    cpSync(join(repoRoot, "examples", "todo-orbit", "openuispec"), join(sandbox, "openuispec"), { recursive: true });
+    const motionPath = join(sandbox, "openuispec", "tokens", "motion.yaml");
+    writeFileSync(motionPath, `motion:\n  duration:\n    quick: 180\n    normal: 280\n  easing:\n    default: "ease"\n  reduced_motion: "remove-animation"\n`);
+    const result = buildAuditResult(join(sandbox, "openuispec"));
+    assert.ok(
+      result.findings.some((f) => f.rule === "easing_quality" && f.message.includes("enter")),
+      "expected warning for missing enter/exit easing",
+    );
+    assert.ok(
+      result.findings.some((f) => f.rule === "easing_quality" && f.message.includes("cubic-bezier")),
+      "expected warning for no cubic-bezier easing",
+    );
+  } finally {
+    rmSync(sandbox, { recursive: true, force: true });
+  }
+});
+
+test("audit checks typography weight hierarchy", () => {
+  const sandbox = mkdtempSync(join(tmpdir(), "openuispec-audit-weight-"));
+  try {
+    cpSync(join(repoRoot, "examples", "todo-orbit", "openuispec"), join(sandbox, "openuispec"), { recursive: true });
+    const typoPath = join(sandbox, "openuispec", "tokens", "typography.yaml");
+    const typo = readFileSync(typoPath, "utf-8");
+    // Set all weights to 400
+    writeFileSync(typoPath, typo.replace(/weight: \d+/g, "weight: 400"));
+    const result = buildAuditResult(join(sandbox, "openuispec"));
+    assert.ok(
+      result.findings.some((f) => f.rule === "weight_hierarchy"),
+      "expected warning for single font weight",
+    );
+  } finally {
+    rmSync(sandbox, { recursive: true, force: true });
+  }
+});
+
+test("audit checks layout size class coverage", () => {
+  const sandbox = mkdtempSync(join(tmpdir(), "openuispec-audit-layout-"));
+  try {
+    cpSync(join(repoRoot, "examples", "todo-orbit", "openuispec"), join(sandbox, "openuispec"), { recursive: true });
+    const layoutPath = join(sandbox, "openuispec", "tokens", "layout.yaml");
+    writeFileSync(layoutPath, `layout:\n  size_classes:\n    regular:\n      semantic: "Tablet"\n      width: { min: 641, max: 1024 }\n      columns: 8\n`);
+    const result = buildAuditResult(join(sandbox, "openuispec"));
+    assert.ok(
+      result.findings.some((f) => f.rule === "size_class_coverage" && f.message.includes("compact")),
+      "expected warning for missing compact size class",
+    );
+  } finally {
+    rmSync(sandbox, { recursive: true, force: true });
+  }
+});
+
+test("audit checks contract state coverage", () => {
+  const sandbox = mkdtempSync(join(tmpdir(), "openuispec-audit-contract-state-"));
+  try {
+    cpSync(join(repoRoot, "examples", "todo-orbit", "openuispec"), join(sandbox, "openuispec"), { recursive: true });
+    // Write a contract with empty must_handle
+    writeFileSync(
+      join(sandbox, "openuispec", "contracts", "surface.yaml"),
+      `surface:\n  semantic: "test"\n  generation:\n    must_handle: []\n`,
+    );
+    const result = buildAuditResult(join(sandbox, "openuispec"));
+    assert.ok(
+      result.findings.some((f) => f.rule === "state_coverage" && f.message.includes("surface")),
+      "expected warning for contract with empty must_handle",
+    );
+  } finally {
+    rmSync(sandbox, { recursive: true, force: true });
+  }
+});
+
+test("clean project passes all new audit checks without warnings", () => {
+  const result = buildAuditResult(join(repoRoot, "examples", "todo-orbit", "openuispec"));
+  const newRules = ["semantic_completeness", "level_count", "progression", "easing_quality", "weight_hierarchy", "size_class_coverage", "state_coverage"];
+  for (const rule of newRules) {
+    assert.ok(
+      !result.findings.some((f) => f.rule === rule),
+      `clean todo-orbit project should not trigger ${rule}`,
+    );
+  }
+});

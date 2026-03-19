@@ -57,6 +57,15 @@ generation_guidance:
     layout:
       - "Do not assume large-screen layouts work on compact — every multi-pane pattern needs an explicit compact fallback"
       - "Do not use pixel breakpoints — reference size classes by name (compact, regular, expanded)"
+    visual:
+      - "Do not flatten depth — use elevation tokens to separate layers and give content visual weight"
+      - "Do not use generic drop shadows — map every shadow to a specific elevation level from tokens"
+      - "Do not apply glassmorphism to interactive controls — reserve frosted effects for non-interactive overlays only"
+    interaction:
+      - "Do not make swipe gestures the only way to access actions — provide a visible alternative"
+      - "Do not delay visual feedback on tap — social content requires instant response"
+      - "[web] Do not use :focus for focus rings — use :focus-visible to show rings only for keyboard navigation"
+      - "[ios] Do not replace native swipe-back with custom gestures — users expect system navigation"
     accessibility:
       - "Do not use color as the only differentiator between states — combine with icon, border, or text changes"
       - "Do not skip focus ring styles — keyboard users must see where focus is at all times"
@@ -66,6 +75,7 @@ generation_guidance:
 design:
   personality: "Vibrant, social, content-rich — engagement and discovery are primary, utility is secondary"
   complexity: "elaborate"
+  quality_tier: "flagship"
   audience: "Mobile-first social media users who expect rich media, smooth animations, and expressive interactions"
   avoid:
     - "Do not use muted or desaturated brand colors — the palette should feel energetic"

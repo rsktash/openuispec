@@ -10,7 +10,7 @@
  *   openuispec check --target web --audit --format json
  */
 
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join, resolve } from "node:path";
 import YAML from "yaml";
 
@@ -103,6 +103,24 @@ function checkTypography(tokensDir: string, findings: AuditFinding[]): void {
       message: `Only ${scaleKeys.length} type scale level(s) defined. Use ≥4 distinct levels for clear hierarchy.`,
     });
   }
+
+  // Weight hierarchy: at least 2 distinct weights
+  if (doc.typography.scale) {
+    const weights = new Set<number>();
+    for (const level of Object.values(doc.typography.scale)) {
+      if (typeof (level as any)?.weight === "number") {
+        weights.add((level as any).weight);
+      }
+    }
+    if (weights.size > 0 && weights.size < 2) {
+      findings.push({
+        domain: "typography",
+        rule: "weight_hierarchy",
+        severity: "warning",
+        message: "Only 1 distinct font weight used across the type scale. Use ≥2 weights (e.g. 400 + 700) for clear hierarchy.",
+      });
+    }
+  }
 }
 
 function checkColor(tokensDir: string, findings: AuditFinding[]): void {
@@ -138,6 +156,22 @@ function checkColor(tokensDir: string, findings: AuditFinding[]): void {
     }
   }
   scanForPure(doc.color, "color");
+
+  // Semantic color completeness: success, warning, danger, info
+  if (doc.color.semantic) {
+    const required = ["success", "warning", "danger", "info"];
+    const defined = Object.keys(doc.color.semantic);
+    for (const name of required) {
+      if (!defined.includes(name)) {
+        findings.push({
+          domain: "color",
+          rule: "semantic_completeness",
+          severity: "warning",
+          message: `Semantic color "${name}" is missing. Define all four (success, warning, danger, info) for complete state coverage.`,
+        });
+      }
+    }
+  }
 
   // Theme coverage: check themes.yaml for both light + dark
   {
@@ -219,6 +253,104 @@ function checkMotion(tokensDir: string, findings: AuditFinding[]): void {
       message: "motion.reduced_motion is not defined. Must specify policy for prefers-reduced-motion.",
     });
   }
+
+  // Easing quality: enter + exit curves, at least one cubic-bezier
+  if (doc.motion.easing) {
+    const easings = doc.motion.easing;
+    const keys = Object.keys(easings);
+    if (!keys.includes("enter") || !keys.includes("exit")) {
+      findings.push({
+        domain: "motion",
+        rule: "easing_quality",
+        severity: "warning",
+        message: "Motion easing should define at least 'enter' and 'exit' curves for asymmetric transitions.",
+      });
+    }
+    const hasCubicBezier = Object.values(easings).some(
+      (v) => typeof v === "string" && v.includes("cubic-bezier"),
+    );
+    if (!hasCubicBezier) {
+      findings.push({
+        domain: "motion",
+        rule: "easing_quality",
+        severity: "warning",
+        message: "All easing curves are generic keywords. Use at least one cubic-bezier() for nuanced motion.",
+      });
+    }
+  }
+}
+
+function checkElevationProgression(tokensDir: string, findings: AuditFinding[]): void {
+  const doc = readYamlForAudit(join(tokensDir, "elevation.yaml"), "elevation", findings);
+  if (!doc?.elevation) return;
+  const levels = Object.keys(doc.elevation).filter((k) => k !== "none");
+  if (levels.length < 2) {
+    findings.push({
+      domain: "elevation",
+      rule: "level_count",
+      severity: "warning",
+      message: `Only ${levels.length} non-none elevation level(s) defined. Define ≥2 (e.g. sm, md, lg) for meaningful depth hierarchy.`,
+    });
+    return;
+  }
+  const androidValues: number[] = [];
+  for (const level of levels) {
+    const val = doc.elevation[level]?.platform?.android?.elevation;
+    if (typeof val === "number") androidValues.push(val);
+  }
+  if (androidValues.length >= 2) {
+    for (let i = 1; i < androidValues.length; i++) {
+      if (androidValues[i] <= androidValues[i - 1]) {
+        findings.push({
+          domain: "elevation",
+          rule: "progression",
+          severity: "warning",
+          message: "Elevation levels do not increase monotonically. Each level should cast a deeper shadow than the previous.",
+        });
+        break;
+      }
+    }
+  }
+}
+
+function checkLayoutSizeClasses(tokensDir: string, findings: AuditFinding[]): void {
+  const doc = readYamlForAudit(join(tokensDir, "layout.yaml"), "layout", findings);
+  if (!doc?.layout?.size_classes) return;
+  const classes = Object.keys(doc.layout.size_classes);
+  if (classes.length < 2) {
+    findings.push({
+      domain: "layout",
+      rule: "size_class_coverage",
+      severity: "warning",
+      message: `Only ${classes.length} size class(es) defined. Define at least compact + regular for responsive layouts.`,
+    });
+  } else if (!classes.includes("compact")) {
+    findings.push({
+      domain: "layout",
+      rule: "size_class_coverage",
+      severity: "warning",
+      message: "No 'compact' size class defined. Mobile-first layouts require a compact breakpoint.",
+    });
+  }
+}
+
+function checkContractStateCoverage(contractsDir: string, findings: AuditFinding[]): void {
+  if (!existsSync(contractsDir)) return;
+  for (const file of readdirSync(contractsDir).filter((f) => f.endsWith(".yaml") && !f.startsWith("x_"))) {
+    const doc = readYamlForAudit(join(contractsDir, file), "contracts", findings);
+    if (!doc) continue;
+    const contractName = Object.keys(doc)[0];
+    const contract = doc[contractName];
+    const mustHandle: string[] = contract?.generation?.must_handle ?? [];
+    if (mustHandle.length === 0) {
+      findings.push({
+        domain: "contracts",
+        rule: "state_coverage",
+        severity: "warning",
+        message: `Contract "${contractName}" has no generation.must_handle entries. Define required states for AI compliance.`,
+      });
+    }
+  }
 }
 
 function checkContracts(contractsDir: string, findings: AuditFinding[]): void {
@@ -255,7 +387,10 @@ export function buildAuditResult(projectDir: string, threshold: number = 0): Aud
   checkColor(tokensDir, findings);
   checkSpacing(tokensDir, findings);
   checkMotion(tokensDir, findings);
+  checkElevationProgression(tokensDir, findings);
+  checkLayoutSizeClasses(tokensDir, findings);
   checkContracts(contractsDir, findings);
+  checkContractStateCoverage(contractsDir, findings);
 
   const errors = findings.filter((f) => f.severity === "error").length;
   const warnings = findings.filter((f) => f.severity === "warning").length;
