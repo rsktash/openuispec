@@ -1,6 +1,6 @@
 {
   "name": "openuispec",
-  "version": "0.2.19",
+  "version": "0.2.20",
   "license": "MIT",
   "type": "module",
   "description": "A semantic UI specification format for AI-native, platform-native app development",
@@ -10,27 +10,23 @@
     "url": "https://github.com/rsktash/openuispec.git"
   },
   "files": [
-    "cli/",
-    "check/",
-    "drift/",
-    "mcp-server/",
-    "prepare/",
-    "status/",
-    "schema/",
+    "dist/",
+    "cli/target-presets.json",
+    "schema/**/*.json",
     "spec/",
     "docs/",
     "examples/*/openuispec/**",
     "examples/*/openuispec.yaml",
     "examples/*/README.md",
-    "scripts/",
     "README.md",
     "LICENSE"
   ],
   "bin": {
-    "openuispec": "./cli/index.ts",
-    "openuispec-mcp": "./mcp-server/index.ts"
+    "openuispec": "./dist/cli/index.js",
+    "openuispec-mcp": "./dist/mcp-server/index.js"
   },
   "scripts": {
+    "build": "tsc -p tsconfig.build.json && node scripts/fix-dist-bins.mjs",
     "test": "node --import tsx --test tests/check.test.ts tests/configure-target.test.ts tests/drift-prepare.test.ts tests/init.test.ts tests/mcp-tools.test.ts tests/semantic-lint.test.ts tests/status.test.ts",
     "test:screenshot": "node --import tsx --test tests/mcp-screenshot.test.ts",
     "test:all": "node --import tsx --test tests/*.test.ts",
@@ -45,6 +41,8 @@
     "drift:snapshot": "tsx drift/index.ts --snapshot --target",
     "prepare:target": "tsx prepare/index.ts",
     "status": "tsx status/index.ts",
+    "prepare": "npm run build",
+    "prepack": "npm run build",
     "postinstall": "echo \"\\n  ✓ openuispec installed — if upgrading, run: openuispec update-rules\\n\"",
     "cloc": "cloc --exclude-dir=$(tr '\n' ',' < .cloc-ignore) ."
   },
@@ -52,14 +50,15 @@
     "@modelcontextprotocol/sdk": "^1.27.1",
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
-    "tsx": "^4.19.4",
-    "yaml": "^2.7.1"
+    "yaml": "^2.7.1",
+    "zod": "^3.25.76"
   },
   "optionalDependencies": {
     "puppeteer": "^24.39.1"
   },
   "devDependencies": {
     "@types/node": "^25.5.0",
+    "tsx": "^4.19.4",
     "typescript": "^5.8.3"
   }
 }

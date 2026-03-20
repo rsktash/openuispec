@@ -1344,7 +1344,7 @@ function renderInputField(section: any, props: any, ctx: PreviewContext): string
   const containerStyle = buildContainerStyle(section, ctx);
 
   if (inputType === "toggle") {
-    const isOn = value === "true" || value === true;
+    const isOn = String(value) === "true";
     const trackOn = ct("track_on") ?? FALLBACK.brand;
     const trackOff = ct("track_off") ?? FALLBACK.borderDefault;
     const trackColor = isOn ? trackOn : trackOff;
@@ -1375,7 +1375,7 @@ function renderInputField(section: any, props: any, ctx: PreviewContext): string
   }
 
   if (inputType === "checkbox") {
-    const isChecked = value === "true" || value === true;
+    const isChecked = String(value) === "true";
     const brandColor = resolveColor(ctx, "color.brand.primary") ?? FALLBACK.brand;
     const successColor = resolveColor(ctx, "color.semantic.success") ?? FALLBACK.success;
     const checkColor = isChecked ? successColor : brandColor;

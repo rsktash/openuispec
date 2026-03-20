@@ -10,18 +10,17 @@
 
 import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { resolve, join, basename } from "node:path";
-import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
 import type { ErrorObject } from "ajv";
 import YAML from "yaml";
 import { runSemanticLint, collectSemanticLint, type Includes } from "./semantic-lint.js";
+import { resolvePackagePath } from "../runtime/package-paths.js";
 
 const require = createRequire(import.meta.url);
 const Ajv2020 = require("ajv/dist/2020") as typeof import("ajv").default;
 const addFormats = require("ajv-formats") as typeof import("ajv-formats").default;
 
-const __dirname = fileURLToPath(new URL(".", import.meta.url));
-const SCHEMA_DIR = resolve(__dirname);
+const SCHEMA_DIR = resolve(resolvePackagePath(import.meta.url, "schema"));
 
 type AjvInstance = InstanceType<typeof Ajv2020>;
 type UnknownRecord = Record<string, unknown>;

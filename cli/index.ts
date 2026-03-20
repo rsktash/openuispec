@@ -33,6 +33,7 @@ import { init, updateRules, extractRulesVersion, getPackageVersion } from "./ini
 import { join, dirname, relative, resolve } from "node:path";
 import { existsSync, readFileSync, readdirSync, writeFileSync, mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import { resolvePackagePath } from "../runtime/package-paths.js";
 
 // ── arg parsing helpers ──────────────────────────────────────────────
 
@@ -337,8 +338,7 @@ async function main(): Promise<void> {
       if (!type) { console.error("Usage: openuispec spec-schema <type>\nRun `openuispec spec-types` to list types."); process.exit(1); }
       const entry = SCHEMA_CATALOG[type];
       if (!entry) { console.error(`Unknown spec type "${type}". Run \`openuispec spec-types\` to list types.`); process.exit(1); }
-      const __dirname = dirname(fileURLToPath(import.meta.url));
-      const schemaPath = join(__dirname, "..", "schema", entry.file);
+      const schemaPath = resolvePackagePath(import.meta.url, "schema", entry.file);
       console.log(readFileSync(schemaPath, "utf-8"));
       break;
     }

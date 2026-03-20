@@ -20,6 +20,27 @@ import {
 } from "./screenshot-shared.js";
 
 const exec = promisify(execCb);
+let iosScreenshotQueue: Promise<void> = Promise.resolve();
+
+async function withIOSScreenshotLock<T>(run: () => Promise<T>): Promise<T> {
+  const previousRun = iosScreenshotQueue;
+  let releaseQueue: (() => void) | undefined;
+  const currentRun = new Promise<void>((resolve) => {
+    releaseQueue = resolve;
+  });
+  const queuedRun = previousRun.then(() => currentRun);
+  iosScreenshotQueue = queuedRun;
+
+  await previousRun;
+  try {
+    return await run();
+  } finally {
+    releaseQueue?.();
+    if (iosScreenshotQueue === queuedRun) {
+      iosScreenshotQueue = Promise.resolve();
+    }
+  }
+}
 
 // ── types ───────────────────────────────────────────────────────────
 
@@ -473,83 +494,85 @@ export async function takeIOSScreenshot(
   projectCwd: string,
   options: IOSScreenshotOptions,
 ): Promise<ScreenshotResult> {
-  const {
-    screen,
-    device,
-    nav,
-    theme,
-    wait_for = 3000,
-    output_dir,
-    project_dir,
-    scheme,
-    bundle_id,
-  } = options;
+  return withIOSScreenshotLock(async () => {
+    const {
+      screen,
+      device,
+      nav,
+      theme,
+      wait_for = 3000,
+      output_dir,
+      project_dir,
+      scheme,
+      bundle_id,
+    } = options;
 
-  // 1. Find iOS project
-  const iosDir = findIOSAppDir(projectCwd, project_dir);
-  const appInfo = extractAppInfo(iosDir, { scheme, bundle_id });
+    // 1. Find iOS project
+    const iosDir = findIOSAppDir(projectCwd, project_dir);
+    const appInfo = extractAppInfo(iosDir, { scheme, bundle_id });
 
-  // 2. Find and boot simulator
-  const sim = findSimulator(device);
-  await ensureSimulatorBooted(sim.udid);
+    // 2. Find and boot simulator
+    const sim = findSimulator(device);
+    await ensureSimulatorBooted(sim.udid);
 
-  // 3. Set theme if requested
-  if (theme) {
-    await setAppearance(sim.udid, theme);
-  }
+    // 3. Set theme if requested
+    if (theme) {
+      await setAppearance(sim.udid, theme);
+    }
 
-  // 4. Capture screenshot
-  const screenLabel = screen ?? "main";
-  const themeLabel = theme ?? "default";
-  const filename = `${screenLabel}_${themeLabel}.png`;
-  const tmpPath = join(iosDir, ".openuispec-screenshot.png");
+    // 4. Capture screenshot
+    const screenLabel = screen ?? "main";
+    const themeLabel = theme ?? "default";
+    const filename = `${screenLabel}_${themeLabel}.png`;
+    const tmpPath = join(iosDir, ".openuispec-screenshot.png");
 
-  if (nav && nav.length > 0) {
-    // Use XCUITest for navigation + screenshot (builds both targets via xcodebuild test)
-    await runXCUITest(iosDir, appInfo, sim.udid, nav, wait_for, tmpPath);
-  } else {
-    // Simple: build, install, launch, wait, screencap
-    const appBundlePath = await buildApp(iosDir, appInfo, sim.udid);
-    await installAndLaunch(sim.udid, appBundlePath, appInfo.bundleId);
-    await waitForAppReady(sim.udid, appInfo.bundleId, wait_for);
-    await captureScreenshot(sim.udid, tmpPath);
-  }
+    if (nav && nav.length > 0) {
+      // Use XCUITest for navigation + screenshot (builds both targets via xcodebuild test)
+      await runXCUITest(iosDir, appInfo, sim.udid, nav, wait_for, tmpPath);
+    } else {
+      // Simple: build, install, launch, wait, screencap
+      const appBundlePath = await buildApp(iosDir, appInfo, sim.udid);
+      await installAndLaunch(sim.udid, appBundlePath, appInfo.bundleId);
+      await waitForAppReady(sim.udid, appInfo.bundleId, wait_for);
+      await captureScreenshot(sim.udid, tmpPath);
+    }
 
-  if (!existsSync(tmpPath)) {
-    return {
-      content: [{ type: "text", text: "No screenshot was captured. Check Xcode and Simulator output." }],
-      isError: true,
-    };
-  }
+    if (!existsSync(tmpPath)) {
+      return {
+        content: [{ type: "text", text: "No screenshot was captured. Check Xcode and Simulator output." }],
+        isError: true,
+      };
+    }
 
-  // 6. Save to output_dir if specified
-  let savedPath: string | undefined;
-  if (output_dir) {
-    const outDir = resolve(iosDir, output_dir);
-    mkdirSync(outDir, { recursive: true });
-    savedPath = join(outDir, filename);
-    copyFileSync(tmpPath, savedPath);
-  }
+    // 6. Save to output_dir if specified
+    let savedPath: string | undefined;
+    if (output_dir) {
+      const outDir = resolve(iosDir, output_dir);
+      mkdirSync(outDir, { recursive: true });
+      savedPath = join(outDir, filename);
+      copyFileSync(tmpPath, savedPath);
+    }
 
-  // 7. Read and return
-  try {
-    const data = readFileSync(tmpPath).toString("base64");
-    const snapshots = [{
-      screen: screenLabel,
-      path: savedPath ?? filename,
-      data,
-    }];
+    // 7. Read and return
+    try {
+      const data = readFileSync(tmpPath).toString("base64");
+      const snapshots = [{
+        screen: screenLabel,
+        path: savedPath ?? filename,
+        data,
+      }];
 
-    return buildScreenshotResponse(snapshots, (s) => ({
-      screen: s.screen,
-      path: savedPath ?? null,
-      simulator: sim.name,
-      theme: themeLabel,
-      bundleId: appInfo.bundleId,
-    }));
-  } finally {
-    try { unlinkSync(tmpPath); } catch { /* ignore */ }
-  }
+      return buildScreenshotResponse(snapshots, (s) => ({
+        screen: s.screen,
+        path: savedPath ?? null,
+        simulator: sim.name,
+        theme: themeLabel,
+        bundleId: appInfo.bundleId,
+      }));
+    } finally {
+      try { unlinkSync(tmpPath); } catch { /* ignore */ }
+    }
+  });
 }
 
 // ── batch types ──────────────────────────────────────────────────────
@@ -576,91 +599,92 @@ export async function takeIOSScreenshotBatch(
   projectCwd: string,
   options: IOSScreenshotBatchOptions,
 ): Promise<ScreenshotResult> {
-  const { captures, device, theme, output_dir, project_dir, scheme, bundle_id } = options;
+  return withIOSScreenshotLock(async () => {
+    const { captures, device, theme, output_dir, project_dir, scheme, bundle_id } = options;
 
-  if (captures.length === 0) {
-    return { content: [{ type: "text", text: "No iOS captures specified." }], isError: true };
-  }
-
-  const iosDir = findIOSAppDir(projectCwd, project_dir);
-  const appInfo = extractAppInfo(iosDir, { scheme, bundle_id });
-  const sim = findSimulator(device);
-  await ensureSimulatorBooted(sim.udid);
-
-  if (theme) {
-    await setAppearance(sim.udid, theme);
-  }
-
-  const themeLabel = theme ?? "default";
-  const snapshots: Array<{ screen: string; path: string; data: string }> = [];
-
-  // Separate captures: no-nav (simctl screenshot) vs nav (XCUITest batch)
-  const noNavCaptures = captures.filter((c) => !c.nav || c.nav.length === 0);
-  const navCaptures = captures.filter((c) => c.nav && c.nav.length > 0);
-
-  // Build + install once for all captures
-  const appBundlePath = await buildApp(iosDir, appInfo, sim.udid);
-  await installAndLaunch(sim.udid, appBundlePath, appInfo.bundleId);
-
-  // Pre-create output dir once
-  if (output_dir) mkdirSync(resolve(iosDir, output_dir), { recursive: true });
-
-  // No-nav captures: relaunch, wait, simctl screenshot
-  for (const capture of noNavCaptures) {
-    // Relaunch without reinstalling
-    try { await exec(`xcrun simctl terminate ${sim.udid} ${appInfo.bundleId}`); } catch { /* not running */ }
-    await exec(`xcrun simctl launch ${sim.udid} ${appInfo.bundleId}`, { timeout: 30_000 });
-    await waitForAppReady(sim.udid, appInfo.bundleId, capture.wait_for ?? 3000);
-
-    const filename = `${capture.screen}_${themeLabel}.png`;
-    const tmpPath = join(iosDir, `.openuispec-screenshot-${capture.screen}.png`);
-    await captureScreenshot(sim.udid, tmpPath);
-
-    if (!existsSync(tmpPath)) continue;
-
-    let savedPath = filename;
-    if (output_dir) {
-      savedPath = join(resolve(iosDir, output_dir), filename);
-      copyFileSync(tmpPath, savedPath);
+    if (captures.length === 0) {
+      return { content: [{ type: "text", text: "No iOS captures specified." }], isError: true };
     }
 
-    snapshots.push({ screen: capture.screen, path: savedPath, data: readFileSync(tmpPath).toString("base64") });
-    try { unlinkSync(tmpPath); } catch { /* ignore */ }
-  }
+    const iosDir = findIOSAppDir(projectCwd, project_dir);
+    const appInfo = extractAppInfo(iosDir, { scheme, bundle_id });
+    const sim = findSimulator(device);
+    await ensureSimulatorBooted(sim.udid);
 
-  // Nav captures: batch into a single XCUITest run
-  if (navCaptures.length > 0) {
-    const uitestDir = join(iosDir, ".screenshot-uitest");
-    const sourcesDir = join(uitestDir, "Sources");
-    mkdirSync(sourcesDir, { recursive: true });
+    if (theme) {
+      await setAppearance(sim.udid, theme);
+    }
 
-    // Build output paths map
-    const outputPaths: Record<string, string> = {};
-    for (const capture of navCaptures) {
+    const themeLabel = theme ?? "default";
+    const snapshots: Array<{ screen: string; path: string; data: string }> = [];
+
+    // Separate captures: no-nav (simctl screenshot) vs nav (XCUITest batch)
+    const noNavCaptures = captures.filter((c) => !c.nav || c.nav.length === 0);
+    const navCaptures = captures.filter((c) => c.nav && c.nav.length > 0);
+
+    // Build + install once for all captures
+    const appBundlePath = await buildApp(iosDir, appInfo, sim.udid);
+    await installAndLaunch(sim.udid, appBundlePath, appInfo.bundleId);
+
+    // Pre-create output dir once
+    if (output_dir) mkdirSync(resolve(iosDir, output_dir), { recursive: true });
+
+    // No-nav captures: relaunch, wait, simctl screenshot
+    for (const capture of noNavCaptures) {
+      // Relaunch without reinstalling
+      try { await exec(`xcrun simctl terminate ${sim.udid} ${appInfo.bundleId}`); } catch { /* not running */ }
+      await exec(`xcrun simctl launch ${sim.udid} ${appInfo.bundleId}`, { timeout: 30_000 });
+      await waitForAppReady(sim.udid, appInfo.bundleId, capture.wait_for ?? 3000);
+
       const filename = `${capture.screen}_${themeLabel}.png`;
+      const tmpPath = join(iosDir, `.openuispec-screenshot-${capture.screen}.png`);
+      await captureScreenshot(sim.udid, tmpPath);
+
+      if (!existsSync(tmpPath)) continue;
+
+      let savedPath = filename;
       if (output_dir) {
-        const outDir = resolve(iosDir, output_dir);
-        mkdirSync(outDir, { recursive: true });
-        outputPaths[capture.screen] = join(outDir, filename);
-      } else {
-        outputPaths[capture.screen] = join(iosDir, `.openuispec-screenshot-${capture.screen}.png`);
+        savedPath = join(resolve(iosDir, output_dir), filename);
+        copyFileSync(tmpPath, savedPath);
       }
+
+      snapshots.push({ screen: capture.screen, path: savedPath, data: readFileSync(tmpPath).toString("base64") });
+      try { unlinkSync(tmpPath); } catch { /* ignore */ }
     }
 
-    // Generate multi-test Swift file
-    const testCases = navCaptures.map((capture, i) => {
-      const taps = (capture.nav ?? []).map((step, j) => {
-        const escaped = step.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
-        return `
+    // Nav captures: batch into a single XCUITest run
+    if (navCaptures.length > 0) {
+      const uitestDir = join(iosDir, ".screenshot-uitest");
+      const sourcesDir = join(uitestDir, "Sources");
+      mkdirSync(sourcesDir, { recursive: true });
+
+      // Build output paths map
+      const outputPaths: Record<string, string> = {};
+      for (const capture of navCaptures) {
+        const filename = `${capture.screen}_${themeLabel}.png`;
+        if (output_dir) {
+          const outDir = resolve(iosDir, output_dir);
+          mkdirSync(outDir, { recursive: true });
+          outputPaths[capture.screen] = join(outDir, filename);
+        } else {
+          outputPaths[capture.screen] = join(iosDir, `.openuispec-screenshot-${capture.screen}.png`);
+        }
+      }
+
+      // Generate multi-test Swift file
+      const testCases = navCaptures.map((capture, i) => {
+        const taps = (capture.nav ?? []).map((step, j) => {
+          const escaped = step.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+          return `
         let target_${i}_${j} = app.descendants(matching: .any).matching(NSPredicate(format: "label ==[c] %@ OR title ==[c] %@", "${escaped}", "${escaped}")).firstMatch
         if target_${i}_${j}.waitForExistence(timeout: 5) {
             target_${i}_${j}.tap()
             Thread.sleep(forTimeInterval: 0.8)
         }`;
-      }).join("\n");
+        }).join("\n");
 
-      const outPath = outputPaths[capture.screen].replace(/"/g, '\\"');
-      return `
+        const outPath = outputPaths[capture.screen].replace(/"/g, '\\"');
+        return `
     func test_${String(i + 1).padStart(2, "0")}_${capture.screen}() {
         let app = XCUIApplication()
         app.launchArguments = ["-AppleLanguages", "(en)"]
@@ -671,26 +695,26 @@ ${taps}
         let screenshot = XCUIScreen.main.screenshot()
         try! screenshot.pngRepresentation.write(to: URL(fileURLWithPath: "${outPath}"))
     }`;
-    }).join("\n");
+      }).join("\n");
 
-    writeFileSync(join(sourcesDir, "ScreenshotUITest.swift"),
-      `import XCTest\n\nfinal class ScreenshotUITest: XCTestCase {\n${testCases}\n}\n`);
+      writeFileSync(join(sourcesDir, "ScreenshotUITest.swift"),
+        `import XCTest\n\nfinal class ScreenshotUITest: XCTestCase {\n${testCases}\n}\n`);
 
-    // Set up xcodegen
-    const UITEST_TARGET = "ScreenshotUITests";
-    const hasXcodegen = existsSync(join(iosDir, "project.yml"));
-    const projectYmlPath = join(iosDir, "project.yml");
-    let originalProjectYml: string | null = null;
-    const buildDir = join(iosDir, ".build", "screenshot");
+      // Set up xcodegen
+      const UITEST_TARGET = "ScreenshotUITests";
+      const hasXcodegen = existsSync(join(iosDir, "project.yml"));
+      const projectYmlPath = join(iosDir, "project.yml");
+      let originalProjectYml: string | null = null;
+      const buildDir = join(iosDir, ".build", "screenshot");
 
-    if (hasXcodegen) {
-      originalProjectYml = readFileSync(projectYmlPath, "utf-8");
-      let modifiedYml = ensureInfoPlistFlag(originalProjectYml);
-      modifiedYml = insertUITestTarget(modifiedYml, generateUITestTargetYml(appInfo, ".screenshot-uitest/Sources", true));
-      writeFileSync(projectYmlPath, modifiedYml);
-      await exec(`xcodegen generate`, { cwd: iosDir, timeout: 30_000 });
-    } else {
-      writeFileSync(join(uitestDir, "project.yml"), `name: ${UITEST_TARGET}
+      if (hasXcodegen) {
+        originalProjectYml = readFileSync(projectYmlPath, "utf-8");
+        let modifiedYml = ensureInfoPlistFlag(originalProjectYml);
+        modifiedYml = insertUITestTarget(modifiedYml, generateUITestTargetYml(appInfo, ".screenshot-uitest/Sources", true));
+        writeFileSync(projectYmlPath, modifiedYml);
+        await exec(`xcodegen generate`, { cwd: iosDir, timeout: 30_000 });
+      } else {
+        writeFileSync(join(uitestDir, "project.yml"), `name: ${UITEST_TARGET}
 targets:
   ${UITEST_TARGET}:
     type: bundle.ui-testing
@@ -704,50 +728,51 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: ${appInfo.bundleId}.uitests
         GENERATE_INFOPLIST_FILE: YES
 `);
-      await exec(`xcodegen generate`, { cwd: uitestDir, timeout: 30_000 });
-    }
+        await exec(`xcodegen generate`, { cwd: uitestDir, timeout: 30_000 });
+      }
 
-    const testProjectFlag = hasXcodegen
-      ? (appInfo.xcodeproj ? `-project "${join(iosDir, appInfo.xcodeproj)}"` : "")
-      : `-project "${join(uitestDir, `${UITEST_TARGET}.xcodeproj`)}"`;
-    const testCwd = hasXcodegen ? iosDir : uitestDir;
+      const testProjectFlag = hasXcodegen
+        ? (appInfo.xcodeproj ? `-project "${join(iosDir, appInfo.xcodeproj)}"` : "")
+        : `-project "${join(uitestDir, `${UITEST_TARGET}.xcodeproj`)}"`;
+      const testCwd = hasXcodegen ? iosDir : uitestDir;
 
-    try {
-      await exec(
-        `xcodebuild test ${testProjectFlag} -scheme "${UITEST_TARGET}" -destination "id=${sim.udid}" -derivedDataPath "${buildDir}" -only-testing:${UITEST_TARGET}/ScreenshotUITest 2>&1`,
-        { cwd: testCwd, timeout: 300_000 },
-      );
-    } catch {
-      // Tests may "fail" but still produce screenshots
-    } finally {
-      if (originalProjectYml) {
-        writeFileSync(projectYmlPath, originalProjectYml);
-        try { await exec(`xcodegen generate`, { cwd: iosDir, timeout: 30_000 }); } catch { /* best effort */ }
+      try {
+        await exec(
+          `xcodebuild test ${testProjectFlag} -scheme "${UITEST_TARGET}" -destination "id=${sim.udid}" -derivedDataPath "${buildDir}" -only-testing:${UITEST_TARGET}/ScreenshotUITest 2>&1`,
+          { cwd: testCwd, timeout: 300_000 },
+        );
+      } catch {
+        // Tests may "fail" but still produce screenshots
+      } finally {
+        if (originalProjectYml) {
+          writeFileSync(projectYmlPath, originalProjectYml);
+          try { await exec(`xcodegen generate`, { cwd: iosDir, timeout: 30_000 }); } catch { /* best effort */ }
+        }
+      }
+
+      // Collect results
+      for (const capture of navCaptures) {
+        const outPath = outputPaths[capture.screen];
+        if (existsSync(outPath)) {
+          snapshots.push({
+            screen: capture.screen,
+            path: output_dir ? outPath : `${capture.screen}_${themeLabel}.png`,
+            data: readFileSync(outPath).toString("base64"),
+          });
+          if (!output_dir) { try { unlinkSync(outPath); } catch { /* ignore */ } }
+        }
       }
     }
 
-    // Collect results
-    for (const capture of navCaptures) {
-      const outPath = outputPaths[capture.screen];
-      if (existsSync(outPath)) {
-        snapshots.push({
-          screen: capture.screen,
-          path: output_dir ? outPath : `${capture.screen}_${themeLabel}.png`,
-          data: readFileSync(outPath).toString("base64"),
-        });
-        if (!output_dir) { try { unlinkSync(outPath); } catch { /* ignore */ } }
-      }
+    if (snapshots.length === 0) {
+      return { content: [{ type: "text", text: "No screenshots were captured. Check Xcode and Simulator output." }], isError: true };
     }
-  }
 
-  if (snapshots.length === 0) {
-    return { content: [{ type: "text", text: "No screenshots were captured. Check Xcode and Simulator output." }], isError: true };
-  }
-
-  const content: ScreenshotResult["content"] = [];
-  for (const s of snapshots) {
-    content.push({ type: "image" as const, data: s.data, mimeType: "image/png" });
-    content.push({ type: "text" as const, text: JSON.stringify({ screen: s.screen, path: s.path, simulator: sim.name, theme: themeLabel, bundleId: appInfo.bundleId }, null, 2) });
-  }
-  return { content };
+    const content: ScreenshotResult["content"] = [];
+    for (const s of snapshots) {
+      content.push({ type: "image" as const, data: s.data, mimeType: "image/png" });
+      content.push({ type: "text" as const, text: JSON.stringify({ screen: s.screen, path: s.path, simulator: sim.name, theme: themeLabel, bundleId: appInfo.bundleId }, null, 2) });
+    }
+    return { content };
+  });
 }

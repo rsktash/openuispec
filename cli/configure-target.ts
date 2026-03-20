@@ -5,6 +5,7 @@ import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import YAML from "yaml";
 import { findProjectDir, isSupportedTarget, readManifest, type SupportedTarget } from "../drift/index.js";
+import { resolvePackagePath } from "../runtime/package-paths.js";
 import { ask, askChoice } from "./init.js";
 
 type WizardOptionPreset = {
@@ -64,7 +65,7 @@ export type TargetWizardOptionsResponse = {
 };
 
 function readWizardPresets(): Record<SupportedTarget, TargetWizardPreset> {
-  const presetsPath = join(dirname(fileURLToPath(import.meta.url)), "target-presets.json");
+  const presetsPath = resolvePackagePath(import.meta.url, "cli", "target-presets.json");
   return JSON.parse(readFileSync(presetsPath, "utf-8")) as Record<SupportedTarget, TargetWizardPreset>;
 }
 
@@ -347,8 +348,9 @@ function parseTarget(argv: string[]): SupportedTarget | null {
     return direct;
   }
   const targetIdx = argv.indexOf("--target");
-  if (targetIdx !== -1 && argv[targetIdx + 1] && isSupportedTarget(argv[targetIdx + 1])) {
-    return argv[targetIdx + 1];
+  const candidate = targetIdx !== -1 ? argv[targetIdx + 1] : null;
+  if (candidate && isSupportedTarget(candidate)) {
+    return candidate;
   }
   return null;
 }

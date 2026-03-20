@@ -506,7 +506,8 @@ export async function takeAndroidScreenshot(
   const currentRun = new Promise<void>((resolve) => {
     releaseQueue = resolve;
   });
-  androidScreenshotQueues.set(serial, previousRun.then(() => currentRun));
+  const queuedRun = previousRun.then(() => currentRun);
+  androidScreenshotQueues.set(serial, queuedRun);
 
   await previousRun;
 
@@ -544,7 +545,7 @@ export async function takeAndroidScreenshot(
     }));
   } finally {
     releaseQueue?.();
-    if (androidScreenshotQueues.get(serial) === currentRun) {
+    if (androidScreenshotQueues.get(serial) === queuedRun) {
       androidScreenshotQueues.delete(serial);
     }
   }
@@ -572,7 +573,8 @@ export async function takeAndroidScreenshotBatch(
   const currentRun = new Promise<void>((resolve) => {
     releaseQueue = resolve;
   });
-  androidScreenshotQueues.set(serial, previousRun.then(() => currentRun));
+  const queuedRun = previousRun.then(() => currentRun);
+  androidScreenshotQueues.set(serial, queuedRun);
 
   await previousRun;
 
@@ -614,7 +616,7 @@ export async function takeAndroidScreenshotBatch(
     }));
   } finally {
     releaseQueue?.();
-    if (androidScreenshotQueues.get(serial) === currentRun) {
+    if (androidScreenshotQueues.get(serial) === queuedRun) {
       androidScreenshotQueues.delete(serial);
     }
   }

@@ -19,6 +19,7 @@ import {
 import { join, relative, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { SUPPORTED_TARGETS, isSupportedTarget, type SupportedTarget } from "../drift/index.js";
+import { readPackageVersion, resolvePackagePath } from "../runtime/package-paths.js";
 
 // ── list-options ────────────────────────────────────────────────────
 
@@ -166,13 +167,7 @@ const RULES_START_MARKER = "<!-- openuispec-rules-start -->";
 const RULES_END_MARKER = "<!-- openuispec-rules-end -->";
 
 function getPackageVersion(): string {
-  const pkgPath = join(
-    dirname(fileURLToPath(import.meta.url)),
-    "..",
-    "package.json"
-  );
-  const pkg = JSON.parse(readFileSync(pkgPath, "utf-8"));
-  return pkg.version;
+  return readPackageVersion(import.meta.url);
 }
 
 // ── templates ────────────────────────────────────────────────────────
@@ -554,7 +549,13 @@ export function updateRules(): void {
     );
     const match = manifest.match(/targets:\s*\[([^\]]+)\]/);
     if (match) {
-      targets = match[1].split(",").map((t) => t.trim().replace(/['"]/g, ""));
+      const parsedTargets = match[1]
+        .split(",")
+        .map((t) => t.trim().replace(/['"]/g, ""))
+        .filter(isSupportedTarget);
+      if (parsedTargets.length > 0) {
+        targets = parsedTargets;
+      }
     }
   } catch {}
 
@@ -613,8 +614,7 @@ export function updateRules(): void {
 // ── spec doc version migration ──────────────────────────────────────
 
 function getCurrentSpecDocVersion(): string | null {
-  const pkgDir = dirname(fileURLToPath(import.meta.url));
-  const specDir = join(pkgDir, "..", "spec");
+  const specDir = resolvePackagePath(import.meta.url, "spec");
   try {
     const files = readdirSync(specDir);
     const match = files

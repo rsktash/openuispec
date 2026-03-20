@@ -289,8 +289,13 @@ export function formatBaseline(baseline?: BaselineRef): string | null {
   return `${ref}${branchSuffix} + working tree spec changes`;
 }
 
-const MAX_CHANGES_PER_FILE = 20;
+const MAX_CHANGES_PER_FILE = 12;
+const MAX_CHANGES_PER_LOCALE_FILE = 8;
 const MAX_VALUE_LENGTH = 120;
+
+function changeLimitForPath(relPath: string): number {
+  return relPath.startsWith("locales/") ? MAX_CHANGES_PER_LOCALE_FILE : MAX_CHANGES_PER_FILE;
+}
 
 function summarizeValue(value: unknown): string {
   if (typeof value === "string") {
@@ -310,9 +315,10 @@ function compareSemanticValue(
   path: string,
   before: unknown,
   after: unknown,
-  changes: SemanticChange[]
+  changes: SemanticChange[],
+  maxChanges: number
 ): void {
-  if (changes.length >= MAX_CHANGES_PER_FILE) return;
+  if (changes.length >= maxChanges) return;
 
   if (before === undefined && after === undefined) return;
   if (before === undefined) {
@@ -337,8 +343,8 @@ function compareSemanticValue(
 
     const maxLength = Math.max(before.length, after.length);
     for (let index = 0; index < maxLength; index += 1) {
-      compareSemanticValue(`${path}[${index}]`, before[index], after[index], changes);
-      if (changes.length >= MAX_CHANGES_PER_FILE) return;
+      compareSemanticValue(`${path}[${index}]`, before[index], after[index], changes, maxChanges);
+      if (changes.length >= maxChanges) return;
     }
     return;
   }
@@ -355,8 +361,8 @@ function compareSemanticValue(
 
     for (const key of keys) {
       const nextPath = path ? `${path}.${key}` : key;
-      compareSemanticValue(nextPath, beforeObj[key], afterObj[key], changes);
-      if (changes.length >= MAX_CHANGES_PER_FILE) return;
+      compareSemanticValue(nextPath, beforeObj[key], afterObj[key], changes, maxChanges);
+      if (changes.length >= maxChanges) return;
     }
     return;
   }
@@ -418,13 +424,14 @@ function explainFileChange(
     const beforeDoc = parseSpecDocument(relPath, beforeContent);
     const afterDoc = parseSpecDocument(relPath, afterContent);
     const changes: SemanticChange[] = [];
-    compareSemanticValue("", beforeDoc, afterDoc, changes);
+    const maxChanges = changeLimitForPath(relPath);
+    compareSemanticValue("", beforeDoc, afterDoc, changes, maxChanges);
 
     return {
       file: relPath,
       status,
       changes,
-      truncated: changes.length >= MAX_CHANGES_PER_FILE,
+      truncated: changes.length >= maxChanges,
     };
   } catch (error) {
     return {

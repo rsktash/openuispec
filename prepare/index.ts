@@ -8,8 +8,8 @@
  */
 
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
-import { basename, dirname, extname, join, relative, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { basename, extname, join, relative, resolve } from "node:path";
+import { findPackageRoot } from "../runtime/package-paths.js";
 import YAML from "yaml";
 import { listTargetWizardOptions, type TargetWizardOptionsResponse } from "../cli/configure-target.js";
 import {
@@ -190,7 +190,7 @@ export interface PrepareResult {
 }
 
 function resolvePackageRoot(): string {
-  return resolve(dirname(fileURLToPath(import.meta.url)), "..");
+  return findPackageRoot(import.meta.url);
 }
 
 function readPlatformDefinition(projectDir: string, manifest: Record<string, any>, target: string): Record<string, any> {
@@ -274,7 +274,7 @@ function buildPlatformConfig(target: string, platformDef: Record<string, any>): 
       .filter((entry): entry is [string, string] => typeof entry[1] === "string" && entry[1].trim().length > 0)
   );
   const dependencies = Array.isArray(generation.dependencies)
-    ? generation.dependencies.filter((dep): dep is string => typeof dep === "string")
+    ? generation.dependencies.filter((dep: unknown): dep is string => typeof dep === "string")
     : [];
   const selectedOptionRefs = Object.fromEntries(
     links.questions
@@ -466,9 +466,16 @@ function walkFiles(root: string, files: string[], depth = 0): void {
   for (const entry of readdirSync(root)) {
     if (
       entry === ".git" ||
+      entry === ".next" ||
+      entry === ".turbo" ||
+      entry === ".cache" ||
+      entry === ".vercel" ||
       entry === "node_modules" ||
       entry === "build" ||
       entry === "dist" ||
+      entry === "coverage" ||
+      entry === "storybook-static" ||
+      entry === "out" ||
       entry === ".gradle" ||
       entry === "DerivedData"
     ) {
@@ -499,9 +506,56 @@ const SEARCHABLE_EXTENSIONS = new Set([
   ".yaml", ".yml", ".strings",
 ]);
 
+interface SearchCandidate {
+  path: string;
+  relPath: string;
+  relPathLower: string;
+  contentLower?: string | null;
+}
+
+const MAX_PREPARE_CHANGES_PER_ITEM = 8;
+const MAX_PREPARE_LIKELY_FILES = 4;
+
 function isSearchableFile(filePath: string): boolean {
   if (basename(filePath) === ".openuispec-state.json") return false;
   return SEARCHABLE_EXTENSIONS.has(extname(filePath).toLowerCase());
+}
+
+function collectSearchCandidates(outputDir: string, codeRoots: string[]): SearchCandidate[] {
+  const visited = new Set<string>();
+  const candidates: SearchCandidate[] = [];
+
+  for (const root of codeRoots) {
+    const files: string[] = [];
+    walkFiles(root, files);
+
+    for (const filePath of files) {
+      if (!isSearchableFile(filePath) || visited.has(filePath)) continue;
+      visited.add(filePath);
+      const relPath = relative(outputDir, filePath);
+      candidates.push({
+        path: filePath,
+        relPath,
+        relPathLower: relPath.toLowerCase(),
+      });
+    }
+  }
+
+  return candidates;
+}
+
+function readSearchCandidateContent(candidate: SearchCandidate): string | null {
+  if (candidate.contentLower !== undefined) {
+    return candidate.contentLower;
+  }
+
+  try {
+    candidate.contentLower = readFileSync(candidate.path, "utf-8").toLowerCase();
+  } catch {
+    candidate.contentLower = null;
+  }
+
+  return candidate.contentLower;
 }
 
 function normalizeTerm(term: string): string | null {
@@ -539,36 +593,27 @@ function buildSearchTerms(file: FileExplanation): string[] {
   return Array.from(terms).sort((a, b) => b.length - a.length);
 }
 
-function searchLikelyFiles(outputDir: string, codeRoots: string[], file: FileExplanation): string[] {
+function searchLikelyFiles(candidates: SearchCandidate[], file: FileExplanation): string[] {
   const terms = buildSearchTerms(file);
   if (terms.length === 0) return [];
 
-  const candidates: string[] = [];
-  for (const root of codeRoots) {
-    walkFiles(root, candidates);
-  }
-
   const scored = candidates
-    .filter(isSearchableFile)
     .map((candidate) => {
-      const relPath = relative(outputDir, candidate);
-      const pathScore = terms.reduce((sum, term) => sum + (relPath.toLowerCase().includes(term) ? 5 : 0), 0);
+      const pathScore = terms.reduce((sum, term) => sum + (candidate.relPathLower.includes(term) ? 5 : 0), 0);
 
       let contentScore = 0;
       if (pathScore > 0 || terms.some((term) => term.includes("."))) {
-        try {
-          const text = readFileSync(candidate, "utf-8").toLowerCase();
+        const text = readSearchCandidateContent(candidate);
+        if (text) {
           contentScore = terms.reduce((sum, term) => sum + (text.includes(term) ? 2 : 0), 0);
-        } catch {
-          contentScore = 0;
         }
       }
 
-      return { relPath, score: pathScore + contentScore };
+      return { relPath: candidate.relPath, score: pathScore + contentScore };
     })
     .filter((entry) => entry.score > 0)
     .sort((a, b) => b.score - a.score || a.relPath.localeCompare(b.relPath))
-    .slice(0, 12);
+    .slice(0, 10);
 
   const unique = new Set<string>();
   const results: string[] = [];
@@ -576,10 +621,21 @@ function searchLikelyFiles(outputDir: string, codeRoots: string[], file: FileExp
     if (unique.has(entry.relPath)) continue;
     unique.add(entry.relPath);
     results.push(entry.relPath);
-    if (results.length >= 6) break;
+    if (results.length >= MAX_PREPARE_LIKELY_FILES) break;
   }
 
   return results;
+}
+
+function compactPrepareSemanticChanges(changes: SemanticChange[]): { changes: SemanticChange[]; truncated: boolean } {
+  if (changes.length <= MAX_PREPARE_CHANGES_PER_ITEM) {
+    return { changes, truncated: false };
+  }
+
+  return {
+    changes: changes.slice(0, MAX_PREPARE_CHANGES_PER_ITEM),
+    truncated: true,
+  };
 }
 
 function buildCategoryNotes(category: string, target: string): string[] {
@@ -1148,15 +1204,25 @@ function explanationItems(
   target: string
 ): PrepareItem[] {
   if (!explanation?.available) return [];
+  const searchCandidates = collectSearchCandidates(outputDir, codeRoots);
 
-  return explanation.files.map((file) => ({
-    spec_file: file.file,
-    category: categorizeSpecFile(file.file),
-    status: file.status,
-    semantic_changes: file.changes,
-    likely_files: searchLikelyFiles(outputDir, codeRoots, file),
-    notes: buildCategoryNotes(categorizeSpecFile(file.file), target),
-  }));
+  return explanation.files.map((file) => {
+    const compact = compactPrepareSemanticChanges(file.changes);
+    const notes = buildCategoryNotes(categorizeSpecFile(file.file), target);
+
+    if (file.truncated || compact.truncated) {
+      notes.push("Semantic diff truncated for prepare output; use `openuispec drift --target " + target + " --explain` for the full file-level diff.");
+    }
+
+    return {
+      spec_file: file.file,
+      category: categorizeSpecFile(file.file),
+      status: file.status,
+      semantic_changes: compact.changes,
+      likely_files: searchLikelyFiles(searchCandidates, file),
+      notes,
+    };
+  });
 }
 
 function printReport(result: PrepareResult): void {

@@ -249,6 +249,7 @@ interface ServerInstance {
 }
 
 const servers = new Map<string, ServerInstance>();
+const serverStarts = new Map<string, Promise<ServerInstance>>();
 
 function ensureDepsInstalled(webDir: string, fw: FrameworkConfig): void {
   if (!fw.installCommand) return;
@@ -274,6 +275,9 @@ async function waitForPort(port: number, timeoutMs = 60_000): Promise<boolean> {
 }
 
 async function startDevServer(webDir: string): Promise<ServerInstance> {
+  const pendingStart = serverStarts.get(webDir);
+  if (pendingStart) return pendingStart;
+
   const existing = servers.get(webDir);
   if (existing) {
     const alive = existing.process === null
@@ -283,61 +287,72 @@ async function startDevServer(webDir: string): Promise<ServerInstance> {
     servers.delete(webDir);
   }
 
-  const fw = detectFramework(webDir);
-  const port = resolvePort(webDir, fw);
+  const startPromise = (async () => {
+    const fw = detectFramework(webDir);
+    const port = resolvePort(webDir, fw);
 
-  // Always prefer an already-running server on the expected port
-  if (await isPortListening(port)) {
-    const instance: ServerInstance = { process: null, port, url: `http://localhost:${port}` };
+    // Always prefer an already-running server on the expected port
+    if (await isPortListening(port)) {
+      const instance: ServerInstance = { process: null, port, url: `http://localhost:${port}` };
+      servers.set(webDir, instance);
+      return instance;
+    }
+
+    // Start the dev server for this framework
+    ensureDepsInstalled(webDir, fw);
+
+    // Build command: replace "PORT" placeholder with actual port string
+    const [cmd, ...args] = fw.devCommand.map((part) => part === "PORT" ? String(port) : part);
+
+    // For Node.js, use the project's own dev script from package.json if available
+    let spawnCmd = cmd;
+    let spawnArgs = args;
+    if (fw.kind === "node" && existsSync(join(webDir, "package.json"))) {
+      try {
+        const pkg = JSON.parse(readFileSync(join(webDir, "package.json"), "utf-8"));
+        const scripts: Record<string, string> = pkg.scripts ?? {};
+        const scriptName = ["dev", "start", "serve", "develop"].find((n) => n in scripts);
+        if (scriptName) {
+          spawnCmd = "npm";
+          spawnArgs = ["run", scriptName];
+        }
+      } catch { /* ignore */ }
+    }
+
+    const child = spawn(spawnCmd, spawnArgs, {
+      cwd: webDir,
+      stdio: ["ignore", "pipe", "pipe"],
+      env: { ...process.env, FORCE_COLOR: "0", BROWSER: "none", [fw.portEnvVar]: String(port) },
+    });
+
+    // Collect stderr from the start so we have output for error messages
+    let stderr = "";
+    child.stderr?.on("data", (d: Buffer) => { stderr += d.toString(); });
+
+    // Wait for the port to open (framework-agnostic — no stdout parsing needed)
+    const ready = await waitForPort(port, 60_000);
+
+    if (!ready) {
+      child.kill();
+      throw new Error(
+        `${fw.name} dev server did not open port ${port} within 60s.\n` +
+        (stderr ? `stderr:\n${stripAnsi(stderr).slice(-500)}` : ""),
+      );
+    }
+
+    const instance: ServerInstance = { process: child, port, url: `http://localhost:${port}` };
     servers.set(webDir, instance);
     return instance;
+  })();
+
+  serverStarts.set(webDir, startPromise);
+  try {
+    return await startPromise;
+  } finally {
+    if (serverStarts.get(webDir) === startPromise) {
+      serverStarts.delete(webDir);
+    }
   }
-
-  // Start the dev server for this framework
-  ensureDepsInstalled(webDir, fw);
-
-  // Build command: replace "PORT" placeholder with actual port string
-  const [cmd, ...args] = fw.devCommand.map((part) => part === "PORT" ? String(port) : part);
-
-  // For Node.js, use the project's own dev script from package.json if available
-  let spawnCmd = cmd;
-  let spawnArgs = args;
-  if (fw.kind === "node" && existsSync(join(webDir, "package.json"))) {
-    try {
-      const pkg = JSON.parse(readFileSync(join(webDir, "package.json"), "utf-8"));
-      const scripts: Record<string, string> = pkg.scripts ?? {};
-      const scriptName = ["dev", "start", "serve", "develop"].find((n) => n in scripts);
-      if (scriptName) {
-        spawnCmd = "npm";
-        spawnArgs = ["run", scriptName];
-      }
-    } catch { /* ignore */ }
-  }
-
-  const child = spawn(spawnCmd, spawnArgs, {
-    cwd: webDir,
-    stdio: ["ignore", "pipe", "pipe"],
-    env: { ...process.env, FORCE_COLOR: "0", BROWSER: "none", [fw.portEnvVar]: String(port) },
-  });
-
-  // Collect stderr from the start so we have output for error messages
-  let stderr = "";
-  child.stderr?.on("data", (d: Buffer) => { stderr += d.toString(); });
-
-  // Wait for the port to open (framework-agnostic — no stdout parsing needed)
-  const ready = await waitForPort(port, 60_000);
-
-  if (!ready) {
-    child.kill();
-    throw new Error(
-      `${fw.name} dev server did not open port ${port} within 60s.\n` +
-      (stderr ? `stderr:\n${stripAnsi(stderr).slice(-500)}` : ""),
-    );
-  }
-
-  const instance: ServerInstance = { process: child, port, url: `http://localhost:${port}` };
-  servers.set(webDir, instance);
-  return instance;
 }
 
 // ── browser manager (imported from screenshot-shared.ts) ────────────

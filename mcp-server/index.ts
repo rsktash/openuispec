@@ -13,7 +13,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
-import { readFileSync, existsSync, readdirSync } from "node:fs";
+import { readFileSync, existsSync, readdirSync, realpathSync } from "node:fs";
 import { join, dirname, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { SUPPORTED_TARGETS, findProjectDir, discoverSpecFiles, readProjectName, resolveOutputDir, stateFilePath, loadTargetDrift, createSnapshot } from "../drift/index.js";
@@ -21,6 +21,7 @@ import { buildPrepareResult } from "../prepare/index.js";
 import { buildCheckResult } from "../check/index.js";
 import { buildStatusResult } from "../status/index.js";
 import { buildValidateResult } from "../schema/validate.js";
+import { readPackageVersion, resolvePackagePath } from "../runtime/package-paths.js";
 import YAML from "yaml";
 import { takeScreenshot, takeScreenshotBatch } from "./screenshot.js";
 import { takeAndroidScreenshot, takeAndroidScreenshotBatch } from "./screenshot-android.js";
@@ -35,9 +36,7 @@ const projectCwd = process.env.OPENUISPEC_PROJECT_DIR || process.cwd();
 
 function getPackageVersion(): string {
   try {
-    const __dirname = dirname(fileURLToPath(import.meta.url));
-    const pkg = JSON.parse(readFileSync(join(__dirname, "..", "package.json"), "utf-8"));
-    return pkg.version ?? "unknown";
+    return readPackageVersion(import.meta.url);
   } catch {
     return "unknown";
   }
@@ -551,8 +550,7 @@ server.registerTool(
       return toolError(`Unknown spec type "${type}". Call openuispec_spec_types to see available types.`);
     }
     try {
-      const __dirname = dirname(fileURLToPath(import.meta.url));
-      const schemaPath = join(__dirname, "..", "schema", entry.file);
+      const schemaPath = resolvePackagePath(import.meta.url, "schema", entry.file);
       const schema = JSON.parse(readFileSync(schemaPath, "utf-8"));
 
       if (summary) {
@@ -1028,12 +1026,20 @@ export async function startMcpServer() {
   await server.connect(transport);
 }
 
-// Direct execution (npx openuispec-mcp)
-const isDirectRun =
-  process.argv[1]?.endsWith("mcp-server/index.ts") ||
-  process.argv[1]?.endsWith("mcp-server/index.js");
+function isDirectExecution(importMetaUrl: string): boolean {
+  const entry = process.argv[1];
+  if (!entry) {
+    return false;
+  }
 
-if (isDirectRun) {
+  try {
+    return realpathSync(entry) === realpathSync(fileURLToPath(importMetaUrl));
+  } catch {
+    return false;
+  }
+}
+
+if (isDirectExecution(import.meta.url)) {
   startMcpServer().catch((err) => {
     console.error("Failed to start OpenUISpec MCP server:", err);
     process.exit(1);
