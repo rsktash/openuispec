@@ -325,7 +325,7 @@ When the openuispec MCP server is configured, AI assistants should use these too
 | \`openuispec_get_contract\` | Get a single contract spec, optionally filtered to one variant. |
 | \`openuispec_get_tokens\` | Get tokens for a specific category (color, typography, spacing, etc.). |
 | \`openuispec_get_locale\` | Get a single locale file, optionally filtered to specific keys. |
-| \`openuispec_screenshot\` | Screenshot the web app at a route via headless browser (requires \`puppeteer\`). |
+| \`openuispec_screenshot\` | Screenshot the web app at a route via headless browser (requires \`playwright\`). |
 | \`openuispec_screenshot_android\` | Screenshot Android app on emulator — works with any project via \`project_dir\`. |
 | \`openuispec_screenshot_ios\` | Screenshot iOS app on Simulator via XCUITest — works with any project via \`project_dir\`. |
 

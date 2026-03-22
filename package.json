@@ -1,6 +1,6 @@
 {
   "name": "openuispec",
-  "version": "0.2.20",
+  "version": "0.2.21",
   "license": "MIT",
   "type": "module",
   "description": "A semantic UI specification format for AI-native, platform-native app development",
@@ -54,7 +54,7 @@
     "zod": "^3.25.76"
   },
   "optionalDependencies": {
-    "puppeteer": "^24.39.1"
+    "playwright": "^1.52.0"
   },
   "devDependencies": {
     "@types/node": "^25.5.0",

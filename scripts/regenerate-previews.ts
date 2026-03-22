@@ -1,7 +1,7 @@
 #!/usr/bin/env npx tsx
 /**
  * Regenerates all preview PNGs for the 3 example projects using the
- * preview renderer (preview-render.ts → preview.ts → Puppeteer).
+ * preview renderer (preview-render.ts → preview.ts → Playwright).
  *
  * Outputs to examples/<project>/previews/<screen>_<sizeClass>[_<theme>].png
  *

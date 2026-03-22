@@ -240,24 +240,17 @@ export async function renderPreview(
   // 6. Render HTML
   const html = renderPage(ctx);
 
-  // 7. Screenshot with Puppeteer
+  // 7. Screenshot with Playwright
   const vp = viewport ?? SIZE_CLASS_VIEWPORTS[size_class];
   const browser = await getBrowser();
-  const page = await browser.newPage();
+  const context = await browser.newContext({
+    viewport: { width: vp.width, height: vp.height },
+    deviceScaleFactor: 2,
+    colorScheme: theme === "dark" ? "dark" : "light",
+  });
+  const page = await context.newPage();
 
   try {
-    await page.setViewport({
-      width: vp.width,
-      height: vp.height,
-      deviceScaleFactor: 2,
-    });
-
-    if (theme === "dark") {
-      await page.emulateMediaFeatures([
-        { name: "prefers-color-scheme", value: "dark" },
-      ]);
-    }
-
     await page.setContent(html, { waitUntil: "load", timeout: 10_000 });
 
     // Small delay for CSS to settle
@@ -288,5 +281,6 @@ export async function renderPreview(
     return { content };
   } finally {
     await page.close();
+    await context.close();
   }
 }

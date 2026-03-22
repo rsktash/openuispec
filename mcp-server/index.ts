@@ -810,7 +810,7 @@ server.registerTool(
 server.registerTool(
   "openuispec_screenshot",
   {
-    description: "Take a screenshot of the generated web app at a specific route. Starts the Vite dev server automatically if needed (first call may take longer). Returns a PNG image for visual verification of generated UI. Requires puppeteer to be installed (npm install -g puppeteer).",
+    description: "Take a screenshot of the generated web app at a specific route. Starts the Vite dev server automatically if needed (first call may take longer). Returns a PNG image for visual verification of generated UI. Requires playwright to be installed (npm install -g playwright).",
     inputSchema: {
       route: z.string().default("/").describe("Route path to navigate to, e.g. '/home', '/settings', '/posts/123'"),
       viewport: z.object({

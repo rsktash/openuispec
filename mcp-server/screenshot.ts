@@ -1,7 +1,7 @@
 /**
  * Screenshot tool — launches dev server + headless browser, captures pages.
  *
- * Both the Vite dev server and the Puppeteer browser are kept alive between
+ * Both the Vite dev server and the Playwright browser are kept alive between
  * calls and torn down when the MCP server process exits.
  */
 
@@ -389,25 +389,18 @@ export async function takeScreenshot(
   const server = await startDevServer(webDir);
   const browser = await getBrowser();
 
-  // 2. Navigate
-  const page = await browser.newPage();
+  // 2. Navigate (Playwright context + page)
+  const context = await browser.newContext({
+    viewport: { width: viewport.width, height: viewport.height },
+    deviceScaleFactor: scale,
+    colorScheme: theme ?? "light",
+  });
+  const page = await context.newPage();
   try {
-    await page.setViewport({
-      width: viewport.width,
-      height: viewport.height,
-      deviceScaleFactor: scale,
-    });
-
-    if (theme) {
-      await page.emulateMediaFeatures([
-        { name: "prefers-color-scheme", value: theme },
-      ]);
-    }
-
     const base = server.url.replace(/\/+$/, "");
     let targetUrl = `${base}${route.startsWith("/") ? "" : "/"}${route}`;
     if (init_script) targetUrl = appendInitParam(targetUrl, init_script);
-    await page.goto(targetUrl, { waitUntil: "networkidle2", timeout: 30_000 });
+    await page.goto(targetUrl, { waitUntil: "networkidle", timeout: 30_000 });
 
     if (wait_for > 0) {
       await new Promise((r) => setTimeout(r, wait_for));
@@ -416,14 +409,14 @@ export async function takeScreenshot(
     // 3. Screenshot
     let buffer: Buffer;
     if (selector) {
-      const element = await page.$(selector);
-      if (!element) {
+      const loc = page.locator(selector);
+      if ((await loc.count()) === 0) {
         return {
           content: [{ type: "text", text: `Error: Element not found for selector: ${selector}` }],
           isError: true,
         };
       }
-      buffer = await element.screenshot({ type: "png" });
+      buffer = await loc.screenshot({ type: "png" });
     } else {
       buffer = await page.screenshot({ type: "png", fullPage: full_page });
     }
@@ -462,6 +455,7 @@ export async function takeScreenshot(
     };
   } finally {
     await page.close();
+    await context.close();
   }
 }
 
@@ -500,50 +494,58 @@ export async function takeScreenshotBatch(
   const webDir = findWebAppDir(projectCwd);
   const server = await startDevServer(webDir);
   const browser = await getBrowser();
-  const page = await browser.newPage();
+  const context = await browser.newContext({
+    viewport: { width: viewport.width, height: viewport.height },
+    deviceScaleFactor: scale,
+    colorScheme: theme ?? "light",
+  });
+  const page = await context.newPage();
 
   try {
-    await page.setViewport({
-      width: viewport.width,
-      height: viewport.height,
-      deviceScaleFactor: scale,
-    });
-    if (theme) {
-      await page.emulateMediaFeatures([{ name: "prefers-color-scheme", value: theme }]);
-    }
-
     const base = server.url.replace(/\/+$/, "");
     const themeLabel = theme ?? "default";
     const snapshots: Array<{ screen: string; path: string; data: string; init_script?: string }> = [];
+    const errors: Array<{ screen: string; error: string }> = [];
 
     for (const capture of captures) {
-      const effectiveInitScript = capture.init_script ?? sharedInitScript;
-      let targetUrl = `${base}${capture.route.startsWith("/") ? "" : "/"}${capture.route}`;
-      if (effectiveInitScript) targetUrl = appendInitParam(targetUrl, effectiveInitScript);
-      await page.goto(targetUrl, { waitUntil: "networkidle2", timeout: 30_000 });
-      await new Promise((r) => setTimeout(r, capture.wait_for ?? 1000));
+      try {
+        const effectiveInitScript = capture.init_script ?? sharedInitScript;
+        let targetUrl = `${base}${capture.route.startsWith("/") ? "" : "/"}${capture.route}`;
+        if (effectiveInitScript) targetUrl = appendInitParam(targetUrl, effectiveInitScript);
+        await page.goto(targetUrl, { waitUntil: "networkidle", timeout: 30_000 });
+        await new Promise((r) => setTimeout(r, capture.wait_for ?? 1000));
 
-      let buffer: Buffer;
-      if (capture.selector) {
-        const el = await page.$(capture.selector);
-        buffer = el ? await el.screenshot({ type: "png" }) : await page.screenshot({ type: "png" });
-      } else {
-        buffer = await page.screenshot({ type: "png", fullPage: capture.full_page ?? false });
+        let buffer: Buffer;
+        if (capture.selector) {
+          const loc = page.locator(capture.selector);
+          buffer = (await loc.count()) > 0
+            ? await loc.screenshot({ type: "png" })
+            : await page.screenshot({ type: "png" });
+        } else {
+          buffer = await page.screenshot({ type: "png", fullPage: capture.full_page ?? false });
+        }
+
+        const filename = `${capture.screen}_${themeLabel}.png`;
+        let savedPath = filename;
+        if (output_dir) {
+          const outDir = resolve(webDir, output_dir);
+          mkdirSync(outDir, { recursive: true });
+          savedPath = join(outDir, filename);
+          writeFileSync(savedPath, buffer);
+        }
+
+        snapshots.push({ screen: capture.screen, path: savedPath, data: buffer.toString("base64"), init_script: effectiveInitScript });
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        errors.push({ screen: capture.screen, error: msg });
       }
-
-      const filename = `${capture.screen}_${themeLabel}.png`;
-      let savedPath = filename;
-      if (output_dir) {
-        const outDir = resolve(webDir, output_dir);
-        mkdirSync(outDir, { recursive: true });
-        savedPath = join(outDir, filename);
-        writeFileSync(savedPath, buffer);
-      }
-
-      snapshots.push({ screen: capture.screen, path: savedPath, data: buffer.toString("base64"), init_script: effectiveInitScript });
     }
 
     const content: ScreenshotResult["content"] = [];
+    content.push({
+      type: "text" as const,
+      text: JSON.stringify({ captured: snapshots.length, failed: errors.length, errors }, null, 2),
+    });
     for (const s of snapshots) {
       content.push({ type: "image" as const, data: s.data, mimeType: "image/png" });
       content.push({
@@ -554,6 +556,7 @@ export async function takeScreenshotBatch(
     return { content };
   } finally {
     await page.close();
+    await context.close();
   }
 }
 

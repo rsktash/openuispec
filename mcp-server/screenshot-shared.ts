@@ -8,27 +8,31 @@ import { createHash } from "node:crypto";
 import YAML from "yaml";
 import { findProjectDir } from "../drift/index.js";
 
-// ── shared browser manager ──────────────────────────────────────────
+// ── shared browser manager (Playwright) ─────────────────────────────
 
 let browserInstance: any = null;
 let launchPromise: Promise<any> | null = null;
 
 export async function getBrowser(): Promise<any> {
-  if (browserInstance?.connected) return browserInstance;
+  if (browserInstance && browserInstance.isConnected()) return browserInstance;
 
   if (!launchPromise) {
     launchPromise = (async () => {
-      let puppeteer: any;
+      let playwright: any;
       try {
-        puppeteer = await import("puppeteer");
+        playwright = await import("playwright");
       } catch {
-        throw new Error(
-          "puppeteer is not installed. Run:\n  npm install -g puppeteer\n" +
-          "or add it to your project's devDependencies.",
-        );
+        try {
+          playwright = await import("playwright-core");
+        } catch {
+          throw new Error(
+            "playwright is not installed. Run:\n  npm install -g playwright\n" +
+            "or add it to your project's devDependencies.",
+          );
+        }
       }
 
-      browserInstance = await puppeteer.launch({
+      browserInstance = await playwright.chromium.launch({
         headless: true,
         args: ["--no-sandbox", "--disable-setuid-sandbox"],
       });

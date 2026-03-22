@@ -7,7 +7,7 @@
  *   npx tsx scripts/take-all-screenshots.ts           # per-screen mode (manual nav)
  *   npx tsx scripts/take-all-screenshots.ts --batch    # batch mode (build once, capture many)
  *
- * Requires: puppeteer, running Android emulator, booted iOS simulator.
+ * Requires: playwright, running Android emulator, booted iOS simulator.
  */
 
 import { spawn } from "node:child_process";
@@ -226,7 +226,7 @@ async function runBatchMode() {
 }
 
 // ══════════════════════════════════════════════════════════════════════
-// PER-SCREEN MODE — manual vite + puppeteer for web, adb for android, simctl + XCUITest for iOS
+// PER-SCREEN MODE — manual vite + playwright for web, adb for android, simctl + XCUITest for iOS
 // ══════════════════════════════════════════════════════════════════════
 
 async function startViteServer(dir: string): Promise<{ proc: ChildProcess; url: string }> {
@@ -268,15 +268,14 @@ async function takeWebScreenshots(project: string, def: NonNullable<ProjectDef["
   const { proc, url } = await startViteServer(join(ROOT, def.dir));
 
   try {
-    const puppeteer = await import("puppeteer");
-    const browser = await puppeteer.default.launch({ headless: "shell" });
+    const playwright = await import("playwright");
+    const browser = await playwright.chromium.launch({ headless: true });
     try {
-      const page = await browser.newPage();
-      await page.setViewport({ width: 1280, height: 800 });
+      const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
       for (const screen of def.screens) {
         const fullUrl = `${url}${screen.route}`;
         log(`  web/${screen.name}: ${fullUrl}`);
-        await page.goto(fullUrl, { waitUntil: "networkidle0", timeout: 15_000 });
+        await page.goto(fullUrl, { waitUntil: "networkidle", timeout: 15_000 });
         try {
           await page.waitForFunction(
             () => (document.getElementById("root")?.children.length ?? 0) > 0,
