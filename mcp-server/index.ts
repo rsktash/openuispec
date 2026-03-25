@@ -111,27 +111,29 @@ export const server = new McpServer(
     version: getPackageVersion(),
   },
   {
-    instructions: `OpenUISpec — semantic UI spec format. Spec files (YAML) are the single source of truth for all UI.
+    instructions: `CRITICAL: NEVER write or edit UI code without calling an OpenUISpec tool first. NO EXCEPTIONS.
 
-WORKFLOW — each tool response includes a next_tool hint, follow it:
-1. openuispec_prepare(target) → get context + platform config (include_specs=true to embed content)
-2. openuispec_read_specs(paths) → load spec content (omit paths for listing only)
-3. Generate/update code
-4. openuispec_check(target) → validate spec files (audit=true for review checklist, not code inspection)
-5. Remind the user to baseline when satisfied: openuispec drift --snapshot --target <t>
-   Do not baseline on your own initiative — the user decides when output is accepted.
+OpenUISpec — spec files (YAML) are the ONLY source of truth for all UI.
 
-FOCUSED GETTERS (prefer for incremental edits): get_screen, get_contract, get_component, get_tokens, get_locale
-SPEC AUTHORING: spec_types → spec_schema(type, summary?) → write YAML
-PREVIEW: openuispec_preview(screen) → render spec as HTML with mock data, returns screenshot (no app needed)
+FULL GENERATION (new screens, multi-platform, first-time):
+1. openuispec_prepare(target, include_specs=true) → MUST be first action
+2. Generate code strictly from spec contents — do NOT improvise UI structure
+3. openuispec_check(target, audit=true) → verify code against the returned checklist
+4. Fix gaps, repeat 2–3 until audit passes
+
+INCREMENTAL EDITS (one screen, one token, one locale key):
+1. Focused getter: get_screen, get_contract, get_component, get_tokens, get_locale
+2. Edit code based on spec returned
+3. openuispec_check(target) → validate
+
+SPEC AUTHORING: spec_types → spec_schema(type) → write YAML
+PREVIEW: openuispec_preview(screen) → render spec as HTML screenshot (no app needed)
 SCREENSHOTS: screenshot (web), screenshot_android, screenshot_ios — single + batch variants
 
-Skip only for purely non-UI requests.
-
-When generating UI code:
-1. Check anti_patterns in the prepare result — hard constraints on what NOT to produce
-2. Check design_context — match the complexity level and personality description
-3. Apply the AI Fingerprint Test: would a viewer immediately say "AI made this"? If yes, revise.`,
+NEVER skip the tools. NEVER generate UI from memory or conversation alone.
+ALWAYS check anti_patterns and design_context from prepare — hard constraints.
+ALWAYS remind user to baseline when satisfied: openuispec drift --snapshot --target <t>
+Apply the AI Fingerprint Test: if it looks obviously AI-generated, revise.`,
   }
 );
 

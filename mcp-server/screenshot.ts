@@ -477,6 +477,7 @@ export interface WebScreenshotBatchOptions {
   theme?: "light" | "dark";
   output_dir?: string;
   init_script?: string;
+  onProgress?: (event: { screen: string; index: number; total: number; ok: boolean; error?: string }) => void;
 }
 
 // ── batch screenshot ─────────────────────────────────────────────────
@@ -507,7 +508,8 @@ export async function takeScreenshotBatch(
     const snapshots: Array<{ screen: string; path: string; data: string; init_script?: string }> = [];
     const errors: Array<{ screen: string; error: string }> = [];
 
-    for (const capture of captures) {
+    for (let i = 0; i < captures.length; i++) {
+      const capture = captures[i];
       try {
         const effectiveInitScript = capture.init_script ?? sharedInitScript;
         let targetUrl = `${base}${capture.route.startsWith("/") ? "" : "/"}${capture.route}`;
@@ -535,9 +537,11 @@ export async function takeScreenshotBatch(
         }
 
         snapshots.push({ screen: capture.screen, path: savedPath, data: buffer.toString("base64"), init_script: effectiveInitScript });
+        options.onProgress?.({ screen: capture.screen, index: i + 1, total: captures.length, ok: true });
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         errors.push({ screen: capture.screen, error: msg });
+        options.onProgress?.({ screen: capture.screen, index: i + 1, total: captures.length, ok: false, error: msg });
       }
     }
 
